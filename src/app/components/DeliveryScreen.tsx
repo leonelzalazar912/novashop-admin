@@ -21,7 +21,6 @@ export function DeliveryScreen({ onBack, onContinue }: DeliveryScreenProps) {
 
 const isShippingFormValid =
   formData.fullName.trim() !== "" &&
-  formData.email.trim() !== "" &&
   formData.phone.trim() !== "" &&
   formData.province.trim() !== "" &&
   formData.city.trim() !== "" &&
