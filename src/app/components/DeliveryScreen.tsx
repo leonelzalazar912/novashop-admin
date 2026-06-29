@@ -20,8 +20,6 @@ export function DeliveryScreen({ onBack, onContinue }: DeliveryScreenProps) {
 });
 
 const isShippingFormValid =
-  formData.fullName.trim() !== "" &&
-  formData.phone.trim() !== "" &&
   formData.province.trim() !== "" &&
   formData.city.trim() !== "" &&
   formData.address.trim() !== "" &&
@@ -186,27 +184,7 @@ boxShadow: "0 18px 50px rgba(0,0,0,0.35), 0 0 35px rgba(106,60,230,0.18)",
               Completá la información necesaria para realizar el envío de tu pedido.
             </p>
 
-            <h3 style={{ marginBottom: "18px", fontSize: "18px" }}>
-              Información de contacto
-            </h3>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "16px",
-              }}
-            >
-              <input
-  placeholder="Nombre y apellido"
-  style={inputStyle}
-  value={formData.fullName}
-  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-/>
-
-              <input placeholder="Teléfono" style={inputStyle} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-
-            </div>
+            
 
             <h3
               style={{

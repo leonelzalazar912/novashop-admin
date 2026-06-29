@@ -20,7 +20,6 @@ export function CatalogScreen({
   const [selectedPlatform, setSelectedPlatform] = useState("Todos");
   const [selectedGenre, setSelectedGenre] = useState("Todos");
   const [selectedEra, setSelectedEra] = useState("");
-  const [maxPrice, setMaxPrice] = useState(90000);
   const [onlyStock, setOnlyStock] = useState(false);
   const [sortBy, setSortBy] = useState("default");
   const [search, setSearch] = useState(initialSearch);
@@ -40,7 +39,6 @@ export function CatalogScreen({
   setSelectedPlatform("Todos");
   setSelectedGenre("Todos");
   setSelectedEra("");
-  setMaxPrice(90000);
   setOnlyStock(false);
   setSortBy("default");
 };
@@ -346,7 +344,6 @@ const filteredGames = games
     if (selectedGenre !== "Todos" && (game.genre ?? "Acción") !== selectedGenre) return false;
     if (selectedEra === "Retro" && (game.releaseYear ?? 9999) > 2013) return false;
     if (selectedEra === "Actuales" && (game.releaseYear ?? 0) <= 2013) return false;
-    if (game.price > maxPrice) return false;
     if (onlyStock && (game.stock ?? 0) <= 0) return false;
     return true;
   })
@@ -519,21 +516,6 @@ fontWeight: 700,
     ))}
   </div>
 
-  <div style={{ marginBottom: "22px" }}>
-    <p style={{ color: "#e8eaf0", fontWeight: 600 }}>
-      Precio máximo: ${maxPrice.toLocaleString("es-AR")}
-    </p>
-
-    <input
-      type="range"
-      min={10000}
-      max={90000}
-      step={1000}
-      value={maxPrice}
-      onChange={(e) => setMaxPrice(Number(e.target.value))}
-      style={{ width: "100%" }}
-    />
-  </div>
 
   <button
     onClick={() => setOnlyStock(!onlyStock)}

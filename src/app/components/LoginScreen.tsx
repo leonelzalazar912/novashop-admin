@@ -73,12 +73,12 @@ const handleLogin = () => {
               marginBottom: 20,
             }}
           >
-            TU UNIVERSO
+            TU PRÓXIMO JUEGO
             <br />
-            <span style={{ color: "#6A3CE6" }}>TE ESPERA.</span>
+            <span style={{ color: "#6A3CE6" }}>TE ESPERA</span>
           </h1>
           <p style={{ color: "#6B6E85", fontSize: 16, lineHeight: 1.7, maxWidth: 380 }}>
-            Descubrí miles de juegos, unite a comunidades épicas y construí tu legado en el ecosistema gamer más inmersivo del mundo.
+            Inicia sesión para explorar el catálogo, consultar  disponibilidad y continuar con tus compras de videojuegos físicos.
           </p>
           
         </div>
@@ -139,36 +139,7 @@ const handleLogin = () => {
             </button>
           </p>
 
-          {/* Botones sociales */}
-          <div className="flex gap-3 mb-6">
-            {[
-  { icon: <Chrome size={18} />, label: "Google" },
-].map(({ icon, label }) => (
-              <button
-                key={label}
-                className="flex-1 flex items-center justify-center gap-2 rounded-lg transition-all duration-200"
-                style={{
-                  background: "#181A24",
-                  border: "1px solid rgba(106,60,230,0.25)",
-                  color: "#B0B3C6",
-                  padding: "11px 0",
-                  cursor: "pointer",
-                  fontSize: 14,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "#6A3CE6";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#E8E9F0";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(106,60,230,0.25)";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#B0B3C6";
-                }}
-              >
-                {icon}
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
+     
 
           <div className="flex items-center gap-3 mb-6">
             <div style={{ flex: 1, height: 1, background: "rgba(106,60,230,0.2)" }} />

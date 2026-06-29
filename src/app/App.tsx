@@ -206,12 +206,13 @@ if (screen === "payment") {
 if (screen === "completed") {
   return (
     <CompletedScreen
-      items={cartItems}
-      onBackHome={() => {
-        setCartItems([]);
-        setScreen("home");
-      }}
-    />
+  items={cartItems}
+  onBackPayment={() => setScreen("payment")}
+  onBackHome={() => {
+    setCartItems([]);
+    setScreen("home");
+  }}
+/>
   );
 }
 

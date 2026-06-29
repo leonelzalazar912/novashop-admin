@@ -130,13 +130,22 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
         
 <p
   style={{
-    color: (game.stock ?? 0) > 0 ? "#22c55e" : "#ef4444",
+    color:
+      (game.stock ?? 0) === 0
+        ? "#ef4444"
+        : (game.stock ?? 0) <= 5
+        ? "#facc15"
+        : "#22c55e",
     fontSize: "0.75rem",
     margin: "0 0 6px 0",
     fontWeight: 600,
   }}
 >
-  {(game.stock ?? 0) > 0 ? "🟢 En stock" : "🔴 Sin stock"}
+  {(game.stock ?? 0) === 0
+    ? "🔴 Sin stock"
+    : (game.stock ?? 0) <= 5
+    ? "⚠️ Últimas unidades"
+    : "🟢 En stock"}
 </p>
         <h3
           className="leading-tight"

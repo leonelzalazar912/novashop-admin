@@ -164,7 +164,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
 
 <div style={{ display: "grid", gap: 12 }}>
   {[
-    ["💳", "Tarjeta de crédito", "Visa · Mastercard · Amex"],
+    ["💳", "Tarjeta de crédito", "Visa · Mastercard"],
     ["💜", "Mercado Pago", "Pago inmediato"],
     ["🏦", "Transferencia bancaria", "CBU / Alias"],
   ].map(([icon, title, desc]) => {
@@ -432,8 +432,8 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
       color: "#A0A3B8",
     }}
   >
-    <span>Descuento</span>
-    <span>$0</span>
+    <span>Envío</span>
+    <span>Gratis</span>
   </div>
 
   <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.08)", margin: "18px 0" }} />

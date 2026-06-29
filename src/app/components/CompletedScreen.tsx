@@ -13,9 +13,10 @@ interface CartItem {
 interface CompletedScreenProps {
   items: CartItem[];
   onBackHome: () => void;
+  onBackPayment: () => void;
 }
 
-export function CompletedScreen({ items, onBackHome }: CompletedScreenProps) {
+export function CompletedScreen({ items, onBackHome, onBackPayment }: CompletedScreenProps) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const orderNumber = "NP-2026-000184";
   const date = new Date().toLocaleDateString("es-AR");
@@ -290,7 +291,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
 
 <div style={{ marginTop: 28 }}>
   <button
-    onClick={onBackHome}
+    onClick={onBackPayment}
     style={{
       background: "transparent",
       color: "#A66BFF",
@@ -302,7 +303,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
       fontSize: "1rem",
     }}
   >
-    ← VOLVER A LA TIENDA
+    ← VOLVER A DETALLES DEL PAGO
   </button>
 </div>
 

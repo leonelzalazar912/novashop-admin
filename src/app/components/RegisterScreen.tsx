@@ -105,12 +105,12 @@ if (passwordStrength < 2) {
               marginBottom: 20,
             }}
           >
-            UNITE AL
+            CREA TU
             <br />
-            <span style={{ color: "#6A3CE6" }}>EQUIPO.</span>
+            <span style={{ color: "#6A3CE6" }}>CUENTA.</span>
           </h1>
           <p style={{ color: "#6B6E85", fontSize: 15, lineHeight: 1.7, maxWidth: 360 }}>
-            Creá tu cuenta gratis y accedé al instante a miles de títulos, ofertas exclusivas y una comunidad global de jugadores.
+            Regístrate para comprar videojuegos físicos y recibir novedades u ofertas si activas la suscripción.
           </p>
 
 
