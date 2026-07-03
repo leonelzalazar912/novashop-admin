@@ -1,36 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, ShoppingCart, ChevronDown, Menu, X, Store } from "lucide-react";import { products } from "./data";
+import { Search, ShoppingCart, Menu, X, Store } from "lucide-react";import { products } from "./data";
 import type { Product } from "../../types/product";
 import { storeConfig } from "../../config/storeConfig";
 import { theme } from "../../config/theme";
 import { texts } from "../../config/texts";
+import { navigation } from "../../config/categories";
 
 
-const navLinks = [
-  { label: "TIENDA", href: "#" },
-  { label: "OFERTAS", href: "#ofertas" },
-  {
-    label: "JUEGOS PS5",
-    href: "#",
-    sub: ["Acción", "RPG", "Deportes", "Aventura"],
-  },
-  {
-    label: "JUEGOS PS4",
-    href: "#",
-    sub: ["Acción", "RPG", "Deportes", "Aventura"],
-  },
-  {
-    label: "JUEGOS XBOX",
-    href: "#",
-    sub: ["Xbox Series X", "Xbox One", "Game Pass"],
-  },
-  {
-    label: "NINTENDO",
-    href: "#",
-    sub: ["Switch", "Switch Lite", "Clásicos"],
-  },
-  { label: "SEGA", href: "#" },
-];
+const navLinks = navigation;
 
 
 interface HeaderProps {
@@ -313,8 +290,8 @@ border: "1px solid #6A3CE6",
               <li
                 key={link.label}
                 className="relative group"
-                onMouseEnter={() => link.sub && setActiveDropdown(link.label)}
-                onMouseLeave={() => setActiveDropdown(null)}
+                onMouseEnter={() => {}}
+                onMouseLeave={() => {}}
               >
                 <a
                   href={link.href}
@@ -326,29 +303,7 @@ border: "1px solid #6A3CE6",
                   }}
                 >
                   {link.label}
-                  {link.sub && <ChevronDown size={12} strokeWidth={2.5} />}
-                </a>
-                {link.sub && activeDropdown === link.label && (
-                  <div
-                    className="absolute top-full left-0 min-w-[160px] py-1 z-50"
-                    style={{
-                      backgroundColor: theme.colors.surface,
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: "0 0 6px 6px",
-                    }}
-                  >
-                    {link.sub.map((item) => (
-                      <a
-                        key={item}
-                        href="#"
-                        className="block px-4 py-2 text-sm hover:bg-white/5 transition-colors"
-                        style={{ color: "#e8eaf0" }}
-                      >
-                        {item}
-                      </a>
-                    ))}
-                  </div>
-                )}
+                </a>                
               </li>
             ))}
           </ul>
