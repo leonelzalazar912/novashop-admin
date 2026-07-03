@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, ShoppingCart, ChevronDown, Menu, X, Gamepad2 } from "lucide-react";
-import { allGames } from "./data";
-import type { Game } from "./ProductCard";
+import { Search, ShoppingCart, ChevronDown, Menu, X, Store } from "lucide-react";import { allGames } from "./data";
+import type { Product } from "./ProductCard";
+import { storeConfig } from "../../config/storeConfig";
 
 
 const navLinks = [
@@ -37,7 +37,7 @@ interface HeaderProps {
   onProfileClick: () => void;
   onGoLogin: () => void;
   onSearchCatalog: (text: string) => void;
-  onViewDetails: (game: Game) => void;
+  onViewDetails: (game: Product) => void;
 }
 
 export function Header({
@@ -96,20 +96,20 @@ useEffect(() => {
           >
             <div
               className="w-8 h-8 rounded flex items-center justify-center"
-              style={{ backgroundColor: "#6A3CE6"}}
+              style={{ backgroundColor: storeConfig.primaryColor }}
             >
-              <Gamepad2 size={18} color="#0d0e12" strokeWidth={2.5} />
+              <Store size={18} color="#ffffff" strokeWidth={2.5} />
             </div>
             <span
               className="hidden sm:block"
               style={{
-                color: "#6A3CE6",
+                color: storeConfig.primaryColor,
                 fontSize: "1.4rem",
                 fontWeight: 700,
                 letterSpacing: "0.05em",
               }}
             >
-              NEXUS<span style={{ color: "#ffffff" }}>PLAY</span>
+              {storeConfig.appName}
             </span>
           </a>
 
@@ -127,7 +127,7 @@ useEffect(() => {
     onSearchCatalog(query.trim());
   }
 }}
-              placeholder="¿Qué estás buscando?"
+              placeholder={`Buscar ${storeConfig.productLabel.toLowerCase()}...`}
               className="w-full px-4 py-2 pr-10 outline-none transition-colors"
               style={{
                 backgroundColor: "#1e1f2e",
@@ -221,7 +221,7 @@ onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       boxShadow: "0 18px 40px rgba(0,0,0,0.45)",
     }}
   >
-    No se encontraron juegos
+    No se encontraron productos
   </div>
 )}
           </div>

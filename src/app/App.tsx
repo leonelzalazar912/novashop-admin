@@ -12,19 +12,20 @@ import { RegisterScreen } from "./components/RegisterScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
 import { allGames, featuredGames } from "./components/data";
 import { CatalogScreen } from "./components/CatalogScreen";
-import type { Game } from "./components/ProductCard";
+import type { Product } from "./components/ProductCard";
 import { CheckoutScreen } from "./components/CheckoutScreen";
 import { PaymentScreen } from "./components/PaymentScreen";
 import { CompletedScreen } from "./components/CompletedScreen";
 import { DeliveryScreen } from "./components/DeliveryScreen";
 import { ClaimsScreen } from "./components/ClaimsScreen";
+import { storeConfig } from "../config/storeConfig";
 
-interface CartItem extends Game {
+interface CartItem extends Product {
   qty: number;
 }
 
 export default function App() {
-  const [initialSelectedGame, setInitialSelectedGame] = useState<Game | null>(null);
+  const [initialSelectedGame, setInitialSelectedGame] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activePlatform, setActivePlatform] = useState("Todos");
@@ -54,11 +55,11 @@ export default function App() {
   setCatalogSearch("");
   setScreen("catalog");
 };
-const handleViewDetails = (game: Game) => {
+const handleViewDetails = (game: Product) => {
   setInitialSelectedGame(game);
   setScreen("catalog");
 };
-  const addToCart = (game: Game) => {
+  const addToCart = (game: Product) => {
       if ((game.stock ?? 0) <= 0) return;
 
     setCartItems((prev) => {

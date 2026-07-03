@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Gamepad2, Mail, Phone, MapPin, Instagram, Twitter, Facebook, Youtube } from "lucide-react";
 
+
 export function Footer() {
   const [email, setEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");

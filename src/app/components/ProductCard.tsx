@@ -1,6 +1,6 @@
 import { ShoppingCart, Heart } from "lucide-react";
 
-export interface Game {
+export interface Product {
   id: number;
   title: string;
   platform: string;
@@ -29,9 +29,9 @@ const platformLogos: Record<string, string> = {
 };
 
 interface ProductCardProps {
-  game: Game;
-  onAddToCart: (game: Game) => void;
-  onViewDetails?: (game: Game) => void;
+  game: Product;
+  onAddToCart: (game: Product) => void;
+  onViewDetails?: (game: Product) => void;
 }
 
 export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardProps) {
