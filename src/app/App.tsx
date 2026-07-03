@@ -20,6 +20,7 @@ import { ClaimsScreen } from "./components/ClaimsScreen";
 import { storeConfig } from "../config/storeConfig";
 import type { Product } from "../types/product";
 import { useCart } from "../core/cart/useCart";
+import { AdminDashboard } from "../modules/admin/AdminDashboard";
 
 
 
@@ -47,6 +48,7 @@ export default function App() {
   | "payment"
   | "completed"
   | "claims"
+  | "admin"
 >("login");
   const [catalogSearch, setCatalogSearch] = useState("");
   useEffect(() => {
@@ -210,6 +212,10 @@ if (screen === "claims") {
       onFinish={() => setScreen("home")}
     />
   );
+}
+
+if (screen === "admin") {
+  return <AdminDashboard />;
 }
 
   return (
