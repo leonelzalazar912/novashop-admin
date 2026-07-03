@@ -3,6 +3,7 @@ import type { CartItem } from "./cartTypes";
 import type { Product } from "../../types/product";
 
 export interface CartContextType {
+  
   cartItems: CartItem[];
 
   setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
@@ -12,6 +13,12 @@ export interface CartContextType {
   removeFromCart: (id: number) => void;
 
   updateQuantity: (id: number, qty: number) => void;
+
+  clearCart: () => void;
+
+  increaseQuantity: (id: number) => void;
+
+  decreaseQuantity: (id: number) => void;
 }
 
 export const CartContext = createContext<CartContextType | null>(null);

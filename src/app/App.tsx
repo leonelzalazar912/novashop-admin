@@ -31,6 +31,9 @@ export default function App() {
   setCartItems,
   addToCart: contextAddToCart,
   removeFromCart,
+  increaseQuantity,
+  decreaseQuantity,
+  clearCart,
 } = useCart();
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [screen, setScreen] = useState<
@@ -164,29 +167,15 @@ if (screen === "checkout") {
       }}
       onContinue={() => setScreen("delivery")}
       onRemoveItem={(id) => {
-        setCartItems(cartItems.filter((item) => item.id !== id));
+        removeFromCart(id);
       }}
       onIncreaseItem={(id) => {
-  setCartItems(
-    cartItems.map((item) =>
-      item.id === id
-        ? { ...item, qty: item.qty + 1 }
-        : item
-    )
-  );
-}}
+        increaseQuantity(id);
+      }}
 
-onDecreaseItem={(id) => {
-  setCartItems(
-    cartItems
-      .map((item) =>
-        item.id === id
-          ? { ...item, qty: item.qty - 1 }
-          : item
-      )
-      .filter((item) => item.qty > 0)
-  );
-}}
+      onDecreaseItem={(id) => {
+        decreaseQuantity(id);
+      }}
     />
   );
 }
@@ -207,7 +196,7 @@ if (screen === "completed") {
   items={cartItems}
   onBackPayment={() => setScreen("payment")}
   onBackHome={() => {
-    setCartItems([]);
+    clearCart();
     setScreen("home");
   }}
 />

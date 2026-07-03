@@ -35,6 +35,28 @@ export function CartProvider({ children }: Props) {
     );
   };
 
+  const clearCart = () => {
+  setCartItems([]);
+};
+
+const increaseQuantity = (id: number) => {
+  setCartItems((prev) =>
+    prev.map((item) =>
+      item.id === id ? { ...item, qty: item.qty + 1 } : item
+    )
+  );
+};
+
+const decreaseQuantity = (id: number) => {
+  setCartItems((prev) =>
+    prev
+      .map((item) =>
+        item.id === id ? { ...item, qty: item.qty - 1 } : item
+      )
+      .filter((item) => item.qty > 0)
+  );
+};
+
   return (
     <CartContext.Provider
       value={{
@@ -43,6 +65,9 @@ export function CartProvider({ children }: Props) {
         addToCart,
         removeFromCart,
         updateQuantity,
+        clearCart,
+        increaseQuantity,
+        decreaseQuantity,
       }}
     >
       {children}
