@@ -26,7 +26,12 @@ import { useCart } from "../core/cart/useCart";
 export default function App() {
   const [initialSelectedGame, setInitialSelectedGame] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const { cartItems, setCartItems } = useCart();
+  const {
+  cartItems,
+  setCartItems,
+  addToCart: contextAddToCart,
+  removeFromCart,
+} = useCart();
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [screen, setScreen] = useState<
   | "login"
@@ -61,19 +66,10 @@ const handleViewDetails = (game: Product) => {
   const addToCart = (game: Product) => {
       if ((game.stock ?? 0) <= 0) return;
 
-    setCartItems((prev) => {
-      const existing = prev.find((i) => i.id === game.id);
-      if (existing) {
-        return prev.map((i) => (i.id === game.id ? { ...i, qty: i.qty + 1 } : i));
-      }
-      return [...prev, { ...game, qty: 1 }];
-    });
+    contextAddToCart(game);
     setCartOpen(true);
   };
 
-  const removeFromCart = (id: number) => {
-    setCartItems((prev) => prev.filter((i) => i.id !== id));
-  };
 
   const cartCount = cartItems.reduce((a, i) => a + i.qty, 0);
 
