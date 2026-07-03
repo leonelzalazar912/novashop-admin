@@ -12,23 +12,22 @@ import { RegisterScreen } from "./components/RegisterScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
 import { products, featuredGames } from "./components/data";
 import { CatalogScreen } from "./components/CatalogScreen";
-import type { Product } from "../types/product";
 import { CheckoutScreen } from "./components/CheckoutScreen";
 import { PaymentScreen } from "./components/PaymentScreen";
 import { CompletedScreen } from "./components/CompletedScreen";
 import { DeliveryScreen } from "./components/DeliveryScreen";
 import { ClaimsScreen } from "./components/ClaimsScreen";
 import { storeConfig } from "../config/storeConfig";
+import type { CartItem } from "../core/cart/cartTypes";
+import type { Product } from "../types/product";
 
-interface CartItem extends Product {
-  qty: number;
-}
+
 
 export default function App() {
   const [initialSelectedGame, setInitialSelectedGame] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [activePlatform, setActivePlatform] = useState("Todos");
+  const [activeCategory, setActiveCategory] = useState("Todos");
   const [screen, setScreen] = useState<
   | "login"
   | "register"
@@ -252,12 +251,12 @@ if (screen === "claims") {
 
        
 
-        <ConsoleCategories onFilter={setActivePlatform} activePlatform={activePlatform} />
+        <ConsoleCategories onFilter={setActiveCategory} activeCategory={activeCategory} />
 
         <ProductGrid
   games={products}
   onAddToCart={addToCart}
-  platform={activePlatform}
+  category={activeCategory}
   onGoCatalog={goToCatalog}
   onViewDetails={handleViewDetails}
 />

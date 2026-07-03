@@ -1,10 +1,7 @@
 import { useState } from "react";
-import type { Product } from "../../types/product";
+import type { CartItem } from "../../core/cart/cartTypes";
 import { theme } from "../../config/theme";
 
-interface CartItem extends Product {
-  qty: number;
-}
 
 interface PaymentScreenProps {
   items: CartItem[];

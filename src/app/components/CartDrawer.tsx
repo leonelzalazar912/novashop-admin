@@ -1,10 +1,7 @@
 import { X, Trash2, ShoppingBag } from "lucide-react";
-import type { Product } from "../../types/product";
 import { theme } from "../../config/theme";
+import type { CartItem } from "../../core/cart/cartTypes";
 
-interface CartItem extends Product {
-  qty: number;
-}
 
 interface CartDrawerProps {
   open: boolean;

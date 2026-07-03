@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { theme } from "../../config/theme";
-import type { Product } from "../../types/product";
-
-interface CartItem extends Product {
-  qty: number;
-}
+import type { CartItem } from "../../core/cart/cartTypes";
 
 
 interface CompletedScreenProps {

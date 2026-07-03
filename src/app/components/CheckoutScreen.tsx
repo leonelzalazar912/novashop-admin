@@ -1,9 +1,6 @@
 import { theme } from "../../config/theme";
-import type { Product } from "../../types/product";
+import type { CartItem } from "../../core/cart/cartTypes";
 
-interface CartItem extends Product {
-  qty: number;
-}
 
 interface CheckoutScreenProps {
   items: CartItem[];  
