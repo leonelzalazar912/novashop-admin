@@ -1,7 +1,8 @@
 import { X, Trash2, ShoppingBag } from "lucide-react";
-import type { Game } from "./ProductCard";
+import type { Product } from "../../types/product";
+import { theme } from "../../config/theme";
 
-interface CartItem extends Game {
+interface CartItem extends Product {
   qty: number;
 }
 
@@ -34,7 +35,7 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
         style={{
           width: "360px",
           maxWidth: "100vw",
-          backgroundColor: "#161720",
+          backgroundColor: theme.colors.surface,
           borderLeft: "1px solid rgba(255,255,255,0.08)",
           transform: open ? "translateX(0)" : "translateX(100%)",
         }}
@@ -51,7 +52,7 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
                 fontFamily: "'Rajdhani', sans-serif",
                 fontWeight: 700,
                 fontSize: "1.1rem",
-                color: "#e8eaf0",
+                color: theme.colors.text,
                 letterSpacing: "0.04em",
               }}
             >
@@ -82,7 +83,7 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
           {items.length === 0 ? (
             <div
               className="flex flex-col items-center justify-center h-full gap-4"
-              style={{ color: "#7a7d99", fontFamily: "'Inter', sans-serif" }}
+              style={{ color: theme.colors.textSoft, fontFamily: "'Inter', sans-serif" }}
             >
               <div
   className="flex items-center justify-center rounded-full"
@@ -100,7 +101,7 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
   Tu carrito está vacío
 </p>
 
-<span style={{ color: "#7a7d99", fontSize: 13, textAlign: "center" }}>
+<span style={{ color: theme.colors.textSoft, fontSize: 13, textAlign: "center" }}>
   Agregá juegos desde la tienda para verlos acá.
 </span>
             </div>
@@ -113,7 +114,7 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
               >
                 <img
                   src={item.image}
-                  alt={item.title}
+                  alt={item.name}
                   className="w-16 h-20 object-cover rounded"
                   style={{ backgroundColor: "#0d0e12" }}
                 />
@@ -135,13 +136,13 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
                     <p
                       className="leading-tight"
                       style={{
-                        color: "#e8eaf0",
+                        color: theme.colors.text,
                         fontFamily: "'Rajdhani', sans-serif",
                         fontWeight: 600,
                         fontSize: "0.88rem",
                       }}
                     >
-                      {item.title}
+                      {item.name}
                     </p>
                   </div>
                   <div className="flex items-center justify-between mt-2">
@@ -190,7 +191,7 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
               </span>
               <span
                 style={{
-                  color: "#e8eaf0",
+                  color: theme.colors.text,
                   fontFamily: "'Barlow Condensed', sans-serif",
                   fontWeight: 700,
                   fontSize: "1.2rem",
@@ -217,7 +218,7 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
               onClick={onClose}
               className="w-full py-2 rounded transition-colors hover:bg-white/5"
               style={{
-                color: "#7a7d99",
+                color: theme.colors.textSoft,
                 fontFamily: "'Inter', sans-serif",
                 fontSize: "0.8rem",
                 border: "1px solid rgba(255,255,255,0.08)",

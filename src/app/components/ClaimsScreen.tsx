@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { theme } from "../../config/theme";
 
 interface ClaimsScreenProps {
   onBack: () => void;
@@ -42,7 +43,7 @@ export function ClaimsScreen({ onBack, onFinish }: ClaimsScreenProps) {
           onClick={onBack}
           style={{
             background: "rgba(24,24,34,0.88)",
-            color: "#E8EAF0",
+            color: theme.colors.text,
             border: "1px solid rgba(128,86,255,0.35)",
             borderRadius: 12,
             padding: "12px 18px",

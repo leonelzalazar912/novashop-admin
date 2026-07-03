@@ -1,3 +1,5 @@
+import { theme } from "../../config/theme";
+
 interface ConsoleCategoryProps {
   onFilter: (platform: string) => void;
   activePlatform: string;
@@ -52,7 +54,7 @@ export function ConsoleCategories({ onFilter, activePlatform }: ConsoleCategoryP
           className="mb-6"
           style={{
             fontFamily: "'Rajdhani', sans-serif",
-            color: "#e8eaf0",
+            color: theme.colors.text,
             fontWeight: 700,
             fontSize: "1.8rem",
             letterSpacing: "0.04em",

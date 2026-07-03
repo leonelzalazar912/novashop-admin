@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { theme } from "../../config/theme";
 
 interface DeliveryScreenProps {
   onBack: () => void;
@@ -33,7 +34,7 @@ const showValidationMessage =
     padding: "14px",
     borderRadius: "10px",
     background: "#0d0e12",
-    color: "#e8eaf0",
+    color: theme.colors.text,
     border: "1px solid rgba(255,255,255,0.12)",
     outline: "none",
   };
@@ -58,7 +59,7 @@ const showValidationMessage =
     alignItems: "center",
     gap: "8px",
     background: "#161720",
-    color: "#E8EAF0",
+    color: theme.colors.text,
     border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: "12px",
     padding: "12px 18px",

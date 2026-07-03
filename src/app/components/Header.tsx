@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, ShoppingCart, ChevronDown, Menu, X, Store } from "lucide-react";import { allGames } from "./data";
-import type { Product } from "./ProductCard";
+import { Search, ShoppingCart, ChevronDown, Menu, X, Store } from "lucide-react";import { products } from "./data";
+import type { Product } from "../../types/product";
 import { storeConfig } from "../../config/storeConfig";
+import { theme } from "../../config/theme";
+import { texts } from "../../config/texts";
 
 
 const navLinks = [
@@ -54,9 +56,9 @@ export function Header({
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const searchResults = query.trim()
-  ? allGames
+  ? products
       .filter((game) =>
-        game.title.toLowerCase().includes(query.toLowerCase())
+        game.name.toLowerCase().includes(query.toLowerCase())
       )
       .slice(0, 6)
   : [];
@@ -85,7 +87,7 @@ useEffect(() => {
       {/* Top bar */}
       <div
         className="w-full px-4 py-3 flex items-center gap-4"
-        style={{ backgroundColor: "#0a0b0e", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ backgroundColor: theme.colors.header, borderBottom: "1px solid rgba(255,255,255,0.07)" }}
       >
         <div className="container mx-auto flex items-center gap-4 max-w-7xl w-full">
           {/* Logo */}
@@ -127,11 +129,11 @@ useEffect(() => {
     onSearchCatalog(query.trim());
   }
 }}
-              placeholder={`Buscar ${storeConfig.productLabel.toLowerCase()}...`}
+              placeholder={texts.app.searchPlaceholder}
               className="w-full px-4 py-2 pr-10 outline-none transition-colors"
               style={{
-                backgroundColor: "#1e1f2e",
-                color: "#e8eaf0",
+                backgroundColor: theme.colors.surfaceLight,
+                color: theme.colors.text,
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "4px",
                 fontSize: "0.875rem",
@@ -156,7 +158,7 @@ onBlur={(e) =>
       top: "46px",
       left: 0,
       right: 0,
-      backgroundColor: "#161720",
+      backgroundColor: theme.colors.surface,
       border: "1px solid rgba(106,60,230,0.45)",
       borderRadius: "10px",
       overflow: "hidden",
@@ -182,13 +184,13 @@ onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          color: "#e8eaf0",
+          color: theme.colors.text,
           textAlign: "left",
         }}
       >
         <img
           src={game.image}
-          alt={game.title}
+          alt={game.name}
           style={{
             width: "42px",
             height: "56px",
@@ -198,7 +200,7 @@ onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         />
 
         <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-          {game.title}
+          {game.name}
         </span>
       </button>
     ))}
@@ -211,7 +213,7 @@ onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       top: "46px",
       left: 0,
       right: 0,
-      backgroundColor: "#161720",
+      backgroundColor: theme.colors.surface,
       border: "1px solid rgba(106,60,230,0.35)",
       borderRadius: "10px",
       padding: "14px",
@@ -221,7 +223,7 @@ onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       boxShadow: "0 18px 40px rgba(0,0,0,0.45)",
     }}
   >
-    No se encontraron productos
+    {texts.app.noResults}
   </div>
 )}
           </div>
@@ -248,8 +250,8 @@ onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
   onClick={onProfileClick}
   className="hidden sm:flex items-center gap-2 px-4 py-2 rounded transition-opacity hover:opacity-90 active:scale-95"
   style={{
-    backgroundColor: "#1e1f2e",
-    color: "#e8eaf0",
+    backgroundColor: theme.colors.surfaceLight,
+    color: theme.colors.text,
     border: "1px solid rgba(255,255,255,0.12)",
     fontSize: "0.85rem",
   }}
@@ -270,7 +272,7 @@ border: "1px solid #6A3CE6",
 }}
             >
               <ShoppingCart size={17} />
-              <span className="hidden sm:inline">CARRITO</span>
+              <span className="hidden sm:inline">{texts.app.cart}</span>
               {cartCount > 0 && (
                 <span
                   className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white"
@@ -330,7 +332,7 @@ border: "1px solid #6A3CE6",
                   <div
                     className="absolute top-full left-0 min-w-[160px] py-1 z-50"
                     style={{
-                      backgroundColor: "#161720",
+                      backgroundColor: theme.colors.surface,
                       border: "1px solid rgba(255,255,255,0.1)",
                       borderRadius: "0 0 6px 6px",
                     }}
@@ -357,7 +359,7 @@ border: "1px solid #6A3CE6",
       {mobileOpen && (
         <div
           className="sm:hidden w-full py-2"
-          style={{ backgroundColor: "#0a0b0e", borderTop: "1px solid rgba(255,255,255,0.07)" }}
+          style={{ backgroundColor: theme.colors.header, borderTop: "1px solid rgba(255,255,255,0.07)" }}
         >
           {navLinks.map((link) => (
             <a
@@ -380,7 +382,7 @@ border: "1px solid #6A3CE6",
   >
     <div
       style={{
-        backgroundColor: "#161720",
+        backgroundColor: theme.colors.surface,
         border: "1px solid rgba(106,60,230,0.35)",
         borderRadius: "16px",
         padding: "24px",

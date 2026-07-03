@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Gamepad2, Mail, Phone, MapPin, Instagram, Twitter, Facebook, Youtube } from "lucide-react";
+import { theme } from "../../config/theme";
 
 
 export function Footer() {
@@ -9,7 +10,7 @@ export function Footer() {
     <footer
       className="w-full mt-12"
       style={{
-        backgroundColor: "#0a0b0e",
+        backgroundColor: theme.colors.header,
         borderTop: "1px solid rgba(255,255,255,0.06)",
         fontFamily: "'Inter', sans-serif",
       }}
@@ -39,7 +40,7 @@ export function Footer() {
               </span>
             </div>
             <p
-              style={{ color: "#7a7d99", fontSize: "0.82rem", lineHeight: 1.7, maxWidth: "240px" }}
+              style={{ color: theme.colors.textSoft, fontSize: "0.82rem", lineHeight: 1.7, maxWidth: "240px" }}
             >
               La tienda gamer de confianza. Juegos físicos para PlayStation, Xbox, Nintendo y Sega al mejor precio.
             </p>
@@ -56,8 +57,8 @@ export function Footer() {
                   href="#"
                   className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-cyan-500/20"
                   style={{
-                    backgroundColor: "#161720",
-                    color: "#7a7d99",
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.textSoft,
                     border: "1px solid rgba(255,255,255,0.08)",
                   }}
                   aria-label={s.label}
@@ -75,7 +76,7 @@ export function Footer() {
             <h4
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "#e8eaf0",
+                color: theme.colors.text,
                 fontWeight: 700,
                 fontSize: "0.95rem",
                 letterSpacing: "0.08em",
@@ -90,7 +91,7 @@ export function Footer() {
                   <li key={link}>
                     <a
                       href="#"
-                      style={{ color: "#7a7d99", fontSize: "0.82rem" }}
+                      style={{ color: theme.colors.textSoft, fontSize: "0.82rem" }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#6A3CE6")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "#7a7d99")}
                     >
@@ -107,7 +108,7 @@ export function Footer() {
             <h4
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "#e8eaf0",
+                color: theme.colors.text,
                 fontWeight: 700,
                 fontSize: "0.95rem",
                 letterSpacing: "0.08em",
@@ -128,7 +129,7 @@ export function Footer() {
                   <a
                     href="#"
                     className="flex items-center gap-2"
-                    style={{ color: "#7a7d99", fontSize: "0.82rem" }}
+                    style={{ color: theme.colors.textSoft, fontSize: "0.82rem" }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = p.color)}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#7a7d99")}
                   >
@@ -148,7 +149,7 @@ export function Footer() {
             <h4
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "#e8eaf0",
+                color: theme.colors.text,
                 fontWeight: 700,
                 fontSize: "0.95rem",
                 letterSpacing: "0.08em",
@@ -165,7 +166,7 @@ export function Footer() {
               ].map((c) => (
                 <li key={c.text} className="flex items-center gap-2">
                   <span style={{ color: "#6A3CE6" }}>{c.icon}</span>
-                  <span style={{ color: "#7a7d99", fontSize: "0.82rem" }}>{c.text}</span>
+                  <span style={{ color: theme.colors.textSoft, fontSize: "0.82rem" }}>{c.text}</span>
                 </li>
               ))}
             </ul>
@@ -183,8 +184,8 @@ export function Footer() {
                   placeholder="tu@email.com"
                   className="flex-1 px-3 py-2 text-sm outline-none"
                   style={{
-                    backgroundColor: "#1e1f2e",
-                    color: "#e8eaf0",
+                    backgroundColor: theme.colors.surfaceLight,
+                    color: theme.colors.text,
                     border: "1px solid rgba(255,255,255,0.1)",
                     borderRight: "none",
                     borderRadius: "4px 0 0 4px",
@@ -227,7 +228,7 @@ export function Footer() {
       borderRadius: "10px",
       background: "linear-gradient(135deg, rgba(106,60,230,0.18), rgba(0,229,212,0.12))",
       border: "1px solid rgba(106,60,230,0.35)",
-      color: "#E8EAF0",
+      color: theme.colors.text,
       fontSize: "0.82rem",
       lineHeight: 1.6,
       animation: "fadeIn 0.3s ease",
@@ -270,7 +271,7 @@ export function Footer() {
                 key={m}
                 className="px-2 py-1 rounded text-xs"
                 style={{
-                  backgroundColor: "#1e1f2e",
+                  backgroundColor: theme.colors.surfaceLight,
                   color: "#4a4d60",
                   fontFamily: "'Barlow Condensed', sans-serif",
                   fontWeight: 700,

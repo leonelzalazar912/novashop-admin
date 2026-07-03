@@ -1,6 +1,7 @@
-import type { Game } from "./ProductCard";
+import { theme } from "../../config/theme";
+import type { Product } from "../../types/product";
 
-interface CartItem extends Game {
+interface CartItem extends Product {
   qty: number;
 }
 
@@ -48,7 +49,7 @@ export function CheckoutScreen({
     gap: "8px",
     background: "rgba(24,24,34,0.88)",
     backdropFilter: "blur(12px)",
-    color: "#E8EAF0",
+    color: theme.colors.text,
     border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: "12px",
     padding: "12px 18px",
@@ -121,7 +122,7 @@ export function CheckoutScreen({
 >
     <img
   src={item.image}
-  alt={item.title}
+  alt={item.name}
   style={{
     width: 90,
     height: 120,
@@ -149,7 +150,7 @@ export function CheckoutScreen({
         marginBottom: 8,
       }}
     >
-      {item.title}
+      {item.name}
     </h3>
 
     <p
@@ -280,7 +281,7 @@ export function CheckoutScreen({
       }}
     >
       <span>
-        {item.title} x{item.qty}
+        {item.name} x{item.qty}
       </span>
 
       <strong style={{ color: "#E8EAF0" }}>

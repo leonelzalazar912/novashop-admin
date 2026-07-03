@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { ProductCard } from "./ProductCard";
-import type { Game } from "./ProductCard";
+import type { Product } from "../../types/product";
+import { theme } from "../../config/theme";
 
 interface CatalogScreenProps {
-  games: Game[];
+  games: Product[];
   initialSearch: string;
-  onAddToCart: (game: Game) => void;
+  onAddToCart: (game: Product) => void;
   onBack: () => void;
-  initialSelectedGame?: Game | null;
+  initialSelectedGame?: Product | null;
 }
 
 export function CatalogScreen({
@@ -27,7 +28,7 @@ export function CatalogScreen({
   setSearch(initialSearch);
 }, [initialSearch]);
 
-  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [selectedGame, setSelectedGame] = useState<Product | null>(null);
   useEffect(() => {
   if (initialSelectedGame) {
     setSelectedGame(initialSelectedGame);
@@ -55,7 +56,7 @@ export function CatalogScreen({
       border: "none",
       cursor: "pointer",
       background: "#161720",
-      color: "#e8eaf0",
+      color: theme.colors.text,
     }}
   >
     ← Volver al catálogo
@@ -72,12 +73,12 @@ export function CatalogScreen({
     <div style={{ position: "relative" }}>
     <img
       src={selectedGame.image}
-      alt={selectedGame.title}
+      alt={selectedGame.name}
       style={{
         width: "100%",
         height: "520px",
         objectFit: "contain",
-        backgroundColor: "#161720",
+        backgroundColor: theme.colors.surface,
         borderRadius: "16px",
         border: "1px solid rgba(255,255,255,0.08)",
       }}
@@ -107,11 +108,11 @@ export function CatalogScreen({
     fontWeight: 700,
   }}
 >
-  {selectedGame.title}
+  {selectedGame.name}
 </h1>
 
 
-      <p style={{ color: "#7a7d99", marginBottom: "20px" }}>
+      <p style={{ color: theme.colors.textSoft, marginBottom: "20px" }}>
         {selectedGame.genre} · {selectedGame.platform} · {selectedGame.releaseYear}
       </p>
 
@@ -127,7 +128,7 @@ export function CatalogScreen({
   {selectedGame.originalPrice && (
     <p
       style={{
-        color: "#7a7d99",
+        color: theme.colors.textSoft,
         textDecoration: "line-through",
         marginBottom: "6px",
       }}
@@ -339,7 +340,7 @@ const eras = ["Retro", "Actuales"];
 
 const filteredGames = games
   .filter((game) => {
-    if (search && !game.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !game.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (selectedPlatform !== "Todos" && game.platform !== selectedPlatform) return false;
     if (selectedGenre !== "Todos" && (game.genre ?? "Acción") !== selectedGenre) return false;
     if (selectedEra === "Retro" && (game.releaseYear ?? 9999) > 2013) return false;
@@ -360,7 +361,7 @@ const filteredGames = games
   className="flex items-center gap-2 px-5 py-3 rounded-lg transition-all duration-200 hover:scale-105"
   style={{
     background: "#161720",
-    color: "#E8EAF0",
+    color: theme.colors.text,
     border: "1px solid rgba(106,60,230,0.35)",
     cursor: "pointer",
     fontSize: "15px",
@@ -439,7 +440,7 @@ const filteredGames = games
       padding: "12px",
       borderRadius: "10px",
       background: "#161720",
-      color: "#e8eaf0",
+      color: theme.colors.text,
       border: "1px solid rgba(255,255,255,0.08)",
       marginBottom: "20px",
       width: "100%",
@@ -447,7 +448,7 @@ const filteredGames = games
   />
   </div>
 
-  <p style={{ color: "#7a7d99", fontSize: "0.75rem", fontWeight: 700 }}>PLATAFORMA</p>
+  <p style={{ color: theme.colors.textSoft, fontSize: "0.75rem", fontWeight: 700 }}>PLATAFORMA</p>
   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
     {platforms.map((platform) => (
       <button
@@ -470,7 +471,7 @@ fontWeight: 700,
     ))}
   </div>
 
-  <p style={{ color: "#7a7d99", fontSize: "0.75rem", fontWeight: 700 }}>GÉNERO</p>
+  <p style={{ color: theme.colors.textSoft, fontSize: "0.75rem", fontWeight: 700 }}>GÉNERO</p>
   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
     {genres.map((genre) => (
       <button
@@ -493,7 +494,7 @@ fontWeight: 700,
     ))}
   </div>
 
-  <p style={{ color: "#7a7d99", fontSize: "0.75rem", fontWeight: 700 }}>ÉPOCA</p>
+  <p style={{ color: theme.colors.textSoft, fontSize: "0.75rem", fontWeight: 700 }}>ÉPOCA</p>
   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
     {eras.map((era) => (
       <button
@@ -542,7 +543,7 @@ fontWeight: 700,
       padding: "11px 12px",
       borderRadius: "10px",
       background: "#161720",
-      color: "#e8eaf0",
+      color: theme.colors.text,
       border: "1px solid rgba(255,255,255,0.08)",
       marginBottom: "14px",
     }}

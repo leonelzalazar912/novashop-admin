@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { theme } from "../../config/theme";
 
 const slides = [
   {
@@ -187,7 +188,7 @@ export function HeroBanner({ onGoCatalog }: HeroBannerProps) {
                 key={p.label}
                 className="flex items-center gap-3 px-4 py-2.5 rounded cursor-pointer transition-colors hover:brightness-110"
                 style={{
-                  backgroundColor: "#161720",
+                  backgroundColor: theme.colors.surface,
                   border: "1px solid rgba(255,255,255,0.07)",
                   width: "200px",
                 }}

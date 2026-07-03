@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Gamepad2, UserPlus, Check } from "lucide-react";
+import { theme } from "../../config/theme";
 
 interface Props {
   onGoLogin: () => void;
@@ -303,7 +304,7 @@ if (passwordStrength < 2) {
               <div>
   <div
     style={{
-      color: "#E8EAF0",
+      color: theme.colors.text,
       fontSize: 15,
       fontWeight: 600,
       marginBottom: 4,

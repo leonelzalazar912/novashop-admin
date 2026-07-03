@@ -1,8 +1,8 @@
 import { useState } from "react";
+import type { Product } from "../../types/product";
+import { theme } from "../../config/theme";
 
-import type { Game } from "./ProductCard";
-
-interface CartItem extends Game {
+interface CartItem extends Product {
   qty: number;
 }
 
@@ -58,7 +58,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     alignItems: "center",
     gap: "8px",
     background: "#161720",
-    color: "#E8EAF0",
+    color: theme.colors.text,
     border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: "12px",
     padding: "12px 18px",
@@ -398,7 +398,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
       >
         <div>
           <strong style={{ color: "#E8E9F0", fontSize: 14 }}>
-            {item.title}
+            {item.name}
           </strong>
           <p style={{ color: "#8F92A8", fontSize: 13, margin: "4px 0 0" }}>
             Cantidad: {item.qty}

@@ -1,24 +1,7 @@
 import { ShoppingCart, Heart } from "lucide-react";
+import { theme } from "../../config/theme";
+import type { Product } from "../../types/product";
 
-export interface Product {
-  id: number;
-  title: string;
-  platform: string;
-  platformColor: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  image: string;
-  badge?: string;
-
-  genre?: string;
-  stock?: number;
-  rating?: number;
-  reviews?: number;
-  description?: string;
-  developer?: string;
-  releaseYear?: number;
-}
 
 const platformLogos: Record<string, string> = {
   PS5: "PS5",
@@ -40,7 +23,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
   onClick={() => onViewDetails?.(game)}
   className="group relative flex flex-col rounded overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
       style={{
-        backgroundColor: "#161720",
+        backgroundColor: theme.colors.surface,
         border: "1px solid rgba(255,255,255,0.07)",
       }}
     >
@@ -101,7 +84,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
 >
   <img
     src={game.image}
-    alt={game.title}
+    alt={game.name}
     style={{
       width: "100%",
       height: "100%",
@@ -119,7 +102,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
         <span
           className="text-xs uppercase"
           style={{
-            color: "#7a7d99",
+            color: theme.colors.textSoft,
             fontFamily: "'Inter', sans-serif",
             letterSpacing: "0.05em",
             fontSize: "0.65rem",
@@ -150,20 +133,20 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
         <h3
           className="leading-tight"
           style={{
-            color: "#e8eaf0",
+            color: theme.colors.text,
             fontFamily: "'Rajdhani', sans-serif",
             fontWeight: 600,
             fontSize: "0.92rem",
           }}
         >
-          {game.title}
+          {game.name}
         </h3>
 
         <div className="flex items-center gap-2 mt-auto pt-2">
           {game.originalPrice && (
             <span
               style={{
-                color: "#7a7d99",
+                color: theme.colors.textSoft,
                 textDecoration: "line-through",
                 fontSize: "0.72rem",
                 fontFamily: "'Inter', sans-serif",
@@ -177,7 +160,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
         <div className="flex items-center justify-between mt-1">
           <span
             style={{
-              color: "#e8eaf0",
+              color: theme.colors.text,
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700,
               fontSize: "1rem",

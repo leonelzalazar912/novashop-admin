@@ -1,4 +1,5 @@
 import { Truck, Shield, RefreshCw, Headphones } from "lucide-react";
+import { theme } from "../../config/theme";
 
 interface OffersStripProps {
   onClaimsClick: () => void;
@@ -13,7 +14,7 @@ export function OffersStrip({ onClaimsClick }: OffersStripProps) {
   ];
 
   return (
-    <div className="w-full py-4" style={{ backgroundColor: "#161720", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="w-full py-4" style={{ backgroundColor: theme.colors.surface, borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div className="container mx-auto max-w-7xl px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {perks.map((p) => (
@@ -45,10 +46,10 @@ export function OffersStrip({ onClaimsClick }: OffersStripProps) {
             >
               <div style={{ color: "#8F6BFF" }}>{p.icon}</div>
               <div>
-                <div style={{ color: "#e8eaf0", fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: "0.85rem" }}>
+                <div style={{ color: theme.colors.text, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: "0.85rem" }}>
                   {p.title}
                 </div>
-                <div style={{ color: "#7a7d99", fontFamily: "'Inter', sans-serif", fontSize: "0.7rem" }}>
+                <div style={{ color: theme.colors.textSoft, fontFamily: "'Inter', sans-serif", fontSize: "0.7rem" }}>
                   {p.sub}
                 </div>
               </div>

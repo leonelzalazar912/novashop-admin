@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { theme } from "../../config/theme";
 
 
 interface CartItem {
@@ -278,7 +279,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     justifyContent: "center",
     alignItems: "center",
     gap: "8px",
-    color: "#7A7D99",
+    color: theme.colors.textSoft,
     fontSize: "0.82rem",
     letterSpacing: "0.5px",
   }}

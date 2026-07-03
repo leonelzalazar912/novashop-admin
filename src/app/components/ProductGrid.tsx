@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { ProductCard } from "./ProductCard";
-import type { Game } from "./ProductCard";
+import type { Product } from "../../types/product";
+import { theme } from "../../config/theme";
 
 interface ProductGridProps {
-  games: Game[];
-  onAddToCart: (game: Game) => void;
+  games: Product[];
+  onAddToCart: (game: Product) => void;
   platform: string;
   onGoCatalog?: () => void;
-  onViewDetails?: (game: Game) => void;
+  onViewDetails?: (game: Product) => void;
 }
 
 export function ProductGrid({ games, onAddToCart, platform, onGoCatalog, onViewDetails }: ProductGridProps) {
@@ -28,7 +29,7 @@ export function ProductGrid({ games, onAddToCart, platform, onGoCatalog, onViewD
             <h2
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "#e8eaf0",
+                color: theme.colors.text,
                 fontWeight: 700,
                 fontSize: "1.4rem",
                 letterSpacing: "0.04em",
@@ -36,7 +37,7 @@ export function ProductGrid({ games, onAddToCart, platform, onGoCatalog, onViewD
             >
               {platform === "Todos" ? "TODOS LOS JUEGOS" : `JUEGOS ${platform.toUpperCase()}`}
             </h2>
-            <p style={{ color: "#7a7d99", fontSize: "0.8rem", fontFamily: "'Inter', sans-serif" }}>
+            <p style={{ color: theme.colors.textSoft, fontSize: "0.8rem", fontFamily: "'Inter', sans-serif" }}>
               Mostrando {sorted.length} resultados
             </p>
           </div>
@@ -77,7 +78,7 @@ export function ProductGrid({ games, onAddToCart, platform, onGoCatalog, onViewD
         {sorted.length === 0 && (
           <div
             className="text-center py-16"
-            style={{ color: "#7a7d99", fontFamily: "'Inter', sans-serif" }}
+            style={{ color: theme.colors.textSoft, fontFamily: "'Inter', sans-serif" }}
           >
             No se encontraron juegos para esta categoría.
           </div>

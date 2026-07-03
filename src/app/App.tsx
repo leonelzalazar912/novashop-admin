@@ -10,7 +10,7 @@ import { ProductCard } from "./components/ProductCard";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
-import { allGames, featuredGames } from "./components/data";
+import { products, featuredGames } from "./components/data";
 import { CatalogScreen } from "./components/CatalogScreen";
 import type { Product } from "./components/ProductCard";
 import { CheckoutScreen } from "./components/CheckoutScreen";
@@ -78,8 +78,8 @@ const handleViewDetails = (game: Product) => {
 
   const cartCount = cartItems.reduce((a, i) => a + i.qty, 0);
 
-  const ps5Games = allGames.filter((g) => g.platform === "PS5").slice(0, 5);
-  const xboxGames = allGames.filter((g) => g.platform === "Xbox").slice(0, 5);
+  const ps5Games = products.filter((g) => g.platform === "PS5").slice(0, 5);
+  const xboxGames = products.filter((g) => g.platform === "Xbox").slice(0, 5);
 
   if (screen === "login") {
   return (
@@ -128,7 +128,7 @@ if (screen === "catalog") {
 />
 
       <CatalogScreen
-  games={allGames}
+  games={products}
   initialSearch={catalogSearch}
   onAddToCart={addToCart}
   onBack={() => setScreen("home")}
@@ -255,7 +255,7 @@ if (screen === "claims") {
         <ConsoleCategories onFilter={setActivePlatform} activePlatform={activePlatform} />
 
         <ProductGrid
-  games={allGames}
+  games={products}
   onAddToCart={addToCart}
   platform={activePlatform}
   onGoCatalog={goToCatalog}

@@ -1,9 +1,10 @@
 import { Star, ShoppingCart } from "lucide-react";
-import type { Game } from "./ProductCard";
+import type { Product } from "../../types/product";
+import { theme } from "../../config/theme";
 
 interface FeaturedGamesProps {
-  games: Game[];
-  onAddToCart: (game: Game) => void;
+  games: Product[];
+  onAddToCart: (game: Product) => void;
 }
 
 export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
@@ -17,7 +18,7 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
             <h2
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "#e8eaf0",
+                color: theme.colors.text,
                 fontWeight: 700,
                 fontSize: "1.4rem",
                 letterSpacing: "0.04em",
@@ -48,7 +49,7 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
               key={game.id}
               className="flex gap-3 rounded overflow-hidden transition-colors hover:brightness-110 cursor-pointer"
               style={{
-                backgroundColor: "#161720",
+                backgroundColor: theme.colors.surface,
                 border: "1px solid rgba(255,255,255,0.07)",
                 padding: "12px",
               }}
@@ -60,7 +61,7 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
               >
                 <img
                   src={game.image}
-                  alt={game.title}
+                  alt={game.name}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -85,13 +86,13 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
                   <h3
                     className="leading-tight truncate"
                     style={{
-                      color: "#e8eaf0",
+                      color: theme.colors.text,
                       fontFamily: "'Rajdhani', sans-serif",
                       fontWeight: 600,
                       fontSize: "0.9rem",
                     }}
                   >
-                    {game.title}
+                    {game.name}
                   </h3>
 
                   {/* Stars */}
@@ -99,7 +100,7 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
                     {[1, 2, 3, 4, 5].map((s) => (
                       <span key={s} style={{ color: "#fbbf24", fontSize: "0.65rem" }}>★</span>
                     ))}
-                    <span style={{ color: "#7a7d99", fontSize: "0.62rem", fontFamily: "'Inter', sans-serif" }}>
+                    <span style={{ color: theme.colors.textSoft, fontSize: "0.62rem", fontFamily: "'Inter', sans-serif" }}>
                       (4.8)
                     </span>
                   </div>
@@ -110,7 +111,7 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
                     {game.originalPrice && (
                       <div
                         style={{
-                          color: "#7a7d99",
+                          color: theme.colors.textSoft,
                           textDecoration: "line-through",
                           fontSize: "0.65rem",
                           fontFamily: "'Inter', sans-serif",
@@ -121,7 +122,7 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
                     )}
                     <div
                       style={{
-                        color: "#e8eaf0",
+                        color: theme.colors.text,
                         fontFamily: "'Barlow Condensed', sans-serif",
                         fontWeight: 700,
                         fontSize: "0.95rem",
