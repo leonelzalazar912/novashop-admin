@@ -18,15 +18,15 @@ import { CompletedScreen } from "./components/CompletedScreen";
 import { DeliveryScreen } from "./components/DeliveryScreen";
 import { ClaimsScreen } from "./components/ClaimsScreen";
 import { storeConfig } from "../config/storeConfig";
-import type { CartItem } from "../core/cart/cartTypes";
 import type { Product } from "../types/product";
+import { useCart } from "../core/cart/useCart";
 
 
 
 export default function App() {
   const [initialSelectedGame, setInitialSelectedGame] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { cartItems, setCartItems } = useCart();
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [screen, setScreen] = useState<
   | "login"
