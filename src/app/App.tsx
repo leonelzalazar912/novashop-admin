@@ -49,7 +49,7 @@ export default function App() {
   | "completed"
   | "claims"
   | "admin"
->("login");
+>("admin");
   const [catalogSearch, setCatalogSearch] = useState("");
   useEffect(() => {
   window.scrollTo({

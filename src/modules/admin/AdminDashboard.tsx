@@ -1,8 +1,15 @@
+import { AdminSidebar } from "./components/AdminSidebar";
+import "./styles/admin.css";
+
 export function AdminDashboard() {
   return (
-    <section>
-      <h1>Panel de Administración</h1>
-      <p>Bienvenida a NovaShop Admin.</p>
-    </section>
-  );
+  <div className="admin-layout">
+    <AdminSidebar />
+
+    <main className="admin-content">
+      <h1>Dashboard</h1>
+      <p>Bienvenida al panel de administración de NovaShop.</p>
+    </main>
+  </div>
+);
 }
