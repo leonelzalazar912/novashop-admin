@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { theme } from "../../config/theme";
+import type { Product } from "../../types/product";
 
-
-interface CartItem {
-  id: number;
-  title: string;
-  platform: string;
-  price: number;
+interface CartItem extends Product {
   qty: number;
-  image: string;
 }
+
 
 interface CompletedScreenProps {
   items: CartItem[];
@@ -117,14 +113,14 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
         <div key={item.id} style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 16 }}>
           <img
             src={item.image}
-            alt={item.title}
+            alt={item.name}
             style={{ width: 58, height: 76, objectFit: "cover", borderRadius: 10 }}
           />
 
           <div style={{ flex: 1 }}>
-            <strong>{item.title}</strong>
+            <strong>{item.name}</strong>
             <p style={{ color: "#A0A3B8", margin: "4px 0" }}>
-              {item.platform} · Cantidad: {item.qty}
+              {item.category} · Cantidad: {item.qty}
             </p>
           </div>
 

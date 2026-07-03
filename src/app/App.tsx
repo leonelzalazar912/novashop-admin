@@ -12,7 +12,7 @@ import { RegisterScreen } from "./components/RegisterScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
 import { products, featuredGames } from "./components/data";
 import { CatalogScreen } from "./components/CatalogScreen";
-import type { Product } from "./components/ProductCard";
+import type { Product } from "../types/product";
 import { CheckoutScreen } from "./components/CheckoutScreen";
 import { PaymentScreen } from "./components/PaymentScreen";
 import { CompletedScreen } from "./components/CompletedScreen";
@@ -78,8 +78,8 @@ const handleViewDetails = (game: Product) => {
 
   const cartCount = cartItems.reduce((a, i) => a + i.qty, 0);
 
-  const ps5Games = products.filter((g) => g.platform === "PS5").slice(0, 5);
-  const xboxGames = products.filter((g) => g.platform === "Xbox").slice(0, 5);
+  const ps5Games = products.filter((g) => g.category === "PS5").slice(0, 5);
+  const xboxGames = products.filter((g) => g.category === "Xbox").slice(0, 5);
 
   if (screen === "login") {
   return (

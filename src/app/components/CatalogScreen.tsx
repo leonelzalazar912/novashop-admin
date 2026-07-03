@@ -96,7 +96,7 @@ export function CatalogScreen({
         fontWeight: 600,
   }}
 >
-  {selectedGame.platform}
+  {selectedGame.category}
 </span>
 </div>
 
@@ -113,7 +113,7 @@ export function CatalogScreen({
 
 
       <p style={{ color: theme.colors.textSoft, marginBottom: "20px" }}>
-        {selectedGame.genre} · {selectedGame.platform} · {selectedGame.releaseYear}
+        {selectedGame.genre} · {selectedGame.category} · {selectedGame.releaseYear}
       </p>
 
       <div
@@ -231,7 +231,7 @@ export function CatalogScreen({
   >
     {[
       ["Desarrollador", selectedGame.developer],
-      ["Plataforma", selectedGame.platform],
+      ["Plataforma", selectedGame.category],
       ["Género", selectedGame.genre],
       ["Año", selectedGame.releaseYear],
     ].map(([label, value]) => (
@@ -334,14 +334,14 @@ export function CatalogScreen({
   );
 }
 
-const platforms = ["Todos", ...Array.from(new Set(games.map((game) => game.platform)))];
+const platforms = ["Todos", ...Array.from(new Set(games.map((game) => game.category)))];
 const genres = ["Todos", ...Array.from(new Set(games.map((game) => game.genre ?? "Acción")))];
 const eras = ["Retro", "Actuales"];
 
 const filteredGames = games
   .filter((game) => {
     if (search && !game.name.toLowerCase().includes(search.toLowerCase())) return false;
-    if (selectedPlatform !== "Todos" && game.platform !== selectedPlatform) return false;
+    if (selectedPlatform !== "Todos" && game.category !== selectedPlatform) return false;
     if (selectedGenre !== "Todos" && (game.genre ?? "Acción") !== selectedGenre) return false;
     if (selectedEra === "Retro" && (game.releaseYear ?? 9999) > 2013) return false;
     if (selectedEra === "Actuales" && (game.releaseYear ?? 0) <= 2013) return false;

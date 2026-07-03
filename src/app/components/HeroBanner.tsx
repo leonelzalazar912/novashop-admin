@@ -12,8 +12,8 @@ const slides = [
   discount: "",
   bg: "https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?w=1400&h=480&fit=crop&auto=format",
   accent: "#0070D1",
-  platform: "PlayStation",
-  platformColor: "#003791",
+  category: "PlayStation",
+  categoryColor: "#003791",
 },
   {
   id: 2,
@@ -24,8 +24,8 @@ const slides = [
   discount: "",
   bg: "https://images.unsplash.com/photo-1626218174358-7769486c4b79?w=1400&h=480&fit=crop&auto=format",
   accent: "#107c10",
-  platform: "Xbox",
-  platformColor: "#107c10",
+  category: "Xbox",
+  categoryColor: "#107c10",
 },
  {
   id: 3,
@@ -36,8 +36,8 @@ const slides = [
   discount: "",
   bg: "https://images.unsplash.com/photo-1614179924047-e1ab49a0a0cf?w=1400&h=480&fit=crop&auto=format",
   accent: "#e4000f",
-  platform: "Nintendo",
-  platformColor: "#e4000f",
+  category: "Nintendo",
+  categoryColor: "#e4000f",
 },
 ];
 
@@ -86,9 +86,9 @@ export function HeroBanner({ onGoCatalog }: HeroBannerProps) {
             <span
               className="inline-block px-3 py-1 rounded text-xs mb-3"
               style={{
-                backgroundColor: slide.platformColor + "22",
-                color: slide.platformColor === "#003791" ? "#4a9eff" : slide.platformColor,
-                border: `1px solid ${slide.platformColor}44`,
+                backgroundColor: slide.categoryColor + "22",
+                color: slide.categoryColor === "#003791" ? "#4a9eff" : slide.categoryColor,
+                border: `1px solid ${slide.categoryColor}44`,
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 600,
                 letterSpacing: "0.1em",

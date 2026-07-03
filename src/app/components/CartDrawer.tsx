@@ -123,15 +123,15 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
                     <span
                       className="inline-block px-1.5 py-0.5 rounded text-xs mb-1"
                       style={{
-                        backgroundColor: item.platformColor + "22",
-                        color: item.platformColor === "#003791" ? "#4a9eff" : item.platformColor,
+                        backgroundColor: item.categoryColor + "22",
+                        color: item.categoryColor === "#003791" ? "#4a9eff" : item.categoryColor,
                         fontFamily: "'Barlow Condensed', sans-serif",
                         fontWeight: 700,
                         fontSize: "0.6rem",
                         letterSpacing: "0.05em",
                       }}
                     >
-                      {item.platform}
+                      {item.category}
                     </span>
                     <p
                       className="leading-tight"

@@ -159,7 +159,7 @@ export function CheckoutScreen({
         fontSize: 14,
       }}
     >
-      {item.platform}
+      {item.category}
     </p>
   </div>
 

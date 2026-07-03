@@ -3,12 +3,12 @@ import { theme } from "../../config/theme";
 import type { Product } from "../../types/product";
 
 
-const platformLogos: Record<string, string> = {
-  PS5: "PS5",
-  PS4: "PS4",
-  Xbox: "XBOX",
-  Nintendo: "NSW",
-  Sega: "SEGA",
+const categoryLabels: Record<string, string> = {
+  electronics: "Electrónica",
+  clothing: "Ropa",
+  beauty: "Perfumería",
+  toys: "Juguetes",
+  gaming: "Gaming",
 };
 
 interface ProductCardProps {
@@ -60,7 +60,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
         <span
           className="px-2 py-0.5 rounded"
           style={{
-            backgroundColor: game.platformColor,
+            backgroundColor: game.categoryColor,
             color: "#fff",
             fontSize: "0.62rem",
             fontFamily: "'Barlow Condensed', sans-serif",
@@ -69,7 +69,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
             marginLeft: game.discount ? "60px" : "0",
           }}
         >
-          {platformLogos[game.platform] ?? game.platform}
+          {categoryLabels[game.category] ?? game.category}
         </span>
       </div>
 

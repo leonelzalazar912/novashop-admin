@@ -1,8 +1,8 @@
 import { theme } from "../../config/theme";
 
 interface ConsoleCategoryProps {
-  onFilter: (platform: string) => void;
-  activePlatform: string;
+  onFilter: (category: string) => void;
+  activeCategory: string;
 }
 
 const consoles = [
@@ -46,7 +46,7 @@ const consoles = [
   },
 ];
 
-export function ConsoleCategories({ onFilter, activePlatform }: ConsoleCategoryProps) {
+export function ConsoleCategories({ onFilter, activeCategory }: ConsoleCategoryProps) {
   return (
     <section className="w-full py-12" style={{ backgroundColor: "#0d0e12" }}>
       <div className="container mx-auto max-w-7xl px-4">
@@ -65,7 +65,7 @@ export function ConsoleCategories({ onFilter, activePlatform }: ConsoleCategoryP
 
         <div className="flex flex-wrap gap-3">
           {consoles.map((c) => {
-            const isActive = activePlatform === c.name;
+            const isActive = activeCategory === c.name;
 
             return (
               <button

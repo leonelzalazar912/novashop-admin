@@ -1,8 +1,8 @@
 export interface Product {
   id: number;
   name: string;
-  platform: string;
-  platformColor: string;
+  category: string;
+  categoryColor: string;
   price: number;
   originalPrice?: number;
   discount?: number;

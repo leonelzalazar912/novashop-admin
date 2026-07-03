@@ -6,17 +6,17 @@ import { theme } from "../../config/theme";
 interface ProductGridProps {
   games: Product[];
   onAddToCart: (game: Product) => void;
-  platform: string;
+  category: string;
   onGoCatalog?: () => void;
   onViewDetails?: (game: Product) => void;
 }
 
-export function ProductGrid({ games, onAddToCart, platform, onGoCatalog, onViewDetails }: ProductGridProps) {
+export function ProductGrid({ games, onAddToCart, category, onGoCatalog, onViewDetails }: ProductGridProps) {
 
   const filtered =
-  platform === "Todos"
+  category === "Todos"
     ? games
-    : games.filter((g) => g.platform === platform);
+    : games.filter((g) => g.category === category);
 
   const sorted = [...filtered].sort((a, b) => a.id - b.id);
 
@@ -35,7 +35,7 @@ export function ProductGrid({ games, onAddToCart, platform, onGoCatalog, onViewD
                 letterSpacing: "0.04em",
               }}
             >
-              {platform === "Todos" ? "TODOS LOS JUEGOS" : `JUEGOS ${platform.toUpperCase()}`}
+              {category === "Todos" ? "TODOS LOS JUEGOS" : `JUEGOS ${category.toUpperCase()}`}
             </h2>
             <p style={{ color: theme.colors.textSoft, fontSize: "0.8rem", fontFamily: "'Inter', sans-serif" }}>
               Mostrando {sorted.length} resultados

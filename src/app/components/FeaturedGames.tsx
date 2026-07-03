@@ -73,15 +73,15 @@ export function FeaturedGames({ games, onAddToCart }: FeaturedGamesProps) {
                   <span
                     className="inline-block px-2 py-0.5 rounded text-xs mb-1"
                     style={{
-                      backgroundColor: game.platformColor + "22",
-                      color: game.platformColor === "#003791" ? "#4a9eff" : game.platformColor,
+                      backgroundColor: game.categoryColor + "22",
+                      color: game.categoryColor === "#003791" ? "#4a9eff" : game.categoryColor,
                       fontFamily: "'Barlow Condensed', sans-serif",
                       fontWeight: 700,
                       fontSize: "0.65rem",
                       letterSpacing: "0.05em",
                     }}
                   >
-                    {game.platform.toUpperCase()}
+                    {game.category.toUpperCase()}
                   </span>
                   <h3
                     className="leading-tight truncate"
