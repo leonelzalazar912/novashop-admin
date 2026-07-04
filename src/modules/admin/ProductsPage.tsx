@@ -1,11 +1,15 @@
 import { ProductForm } from "./components/ProductForm";
 import { ProductsTable } from "./components/ProductsTable";
 import { ProductsToolbar } from "./components/ProductsToolbar";
-import { useProducts } from "./hooks/useProducts";
 import { Toast } from "./components/Toast";
 import { Pagination } from "./components/Pagination";
+import type { useProducts } from "./hooks/useProducts";
 
-export function ProductsPage() {
+interface ProductsPageProps {
+  productsManager: ReturnType<typeof useProducts>;
+}
+
+export function ProductsPage({ productsManager }: ProductsPageProps) {
   const {
     search,
     setSearch,
@@ -26,7 +30,7 @@ export function ProductsPage() {
     currentPage,
     setCurrentPage,
     totalPages,
-  } = useProducts();
+  } = productsManager;
 
   return (
     <>

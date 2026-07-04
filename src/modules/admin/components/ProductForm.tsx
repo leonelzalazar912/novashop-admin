@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ProductFormProps {
   onCancel: () => void;
@@ -30,6 +30,8 @@ interface ProductFormProps {
     const [image, setImage] = useState(initialProduct?.image ?? "");
     const [preview, setPreview] = useState(initialProduct?.image ?? "");
 
+    const isFormValid = name && category && price && stock;
+
     function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
 
@@ -46,9 +48,33 @@ interface ProductFormProps {
         reader.readAsDataURL(file);
     }
 
+    useEffect(() => {
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      onCancel();
+    }
+  }
+
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [onCancel]);
+
   return (
-    <div className="product-form">
-      <h2>Nuevo producto</h2>
+    <div
+        className="modal-overlay"
+        onClick={onCancel}
+    >
+    <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+    >
+        <div className="product-form">
+      <h2>
+        {initialProduct ? "Editar producto" : "Nuevo producto"}
+      </h2>
 
       <input
         type="text"
@@ -109,11 +135,9 @@ interface ProductFormProps {
       <div className="form-actions">
         <button
         className="primary-button"
+        disabled={!isFormValid}
         onClick={() => {
-            if (!name || !category || !price || !stock) {
-            alert("Completá todos los campos");
-            return;
-            }
+            if (!isFormValid) return;
 
             onAddProduct({
                 image: image || "🎮",
@@ -124,7 +148,7 @@ interface ProductFormProps {
                 });
         }}
         >
-        Guardar
+        {initialProduct ? "Guardar cambios" : "Guardar"}
         </button>
 
         <button onClick={onCancel}>
@@ -132,5 +156,7 @@ interface ProductFormProps {
         </button>
       </div>
     </div>
+    </div>
+  </div>
   );
 }

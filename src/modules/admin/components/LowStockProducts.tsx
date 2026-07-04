@@ -1,17 +1,19 @@
 import { DashboardSection } from "./DashboardSection";
+import type { Product } from "../data/productsData";
 
-const lowStockProducts = [
-  { name: "God of War Ragnarok", stock: 3 },
-  { name: "EA Sports FC 25", stock: 5 },
-  { name: "Mortal Kombat 1", stock: 2 },
-];
+interface LowStockProductsProps {
+  products: Product[];
+}
 
-export function LowStockProducts() {
+export function LowStockProducts({ products }: LowStockProductsProps) {
+  const lowStockProducts = products.filter(
+    (product) => product.stock > 0 && product.stock <= 5
+  );
+
   return (
     <DashboardSection title="Productos con poco stock">
-
       {lowStockProducts.map((product) => (
-        <div key={product.name} className="order-item">
+        <div key={product.id} className="order-item">
           <div>
             <strong>{product.name}</strong>
             <p>Stock disponible</p>

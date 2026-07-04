@@ -42,7 +42,7 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
   margin-top: 32px;
 }
 
@@ -150,6 +150,7 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 24px;
+  margin-top: 32px;
 }
 
 .dashboard-section {
@@ -373,4 +374,76 @@
   border-radius: 12px;
   margin-top: 12px;
   border: 2px solid #374151;
+}
+
+.products-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.products-table thead th {
+  position: sticky;
+  top: 0;
+  background: #111827;
+  z-index: 2;
+}
+
+.products-table tbody tr {
+  transition: background 0.2s, transform 0.2s;
+}
+
+.products-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.products-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.products-table td,
+.products-table th {
+  vertical-align: middle;
+}
+
+.products-table td:nth-child(4),
+.products-table td:nth-child(5) {
+  font-weight: 600;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #111827;
+  border-radius: 16px;
+  padding: 24px;
+  width: min(600px, 90%);
+  animation: modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px) scale(.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }

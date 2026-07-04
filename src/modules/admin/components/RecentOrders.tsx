@@ -1,19 +1,25 @@
-import { recentOrders } from "../data/dashboardData";
 import { DashboardSection } from "./DashboardSection";
+import type { Product } from "../data/productsData";
 
-export function RecentOrders() {
+interface RecentOrdersProps {
+  products: Product[];
+}
+
+export function RecentOrders({ products }: RecentOrdersProps) {
+  const latestProducts = [...products].slice(-3).reverse();
+
   return (
-    <DashboardSection title="Últimos pedidos">
-  {recentOrders.map((order) => (
-    <div key={order.id} className="order-item">
-      <div>
-        <strong>{order.id}</strong>
-        <p>{order.customer}</p>
-      </div>
+    <DashboardSection title="Últimos productos agregados">
+      {latestProducts.map((product) => (
+        <div key={product.id} className="order-item">
+          <div>
+            <strong>{product.name}</strong>
+            <p>{product.category}</p>
+          </div>
 
-      <span>{order.total}</span>
-    </div>
-    ))}
+          <span>${product.price.toLocaleString("es-AR")}</span>
+        </div>
+      ))}
     </DashboardSection>
   );
 }

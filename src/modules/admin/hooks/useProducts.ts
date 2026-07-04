@@ -99,12 +99,13 @@ const paginatedProducts = filteredProducts.slice(
 
     
   return {
+    products,
     search,
     setSearch,
     showForm,
     setShowForm,
     editingProduct,
-    setEditingProduct,
+    setEditingProduct,    
     filteredProducts: paginatedProducts,
     handleAddProduct,
     handleDeleteProduct,
