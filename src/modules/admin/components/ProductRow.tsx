@@ -31,8 +31,13 @@ export function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
         </span>
         </td>
       <td>
-        <button onClick={() => onEdit(product)}>✏️</button>
-        <button onClick={() => onDelete(product.id)}>🗑️</button>
+        <button className="action-button" onClick={() => onEdit(product)}>
+            ✏️
+        </button>
+
+        <button className="action-button" onClick={() => onDelete(product.id)}>
+            🗑️
+        </button>
       </td>
     </tr>
   );

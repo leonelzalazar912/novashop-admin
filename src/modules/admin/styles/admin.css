@@ -281,3 +281,28 @@
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
 }
+
+.action-button {
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.action-button:hover {
+  background: #374151;
+}
+
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  background: #22c55e;
+  color: white;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-weight: bold;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}

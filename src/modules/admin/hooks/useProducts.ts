@@ -15,6 +15,7 @@ export function useProducts() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     localStorage.setItem("products", JSON.stringify(products));
@@ -23,6 +24,11 @@ export function useProducts() {
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  function showToast(message: string) {
+    setToast(message);
+    setTimeout(() => setToast(""), 2500);
+    }
 
   function handleAddProduct(product: Omit<Product, "id">) {
     setProducts((prev) => [
@@ -34,12 +40,14 @@ export function useProducts() {
     ]);
 
     setShowForm(false);
+    showToast("Producto creado correctamente");
   }
 
   function handleDeleteProduct(id: number) {
     if (!window.confirm("¿Eliminar este producto?")) return;
 
     setProducts((prev) => prev.filter((product) => product.id !== id));
+    showToast("Producto eliminado");
   }
 
   function handleUpdateProduct(product: Product) {
@@ -49,8 +57,10 @@ export function useProducts() {
 
     setEditingProduct(null);
     setShowForm(false);
+    showToast("Producto actualizado");
   }
 
+    
   return {
     search,
     setSearch,
@@ -62,5 +72,6 @@ export function useProducts() {
     handleAddProduct,
     handleDeleteProduct,
     handleUpdateProduct,
+    toast,
   };
 }

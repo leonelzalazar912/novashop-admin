@@ -2,6 +2,7 @@ import { ProductForm } from "./components/ProductForm";
 import { ProductsTable } from "./components/ProductsTable";
 import { ProductsToolbar } from "./components/ProductsToolbar";
 import { useProducts } from "./hooks/useProducts";
+import { Toast } from "./components/Toast";
 
 export function ProductsPage() {
   const {
@@ -15,6 +16,7 @@ export function ProductsPage() {
     handleAddProduct,
     handleDeleteProduct,
     handleUpdateProduct,
+    toast,
   } = useProducts();
 
   return (
@@ -51,6 +53,7 @@ export function ProductsPage() {
         onEdit={setEditingProduct}
         onDelete={handleDeleteProduct}
       />
+      <Toast message={toast} />
     </>
   );
 }
