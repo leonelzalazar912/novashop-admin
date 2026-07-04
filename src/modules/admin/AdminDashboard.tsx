@@ -4,6 +4,7 @@ import { RecentOrders } from "./components/RecentOrders";
 import "./styles/admin.css";
 import { dashboardStats } from "./data/dashboardData";
 import { AdminHeader } from "./components/AdminHeader";
+import { LowStockProducts } from "./components/LowStockProducts";
 
 export function AdminDashboard() {
   return (
@@ -25,7 +26,11 @@ export function AdminDashboard() {
           ))}
         </div>
 
+        <div className="dashboard-sections">
         <RecentOrders />
+        <LowStockProducts />
+      </div>
+
       </main>
     </div>
   );
