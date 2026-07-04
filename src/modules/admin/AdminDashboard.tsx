@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminHeader } from "./components/AdminHeader";
-import { StatCard } from "./components/StatCard";
-import { RecentOrders } from "./components/RecentOrders";
-import { LowStockProducts } from "./components/LowStockProducts";
+import { DashboardStats } from "./components/DashboardStats";
+import { DashboardWidgets } from "./components/DashboardWidgets";
 import { ProductsPage } from "./ProductsPage";
 import { useProducts } from "./hooks/useProducts";
 import { useDashboard } from "./hooks/useDashboard";
 import "./styles/admin.css";
-import { CategoryChart } from "./components/CategoryChart";
-import { InventoryPieChart } from "./components/InventoryPieChart";
+import { DashboardCharts } from "./components/DashboardCharts";
 import { NotificationPanel } from "./components/NotificationPanel";
+import { DashboardSettingsModal } from "./components/DashboardSettingsModal";
+import { DashboardToolbar } from "./components/DashboardToolbar";
 
 type AdminSection = "dashboard" | "products";
 
@@ -60,12 +60,9 @@ useEffect(() => {
           <>
             <AdminHeader />
 
-            <button
-              className="primary-button"
-              onClick={() => setShowDashboardSettings(true)}
-            >
-              ⚙️ Personalizar dashboard
-            </button>
+            <DashboardToolbar
+              onCustomize={() => setShowDashboardSettings(true)}
+            />
 
             <NotificationPanel
               alerts={dashboard.alerts}
@@ -73,61 +70,29 @@ useEffect(() => {
             />
 
             {showDashboardSettings && (
-              <div className="modal-overlay" onClick={() => setShowDashboardSettings(false)}>
-              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h2>Personalizar dashboard</h2>
-
-            {dashboardCards.map((card) => (
-              <label key={card.id} className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={visibleCards.includes(card.id)}
-                  onChange={() => {
-                setVisibleCards((prev) =>
-                  prev.includes(card.id)
-                    ? prev.filter((id) => id !== card.id)
-                    : [...prev, card.id]
-                );
-              }}
-            />
-              {card.icon} {card.title}
-          </label>
-      ))}
-
-      <button
-        className="primary-button"
-        onClick={() => setShowDashboardSettings(false)}
-      >
-        Listo
-      </button>
-    </div>
-  </div>
+  <DashboardSettingsModal
+    cards={dashboardCards}
+    visibleCards={visibleCards}
+    onToggleCard={(id) =>
+      setVisibleCards((prev) =>
+        prev.includes(id)
+          ? prev.filter((cardId) => cardId !== id)
+          : [...prev, id]
+      )
+    }
+    onClose={() => setShowDashboardSettings(false)}
+  />
 )}
 
-            <div className="stats-grid">
-              {dashboardCards
-                .filter((card) => visibleCards.includes(card.id))
-                .map((card) => (
-            <StatCard
-              key={card.id}
-              title={card.title}
-              value={card.value}
-              icon={card.icon}
-              color={card.color}
-            />
-            ))}
-            </div>
+            <DashboardStats
+  cards={dashboardCards}
+  visibleCards={visibleCards}
+/>
 
             <div className="dashboard-sections">
-              <div className="charts-grid">
-                <CategoryChart products={productsManager.products} />
-                <InventoryPieChart products={productsManager.products} />
-            </div>
+              <DashboardCharts products={productsManager.products} />
 
-            <div className="widgets-grid">
-              <RecentOrders products={productsManager.products} />
-              <LowStockProducts products={productsManager.products} />
-            </div>
+            <DashboardWidgets products={productsManager.products} />
           </div>
         </>
       )}
