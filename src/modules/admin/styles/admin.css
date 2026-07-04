@@ -61,6 +61,11 @@
   box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
 }
 
+.stat-card-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
 .stat-card h3 {
   margin: 0;
   font-size: 16px;
@@ -73,4 +78,70 @@
   font-size: 40px;
   font-weight: 700;
   color: #60a5fa;
+}
+
+.recent-orders {
+  margin-top: 40px;
+  background: #1f2937;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #374151;
+}
+
+.recent-orders h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #374151;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-item p {
+  margin: 4px 0 0;
+  color: #9ca3af;
+}
+
+.order-item span {
+  color: #60a5fa;
+  font-weight: bold;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.admin-header p {
+  margin-top: 8px;
+  color: #9ca3af;
+}
+
+.admin-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.admin-user span {
+  font-weight: bold;
+}
+
+.admin-user small {
+  color: #9ca3af;
 }
