@@ -1,21 +1,21 @@
-const menuItems = [
-  "Dashboard",
-  "Productos",
-  "Categorías",
-  "Pedidos",
-  "Clientes",
-  "Configuración",
-];
+type AdminSidebarProps = {
+  onNavigate: (section: "dashboard" | "products") => void;
+};
 
-export function AdminSidebar() {
+const menuItems = [
+  { label: "Dashboard", section: "dashboard" },
+  { label: "Productos", section: "products" },
+] as const;
+
+export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   return (
     <aside className="admin-sidebar">
       <h2>NovaShop Admin</h2>
 
       <nav>
         {menuItems.map((item) => (
-          <button key={item}>
-            {item}
+          <button key={item.section} onClick={() => onNavigate(item.section)}>
+            {item.label}
           </button>
         ))}
       </nav>
