@@ -1,12 +1,5 @@
 import { StatCard } from "./StatCard";
-
-type DashboardCard = {
-  id: string;
-  title: string;
-  value: string;
-  icon: string;
-  color: string;
-};
+import type { DashboardCard } from "../types/dashboard";
 
 interface DashboardStatsProps {
   cards: DashboardCard[];

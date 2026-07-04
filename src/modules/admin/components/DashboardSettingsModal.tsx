@@ -1,11 +1,7 @@
-type DashboardCard = {
-  id: string;
-  title: string;
-  icon: string;
-};
+import type { DashboardCard } from "../types/dashboard";
 
 interface DashboardSettingsModalProps {
-  cards: DashboardCard[];
+  cards: Pick<DashboardCard, "id" | "title" | "icon">[];
   visibleCards: string[];
   onToggleCard: (id: string) => void;
   onClose: () => void;

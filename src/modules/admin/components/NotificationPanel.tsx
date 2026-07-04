@@ -1,10 +1,4 @@
-type DashboardAlert = {
-  type: "success" | "warning" | "danger";
-  title: string;
-  description: string;
-  action?: string;
-};
-
+import type { DashboardAlert } from "../types/dashboard";
 interface NotificationPanelProps {
   alerts: DashboardAlert[];
   onActionClick?: () => void;

@@ -11,6 +11,7 @@ import { DashboardCharts } from "./components/DashboardCharts";
 import { NotificationPanel } from "./components/NotificationPanel";
 import { DashboardSettingsModal } from "./components/DashboardSettingsModal";
 import { DashboardToolbar } from "./components/DashboardToolbar";
+import type { DashboardCard } from "./types/dashboard";
 
 type AdminSection = "dashboard" | "products";
 
@@ -40,7 +41,7 @@ useEffect(() => {
   localStorage.setItem("visibleDashboardCards", JSON.stringify(visibleCards));
 }, [visibleCards]);
   const [showDashboardSettings, setShowDashboardSettings] = useState(false);
-  const dashboardCards = [
+  const dashboardCards: DashboardCard[] = [
   { id: "products", title: "Productos", value: dashboard.totalProducts.toString(), icon: "📦", color: "blue" },
   { id: "lowStock", title: "Stock bajo", value: dashboard.lowStockProducts.toString(), icon: "⚠️", color: "orange" },
   { id: "inventory", title: "Inventario", value: `$${dashboard.totalInventoryValue.toLocaleString("es-AR")}`, icon: "💰", color: "green" },
@@ -70,24 +71,24 @@ useEffect(() => {
             />
 
             {showDashboardSettings && (
-  <DashboardSettingsModal
-    cards={dashboardCards}
-    visibleCards={visibleCards}
-    onToggleCard={(id) =>
-      setVisibleCards((prev) =>
-        prev.includes(id)
-          ? prev.filter((cardId) => cardId !== id)
-          : [...prev, id]
-      )
-    }
-    onClose={() => setShowDashboardSettings(false)}
-  />
-)}
+              <DashboardSettingsModal
+                cards={dashboardCards}
+                visibleCards={visibleCards}
+                onToggleCard={(id) =>
+                  setVisibleCards((prev) =>
+                    prev.includes(id)
+                      ? prev.filter((cardId) => cardId !== id)
+                      : [...prev, id]
+                  )
+                }   
+                onClose={() => setShowDashboardSettings(false)}
+              />
+            )}
 
             <DashboardStats
-  cards={dashboardCards}
-  visibleCards={visibleCards}
-/>
+              cards={dashboardCards}
+              visibleCards={visibleCards}
+            />
 
             <div className="dashboard-sections">
               <DashboardCharts products={productsManager.products} />

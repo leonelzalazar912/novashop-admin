@@ -1,12 +1,6 @@
 import { useMemo } from "react";
 import type { Product } from "../data/productsData";
-
-type DashboardAlert = {
-  type: "success" | "warning" | "danger";
-  title: string;
-  description: string;
-  action?: string;
-};
+import type { DashboardAlert } from "../types/dashboard";
 
 
 interface DashboardData {
@@ -19,11 +13,11 @@ interface DashboardData {
   mostExpensiveProduct: Product | null;
   highestStockProduct: Product | null;
   alerts: DashboardAlert[];  
-}[];
+}
 
 export function useDashboard(products: Product[]): DashboardData {
 
-  
+  // KPIs
   return useMemo(() => {
   const totalProducts = products.length;
 
@@ -36,6 +30,7 @@ export function useDashboard(products: Product[]): DashboardData {
     0
   );
 
+  // Estadísticas
   const totalCategories = new Set(
     products.map((product) => product.category)
   ).size;
@@ -48,6 +43,7 @@ export function useDashboard(products: Product[]): DashboardData {
   const averagePrice =
     totalUnits > 0 ? totalInventoryValue / totalUnits : 0;
 
+  // Productos destacados  
   const mostExpensiveProduct =
     products.length > 0
       ? [...products].sort((a, b) => b.price - a.price)[0]
@@ -58,6 +54,7 @@ export function useDashboard(products: Product[]): DashboardData {
       ? [...products].sort((a, b) => b.stock - a.stock)[0]
       : null;
 
+  // Alertas    
   const alerts: DashboardAlert[] = [];
 
   const outOfStockProducts = products.filter(

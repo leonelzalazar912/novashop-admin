@@ -396,12 +396,6 @@
   border: 2px solid #374151;
 }
 
-.products-table {
-  border-collapse: separate;
-  border-spacing: 0;
-  overflow: hidden;
-}
-
 .products-table thead th {
   position: sticky;
   top: 0;
@@ -565,4 +559,41 @@
 
 .notification-action:hover {
   background: #2563eb;
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-grid,
+  .widgets-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+  }
+
+  .admin-content {
+    padding: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-content {
+    height: 260px;
+  }
+
+  .modal-content {
+    width: 90%;
+  }
 }
