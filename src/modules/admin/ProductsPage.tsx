@@ -1,14 +1,52 @@
-import { useState } from "react";
-import { products } from "./data/productsData";
+import { useEffect, useState } from "react";
+import { products as initialProducts, type Product } from "./data/productsData";
 import { ProductForm } from "./components/ProductForm";
 
 export function ProductsPage() {
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<Product[]>(() => {
+  const savedProducts = localStorage.getItem("products");
+
+  if (savedProducts) {
+    return JSON.parse(savedProducts);
+  }
+
+  return initialProducts;
+});
+
+    function handleAddProduct(product: Omit<Product, "id">) {
+        setProducts((prevProducts) => [
+            ...prevProducts,
+            {
+            id: Date.now(),
+            ...product,
+            },
+        ]);
+
+  setShowForm(false);
+}
+
+function handleDeleteProduct(id: number) {
+  const confirmDelete = window.confirm(
+    "¿Estás seguro de que quieres eliminar este producto?"
+  );
+
+  if (!confirmDelete) return;
+
+  setProducts((prevProducts) =>
+    prevProducts.filter((product) => product.id !== id)
+  );
+}
+
   const [showForm, setShowForm] = useState(false);
 
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  );
+  product.name.toLowerCase().includes(search.toLowerCase())
+);
+
+useEffect(() => {
+  localStorage.setItem("products", JSON.stringify(products));
+}, [products]);
 
   return (
     <>
@@ -35,9 +73,12 @@ export function ProductsPage() {
       </div>
 
         {showForm && (
-            <ProductForm onCancel={() => setShowForm(false)} />
+            <ProductForm
+                onCancel={() => setShowForm(false)}
+                onAddProduct={handleAddProduct}
+            />
         )}
-        
+
       <table className="products-table">
         <thead>
           <tr>
@@ -60,7 +101,9 @@ export function ProductsPage() {
               <td>{product.stock}</td>
               <td>
                 <button>✏️</button>
-                <button>🗑️</button>
+                <button onClick={() => handleDeleteProduct(product.id)}>
+                    🗑️
+                </button>
               </td>
             </tr>
           ))}

@@ -2,9 +2,16 @@ import { useState } from "react";
 
 interface ProductFormProps {
   onCancel: () => void;
+  onAddProduct: (product: {
+    image: string;
+    name: string;
+    category: string;
+    price: number;
+    stock: number;
+  }) => void;
 }
 
-export function ProductForm({ onCancel }: ProductFormProps) {
+export function ProductForm({ onCancel, onAddProduct }: ProductFormProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
@@ -43,8 +50,24 @@ export function ProductForm({ onCancel }: ProductFormProps) {
       />
 
       <div className="form-actions">
-        <button className="primary-button">
-          Guardar
+        <button
+        className="primary-button"
+        onClick={() => {
+            if (!name || !category || !price || !stock) {
+            alert("Completá todos los campos");
+            return;
+            }
+
+            onAddProduct({
+            image: "🎮",
+            name,
+            category,
+            price: Number(price),
+            stock: Number(stock),
+            });
+        }}
+        >
+        Guardar
         </button>
 
         <button onClick={onCancel}>
