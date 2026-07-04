@@ -1,141 +1,56 @@
-import { useEffect, useState } from "react";
-import { products as initialProducts, type Product } from "./data/productsData";
 import { ProductForm } from "./components/ProductForm";
+import { ProductsTable } from "./components/ProductsTable";
+import { ProductsToolbar } from "./components/ProductsToolbar";
+import { useProducts } from "./hooks/useProducts";
 
 export function ProductsPage() {
-  const [search, setSearch] = useState("");
-  const [products, setProducts] = useState<Product[]>(() => {
-  const savedProducts = localStorage.getItem("products");
-
-  if (savedProducts) {
-    return JSON.parse(savedProducts);
-  }
-
-  return initialProducts;
-});
-
-    function handleAddProduct(product: Omit<Product, "id">) {
-        setProducts((prevProducts) => [
-            ...prevProducts,
-            {
-            id: Date.now(),
-            ...product,
-            },
-        ]);
-
-  setShowForm(false);
-}
-
-function handleDeleteProduct(id: number) {
-  const confirmDelete = window.confirm(
-    "¿Estás seguro de que quieres eliminar este producto?"
-  );
-
-  if (!confirmDelete) return;
-
-  setProducts((prevProducts) =>
-    prevProducts.filter((product) => product.id !== id)
-  );
-}
-
-function handleUpdateProduct(product: Product) {
-  setProducts((prevProducts) =>
-    prevProducts.map((p) =>
-      p.id === product.id ? product : p
-    )
-  );
-
-  setEditingProduct(null);
-  setShowForm(false);
-}
-
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  const filteredProducts = products.filter((product) =>
-  product.name.toLowerCase().includes(search.toLowerCase())
-);
-
-useEffect(() => {
-  localStorage.setItem("products", JSON.stringify(products));
-}, [products]);
+  const {
+    search,
+    setSearch,
+    showForm,
+    setShowForm,
+    editingProduct,
+    setEditingProduct,
+    filteredProducts,
+    handleAddProduct,
+    handleDeleteProduct,
+    handleUpdateProduct,
+  } = useProducts();
 
   return (
     <>
-      <div className="products-header">
-        <div>
-          <h1>Productos</h1>
-          <p>Administrá todos los productos de NovaShop.</p>
-        </div>
+      <ProductsToolbar
+        search={search}
+        onSearchChange={setSearch}
+        totalProducts={filteredProducts.length}
+        onNewProduct={() => setShowForm(true)}
+      />
 
-        <button className="primary-button" onClick={() => setShowForm(true)}>
-            + Nuevo producto
-        </button>
-      </div>
-
-      <div className="products-toolbar">
-        <span>{filteredProducts.length} productos encontrados</span>
-
-        <input
-          type="text"
-          placeholder="Buscar producto..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-        {(showForm || editingProduct) && (
+      {(showForm || editingProduct) && (
         <ProductForm
-            onCancel={() => {
+          onCancel={() => {
             setShowForm(false);
             setEditingProduct(null);
-            }}
-            onAddProduct={(product) => {
-                if (editingProduct) {
-                    handleUpdateProduct({
-                    ...editingProduct,
-                    ...product,
-                    });
-                } else {
-                    handleAddProduct(product);
-                }
-                }}
-            initialProduct={editingProduct ?? undefined}
+          }}
+          onAddProduct={(product) => {
+            if (editingProduct) {
+              handleUpdateProduct({
+                ...editingProduct,
+                ...product,
+              });
+            } else {
+              handleAddProduct(product);
+            }
+          }}
+          initialProduct={editingProduct ?? undefined}
         />
-        )}
+      )}
 
-      <table className="products-table">
-        <thead>
-          <tr>
-            <th>Imagen</th>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Precio</th>
-            <th>Stock</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {filteredProducts.map((product) => (
-            <tr key={product.id}>
-              <td>{product.image}</td>
-              <td>{product.name}</td>
-              <td>{product.category}</td>
-              <td>${product.price.toLocaleString("es-AR")}</td>
-              <td>{product.stock}</td>
-              <td>
-                <button onClick={() => setEditingProduct(product)}>
-                    ✏️
-                </button>
-                <button onClick={() => handleDeleteProduct(product.id)}>
-                    🗑️
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ProductsTable
+        products={filteredProducts}
+        onEdit={setEditingProduct}
+        onDelete={handleDeleteProduct}
+      />
     </>
   );
 }
