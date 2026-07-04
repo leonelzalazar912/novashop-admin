@@ -306,3 +306,71 @@
   font-weight: bold;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
+
+.products-toolbar select {
+  background: #1f2937;
+  color: white;
+  border: 1px solid #374151;
+  border-radius: 10px;
+  padding: 12px;
+  min-width: 170px;
+  cursor: pointer;
+}
+
+.products-toolbar select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.products-toolbar option {
+  background: #1f2937;
+  color: white;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pagination button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+.product-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.image-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-top: 12px;
+  border: 2px solid #374151;
+}

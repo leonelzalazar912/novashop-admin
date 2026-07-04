@@ -3,6 +3,7 @@ import { ProductsTable } from "./components/ProductsTable";
 import { ProductsToolbar } from "./components/ProductsToolbar";
 import { useProducts } from "./hooks/useProducts";
 import { Toast } from "./components/Toast";
+import { Pagination } from "./components/Pagination";
 
 export function ProductsPage() {
   const {
@@ -17,6 +18,14 @@ export function ProductsPage() {
     handleDeleteProduct,
     handleUpdateProduct,
     toast,
+    categoryFilter , 
+    setCategoryFilter,
+    categories,
+    sortBy,
+    setSortBy,
+    currentPage,
+    setCurrentPage,
+    totalPages,
   } = useProducts();
 
   return (
@@ -26,6 +35,11 @@ export function ProductsPage() {
         onSearchChange={setSearch}
         totalProducts={filteredProducts.length}
         onNewProduct={() => setShowForm(true)}
+        categoryFilter={categoryFilter}
+        onCategoryChange={setCategoryFilter}
+        categories={categories}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
       />
 
       {(showForm || editingProduct) && (
@@ -52,8 +66,15 @@ export function ProductsPage() {
         products={filteredProducts}
         onEdit={setEditingProduct}
         onDelete={handleDeleteProduct}
-      />
-      <Toast message={toast} />
+        />
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        />
+
+        <Toast message={toast} />
     </>
   );
 }

@@ -27,6 +27,24 @@ interface ProductFormProps {
     const [category, setCategory] = useState(initialProduct?.category ?? "");
     const [price, setPrice] = useState(initialProduct?.price?.toString() ?? "");
     const [stock, setStock] = useState(initialProduct?.stock?.toString() ?? "");
+    const [image, setImage] = useState(initialProduct?.image ?? "");
+    const [preview, setPreview] = useState(initialProduct?.image ?? "");
+
+    function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+        const imageBase64 = reader.result as string;
+            setImage(imageBase64);
+            setPreview(imageBase64);
+    };
+
+        reader.readAsDataURL(file);
+    }
 
   return (
     <div className="product-form">
@@ -60,6 +78,34 @@ interface ProductFormProps {
         onChange={(e) => setStock(e.target.value)}
       />
 
+      <div className="form-group">
+  <label>Imagen (URL o archivo)</label>
+
+  <input
+    type="text"
+    placeholder="https://..."
+    value={image.startsWith("data:") ? "" : image}
+    onChange={(e) => {
+      setImage(e.target.value);
+      setPreview(e.target.value);
+    }}
+  />
+
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+  />
+
+  {preview && (
+    <img
+      className="image-preview"
+      src={preview}
+      alt="Vista previa"
+    />
+  )}
+</div>
+
       <div className="form-actions">
         <button
         className="primary-button"
@@ -70,12 +116,12 @@ interface ProductFormProps {
             }
 
             onAddProduct({
-            image: "🎮",
-            name,
-            category,
-            price: Number(price),
-            stock: Number(stock),
-            });
+                image: image || "🎮",
+                name,
+                category,
+                price: Number(price),
+                stock: Number(stock),
+                });
         }}
         >
         Guardar

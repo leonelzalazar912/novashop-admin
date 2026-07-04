@@ -9,7 +9,13 @@ interface ProductRowProps {
 export function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
   return (
     <tr>
-      <td>{product.image}</td>
+      <td>
+        {product.image.startsWith("http") ? (
+            <img className="product-image" src={product.image} alt={product.name} />
+        ) : (
+            product.image
+        )}
+      </td>
       <td>{product.name}</td>
       <td>{product.category}</td>
       <td>${product.price.toLocaleString("es-AR")}</td>

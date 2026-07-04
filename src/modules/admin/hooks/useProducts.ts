@@ -13,6 +13,10 @@ export function useProducts() {
   });
 
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("Todas");
+  const [sortBy, setSortBy] = useState<"name" | "price" | "stock">("name");
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 5;
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState("");
@@ -21,9 +25,42 @@ export function useProducts() {
     localStorage.setItem("products", JSON.stringify(products));
   }, [products]);
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+  setCurrentPage(1);
+}, [search, categoryFilter]);
+
+  const filteredProducts = products
+  .filter((product) => {
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesCategory =
+      categoryFilter === "Todas" || product.category === categoryFilter;
+
+    return matchesSearch && matchesCategory;
+  })
+  .sort((a, b) => {
+    if (sortBy === "name") {
+      return a.name.localeCompare(b.name);
+    }
+
+    return a[sortBy] - b[sortBy];
+  });
+
+const categories = [
+    "Todas",
+     ...new Set(products.map((product) => product.category)),
+    ];
+
+    const totalPages = Math.ceil(
+        filteredProducts.length / productsPerPage
+        );
+
+const paginatedProducts = filteredProducts.slice(
+  (currentPage - 1) * productsPerPage,
+  currentPage * productsPerPage
+);
 
   function showToast(message: string) {
     setToast(message);
@@ -68,10 +105,18 @@ export function useProducts() {
     setShowForm,
     editingProduct,
     setEditingProduct,
-    filteredProducts,
+    filteredProducts: paginatedProducts,
     handleAddProduct,
     handleDeleteProduct,
     handleUpdateProduct,
     toast,
+    categoryFilter,
+    setCategoryFilter,
+    categories,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    sortBy,
+    setSortBy,
   };
 }

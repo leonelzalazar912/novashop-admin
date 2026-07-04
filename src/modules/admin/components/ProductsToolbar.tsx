@@ -3,6 +3,11 @@ interface ProductsToolbarProps {
   onSearchChange: (value: string) => void;
   totalProducts: number;
   onNewProduct: () => void;
+  categoryFilter: string;
+  onCategoryChange: (value: string) => void;
+  categories: string[];
+  sortBy: "name" | "price" | "stock";
+  onSortChange: (value: "name" | "price" | "stock") => void;
 }
 
 export function ProductsToolbar({
@@ -10,7 +15,13 @@ export function ProductsToolbar({
   onSearchChange,
   totalProducts,
   onNewProduct,
+  categoryFilter,
+  onCategoryChange,
+  categories,
+  sortBy,
+  onSortChange,
 }: ProductsToolbarProps) {
+    
   return (
     <>
       <div className="products-header">
@@ -25,15 +36,37 @@ export function ProductsToolbar({
       </div>
 
       <div className="products-toolbar">
-        <span>{totalProducts} productos encontrados</span>
+  <span>{totalProducts} productos encontrados</span>
 
-        <input
-          type="text"
-          placeholder="Buscar producto..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
+  <select
+    value={categoryFilter}
+    onChange={(e) => onCategoryChange(e.target.value)}
+  >
+    {categories.map((category) => (
+      <option key={category} value={category}>
+        {category}
+      </option>
+    ))}
+  </select>
+
+  <select
+    value={sortBy}
+    onChange={(e) =>
+      onSortChange(e.target.value as "name" | "price" | "stock")
+    }
+  >
+    <option value="name">Ordenar por Nombre</option>
+    <option value="price">Ordenar por Precio</option>
+    <option value="stock">Ordenar por Stock</option>
+  </select>
+
+  <input
+    type="text"
+    placeholder="Buscar producto..."
+    value={search}
+    onChange={(e) => onSearchChange(e.target.value)}
+  />
+</div>
     </>
   );
 }
