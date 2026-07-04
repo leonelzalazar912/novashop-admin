@@ -9,13 +9,24 @@ interface ProductFormProps {
     price: number;
     stock: number;
   }) => void;
+  initialProduct?: {
+    image: string;
+    name: string;
+    category: string;
+    price: number;
+    stock: number;
+  };
 }
 
-export function ProductForm({ onCancel, onAddProduct }: ProductFormProps) {
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
-  const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
+    export function ProductForm({
+    onCancel,
+    onAddProduct,
+    initialProduct,
+    }: ProductFormProps) {
+    const [name, setName] = useState(initialProduct?.name ?? "");
+    const [category, setCategory] = useState(initialProduct?.category ?? "");
+    const [price, setPrice] = useState(initialProduct?.price?.toString() ?? "");
+    const [stock, setStock] = useState(initialProduct?.stock?.toString() ?? "");
 
   return (
     <div className="product-form">

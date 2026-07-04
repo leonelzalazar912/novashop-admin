@@ -38,7 +38,19 @@ function handleDeleteProduct(id: number) {
   );
 }
 
+function handleUpdateProduct(product: Product) {
+  setProducts((prevProducts) =>
+    prevProducts.map((p) =>
+      p.id === product.id ? product : p
+    )
+  );
+
+  setEditingProduct(null);
+  setShowForm(false);
+}
+
   const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const filteredProducts = products.filter((product) =>
   product.name.toLowerCase().includes(search.toLowerCase())
@@ -72,11 +84,24 @@ useEffect(() => {
         />
       </div>
 
-        {showForm && (
-            <ProductForm
-                onCancel={() => setShowForm(false)}
-                onAddProduct={handleAddProduct}
-            />
+        {(showForm || editingProduct) && (
+        <ProductForm
+            onCancel={() => {
+            setShowForm(false);
+            setEditingProduct(null);
+            }}
+            onAddProduct={(product) => {
+                if (editingProduct) {
+                    handleUpdateProduct({
+                    ...editingProduct,
+                    ...product,
+                    });
+                } else {
+                    handleAddProduct(product);
+                }
+                }}
+            initialProduct={editingProduct ?? undefined}
+        />
         )}
 
       <table className="products-table">
@@ -100,7 +125,9 @@ useEffect(() => {
               <td>${product.price.toLocaleString("es-AR")}</td>
               <td>{product.stock}</td>
               <td>
-                <button>✏️</button>
+                <button onClick={() => setEditingProduct(product)}>
+                    ✏️
+                </button>
                 <button onClick={() => handleDeleteProduct(product.id)}>
                     🗑️
                 </button>
