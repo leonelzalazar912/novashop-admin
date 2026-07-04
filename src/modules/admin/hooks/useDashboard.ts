@@ -1,6 +1,14 @@
 import { useMemo } from "react";
 import type { Product } from "../data/productsData";
 
+type DashboardAlert = {
+  type: "success" | "warning" | "danger";
+  title: string;
+  description: string;
+  action?: string;
+};
+
+
 interface DashboardData {
   totalProducts: number;
   lowStockProducts: number;
@@ -10,10 +18,12 @@ interface DashboardData {
   averagePrice: number;
   mostExpensiveProduct: Product | null;
   highestStockProduct: Product | null;
-}
+  alerts: DashboardAlert[];  
+}[];
 
 export function useDashboard(products: Product[]): DashboardData {
 
+  
   return useMemo(() => {
   const totalProducts = products.length;
 
@@ -48,6 +58,38 @@ export function useDashboard(products: Product[]): DashboardData {
       ? [...products].sort((a, b) => b.stock - a.stock)[0]
       : null;
 
+  const alerts: DashboardAlert[] = [];
+
+  const outOfStockProducts = products.filter(
+    (product) => product.stock === 0
+  ).length;
+
+  if (outOfStockProducts > 0) {
+    alerts.push({
+      type: "danger",
+      title: "Productos sin stock",
+      description: `Hay ${outOfStockProducts} productos sin stock.`,
+      action: "Ver productos",
+    });
+  }
+
+  if (lowStockProducts > 0) {
+    alerts.push({
+      type: "warning",
+      title: "Stock bajo",
+      description: `Hay ${lowStockProducts} productos con stock crítico.`,
+      action: "Revisar inventario",
+    });
+  }
+
+  if (totalInventoryValue > 1_000_000) {
+    alerts.push({
+      type: "success",
+      title: "Inventario saludable",
+      description: "El valor del inventario supera el millón.",
+    });
+  }    
+
   return {
     totalProducts,
     lowStockProducts,
@@ -57,6 +99,7 @@ export function useDashboard(products: Product[]): DashboardData {
     averagePrice,
     mostExpensiveProduct,
     highestStockProduct,
+    alerts,
   };
 }, [products]);
 }

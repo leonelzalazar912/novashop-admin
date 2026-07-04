@@ -8,6 +8,9 @@ import { ProductsPage } from "./ProductsPage";
 import { useProducts } from "./hooks/useProducts";
 import { useDashboard } from "./hooks/useDashboard";
 import "./styles/admin.css";
+import { CategoryChart } from "./components/CategoryChart";
+import { InventoryPieChart } from "./components/InventoryPieChart";
+import { NotificationPanel } from "./components/NotificationPanel";
 
 type AdminSection = "dashboard" | "products";
 
@@ -64,6 +67,11 @@ useEffect(() => {
               ⚙️ Personalizar dashboard
             </button>
 
+            <NotificationPanel
+              alerts={dashboard.alerts}
+              onActionClick={() => setSection("products")}
+            />
+
             {showDashboardSettings && (
               <div className="modal-overlay" onClick={() => setShowDashboardSettings(false)}>
               <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -111,13 +119,22 @@ useEffect(() => {
             </div>
 
             <div className="dashboard-sections">
+              <div className="charts-grid">
+                <CategoryChart products={productsManager.products} />
+                <InventoryPieChart products={productsManager.products} />
+            </div>
+
+            <div className="widgets-grid">
               <RecentOrders products={productsManager.products} />
               <LowStockProducts products={productsManager.products} />
             </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
 
-        {section === "products" && <ProductsPage productsManager={productsManager} />}
+            {section === "products" && (
+              <ProductsPage productsManager={productsManager} />
+      )}
       </main>
     </div>
   );
