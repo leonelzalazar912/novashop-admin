@@ -2,7 +2,8 @@ type AdminSection =
   | "dashboard"
   | "products"
   | "categories"
-  | "clients";
+  | "clients"
+  | "suppliers";
 
 type AdminSidebarProps = {
   onNavigate: (section: AdminSection) => void;
@@ -13,6 +14,7 @@ const menuItems = [
   { label: "Productos", section: "products" },
   { label: "Categorías", section: "categories" },
   { label: "Clientes", section: "clients" },
+  { label: "Proveedores", section: "suppliers" },
 ] as const;
 
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {

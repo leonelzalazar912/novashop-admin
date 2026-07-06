@@ -693,3 +693,26 @@
     transform: translateY(0);
   }
 }
+
+.product-form select,
+.product-form textarea {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.product-form select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.product-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.product-form textarea::placeholder {
+  color: #94a3b8;
+}
