@@ -1,6 +1,7 @@
 import type { Product } from "../data/productsData";
 import { ProductRow } from "./ProductRow";
 import { EmptyState } from "../../components/common/EmptyState";
+import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 
 interface ProductsTableProps {
   products: Product[];
@@ -13,6 +14,19 @@ export function ProductsTable({
   onEdit,
   onDelete,
 }: ProductsTableProps) {
+  const { hasOrdersByProduct } = useDataIntegrity();
+
+  function handleDelete(product: Product) {
+    if (hasOrdersByProduct(product.id)) {
+      alert(
+        `No se puede eliminar el producto "${product.name}" porque está asociado a uno o más pedidos. Podés marcarlo como inactivo en su lugar.`
+      );
+      return;
+    }
+
+    onDelete(product.id);
+  }
+
   return (
     <table className="products-table">
       <thead>
@@ -34,13 +48,12 @@ export function ProductsTable({
           />
         )}
 
-
         {products.map((product) => (
           <ProductRow
             key={product.id}
             product={product}
             onEdit={onEdit}
-            onDelete={onDelete}
+            onDelete={() => handleDelete(product)}
           />
         ))}
       </tbody>

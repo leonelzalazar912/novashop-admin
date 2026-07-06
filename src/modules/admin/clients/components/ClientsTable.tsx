@@ -1,5 +1,6 @@
 import type { Client } from "../data/clientsData";
 import { EmptyState } from "../../components/common/EmptyState";
+import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 
 type ClientsTableProps = {
   clients: Client[];
@@ -14,6 +15,7 @@ export function ClientsTable({
   onDeleteClient,
   onToggleClientStatus,
 }: ClientsTableProps) {
+const { hasOrdersByClient } = useDataIntegrity();
   return (
     <table className="products-table">
       <thead>
@@ -57,6 +59,13 @@ export function ClientsTable({
               <button
                 className="action-button"
                 onClick={() => {
+                  if (hasOrdersByClient(client.id)) {
+                    alert(
+                      `No se puede eliminar el cliente "${client.name}" porque tiene uno o más pedidos asociados. Podés marcarlo como inactivo en su lugar.`
+                    );
+                    return;
+                  }
+
                   const confirmed = window.confirm(
                     `¿Eliminar el cliente "${client.name}"?`
                   );
