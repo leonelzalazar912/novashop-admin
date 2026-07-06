@@ -12,8 +12,12 @@ import { NotificationPanel } from "./components/NotificationPanel";
 import { DashboardSettingsModal } from "./components/DashboardSettingsModal";
 import { DashboardToolbar } from "./components/DashboardToolbar";
 import type { DashboardCard } from "./types/dashboard";
+import { CategoriesPage } from "./CategoriesPage";
 
-type AdminSection = "dashboard" | "products";
+type AdminSection =
+  | "dashboard"
+  | "products"
+  | "categories";
 
 export function AdminDashboard() {
   const [section, setSection] = useState<AdminSection>("dashboard");
@@ -100,6 +104,10 @@ useEffect(() => {
 
             {section === "products" && (
               <ProductsPage productsManager={productsManager} />
+      )}
+
+            {section === "categories" && (
+              <CategoriesPage />
       )}
       </main>
     </div>

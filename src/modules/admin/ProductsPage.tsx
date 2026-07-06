@@ -1,8 +1,8 @@
 import { ProductForm } from "./components/ProductForm";
 import { ProductsTable } from "./components/ProductsTable";
 import { ProductsToolbar } from "./components/ProductsToolbar";
-import { Toast } from "./components/Toast";
-import { Pagination } from "./components/Pagination";
+import { Toast } from "./components/common/Toast";
+import { Pagination } from "./components/common/Pagination";
 import type { useProducts } from "./hooks/useProducts";
 
 interface ProductsPageProps {
@@ -75,8 +75,9 @@ export function ProductsPage({ productsManager }: ProductsPageProps) {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        />
+        onPrevious={() => setCurrentPage(currentPage - 1)}
+        onNext={() => setCurrentPage(currentPage + 1)}
+      />
 
         <Toast message={toast} />
     </>

@@ -1,5 +1,6 @@
 import type { Product } from "../data/productsData";
 import { ProductRow } from "./ProductRow";
+import { EmptyState } from "./common/EmptyState";
 
 interface ProductsTableProps {
   products: Product[];
@@ -26,6 +27,14 @@ export function ProductsTable({
       </thead>
 
       <tbody>
+        {products.length === 0 && (
+          <EmptyState
+            message="No se encontraron productos."
+            colSpan={6}
+          />
+        )}
+
+
         {products.map((product) => (
           <ProductRow
             key={product.id}

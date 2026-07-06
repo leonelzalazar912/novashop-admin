@@ -1,13 +1,15 @@
-interface PaginationProps {
+type PaginationProps = {
   currentPage: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
-}
+  onPrevious: () => void;
+  onNext: () => void;
+};
 
 export function Pagination({
   currentPage,
   totalPages,
-  onPageChange,
+  onPrevious,
+  onNext,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -15,7 +17,7 @@ export function Pagination({
     <div className="pagination">
       <button
         disabled={currentPage === 1}
-        onClick={() => onPageChange(currentPage - 1)}
+        onClick={onPrevious}
       >
         Anterior
       </button>
@@ -26,7 +28,7 @@ export function Pagination({
 
       <button
         disabled={currentPage === totalPages}
-        onClick={() => onPageChange(currentPage + 1)}
+        onClick={onNext}
       >
         Siguiente
       </button>
