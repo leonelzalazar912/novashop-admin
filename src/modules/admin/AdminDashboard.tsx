@@ -15,13 +15,15 @@ import type { DashboardCard } from "./types/dashboard";
 import { CategoriesPage } from "./categories/CategoriesPage";
 import { ClientsPage } from "./clients/ClientsPage";
 import { SuppliersPage } from "./suppliers/SuppliersPage";
+import { BrandsPage } from "./brands/BrandsPage";
 
 type AdminSection =
   | "dashboard"
   | "products"
   | "categories"
   | "clients"
-  | "suppliers";
+  | "suppliers"
+  | "brands";
 
 export function AdminDashboard() {
   const [section, setSection] = useState<AdminSection>("dashboard");
@@ -121,6 +123,8 @@ export function AdminDashboard() {
         {section === "clients" && <ClientsPage />}
 
         {section === "suppliers" && <SuppliersPage />}
+
+        {section === "brands" && <BrandsPage />}
       </main>
     </div>
   );
