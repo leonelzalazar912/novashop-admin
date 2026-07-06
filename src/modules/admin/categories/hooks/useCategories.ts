@@ -1,5 +1,5 @@
+import { useLocalStorage } from "../../hooks/useLocalStorage";
 import { useEffect, useState } from "react";
-import { useLocalStorage } from "./useLocalStorage";
 import {
   initialCategories,
   type Category,

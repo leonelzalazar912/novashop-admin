@@ -1,5 +1,5 @@
 import type { Category } from "../data/categoriesData";
-import { EmptyState } from "./common/EmptyState";
+import { EmptyState } from "../../components/common/EmptyState";
 
 type CategoriesTableProps = {
   categories: Category[];

@@ -3,9 +3,9 @@ import { useCategories } from "./hooks/useCategories";
 import { CategoriesTable } from "./components/CategoriesTable";
 import { CategoryForm } from "./components/CategoryForm";
 import type { Category } from "./data/categoriesData";
-import { Toolbar } from "./components/common/Toolbar";
-import { Message } from "./components/common/Message";
-import { Pagination } from "./components/common/Pagination";
+import { Toolbar } from "../components/common/Toolbar";
+import { Message } from "../components/common/Message";
+import { Pagination } from "../components/common/Pagination";
 
 export function CategoriesPage() {
   const {

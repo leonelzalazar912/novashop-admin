@@ -1,8 +1,8 @@
 import { ProductForm } from "./components/ProductForm";
 import { ProductsTable } from "./components/ProductsTable";
 import { ProductsToolbar } from "./components/ProductsToolbar";
-import { Toast } from "./components/common/Toast";
-import { Pagination } from "./components/common/Pagination";
+import { Toast } from "../components/common/Toast";
+import { Pagination } from "../components/common/Pagination";
 import type { useProducts } from "./hooks/useProducts";
 
 interface ProductsPageProps {

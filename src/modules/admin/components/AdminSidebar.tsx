@@ -1,4 +1,8 @@
-type AdminSection = "dashboard" | "products" | "categories";
+type AdminSection =
+  | "dashboard"
+  | "products"
+  | "categories"
+  | "clients";
 
 type AdminSidebarProps = {
   onNavigate: (section: AdminSection) => void;
@@ -8,6 +12,7 @@ const menuItems = [
   { label: "Dashboard", section: "dashboard" },
   { label: "Productos", section: "products" },
   { label: "Categorías", section: "categories" },
+  { label: "Clientes", section: "clients" },
 ] as const;
 
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
@@ -17,7 +22,10 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
 
       <nav>
         {menuItems.map((item) => (
-          <button key={item.section} onClick={() => onNavigate(item.section)}>
+          <button
+            key={item.section}
+            onClick={() => onNavigate(item.section)}
+          >
             {item.label}
           </button>
         ))}

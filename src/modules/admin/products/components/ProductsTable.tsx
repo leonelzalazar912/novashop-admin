@@ -1,6 +1,6 @@
 import type { Product } from "../data/productsData";
 import { ProductRow } from "./ProductRow";
-import { EmptyState } from "./common/EmptyState";
+import { EmptyState } from "../../components/common/EmptyState";
 
 interface ProductsTableProps {
   products: Product[];
