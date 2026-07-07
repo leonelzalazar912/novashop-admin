@@ -34,6 +34,8 @@ export function ProductsTable({
           <th>Imagen</th>
           <th>Nombre</th>
           <th>Categoría</th>
+          <th>Marca</th>
+          <th>Proveedor</th>
           <th>Precio</th>
           <th>Stock</th>
           <th>Acciones</th>
@@ -44,7 +46,7 @@ export function ProductsTable({
         {products.length === 0 && (
           <EmptyState
             message="No se encontraron productos."
-            colSpan={6}
+            colSpan={8}
           />
         )}
 

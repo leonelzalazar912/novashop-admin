@@ -1,5 +1,6 @@
 import type { Category } from "../data/categoriesData";
 import { EmptyState } from "../../components/common/EmptyState";
+import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 
 type CategoriesTableProps = {
   categories: Category[];
@@ -14,7 +15,8 @@ export function CategoriesTable({
   onEditCategory,
   onToggleCategoryStatus,
 }: CategoriesTableProps) {
-    
+  const { hasProductsByCategory } = useDataIntegrity();
+
   return (
     <table className="products-table">
       <thead>
@@ -28,10 +30,10 @@ export function CategoriesTable({
 
       <tbody>
         {categories.length === 0 && (
-            <EmptyState
+          <EmptyState
             message="No se encontraron categorías."
             colSpan={4}
-            />
+          />
         )}
 
         {categories.map((category) => (
@@ -41,34 +43,41 @@ export function CategoriesTable({
             <td>{category.active ? "Activa" : "Inactiva"}</td>
 
             <td>
-                <button
-                    className="action-button"
-                    onClick={() => onEditCategory(category)}
-                >
-                    ✏️
-                </button>
+              <button
+                className="action-button"
+                onClick={() => onEditCategory(category)}
+              >
+                ✏️
+              </button>
 
-                <button
-                    className="action-button"
-                    onClick={() => onToggleCategoryStatus(category.id)}
-                >
-                    {category.active ? "⏸️" : "▶️"}
-                </button>
+              <button
+                className="action-button"
+                onClick={() => onToggleCategoryStatus(category.id)}
+              >
+                {category.active ? "⏸️" : "▶️"}
+              </button>
 
-                <button
-                    className="action-button"
-                    onClick={() => {
-                        const confirmed = window.confirm(
-                            `¿Eliminar la categoría "${category.name}"?`
-                        );
+              <button
+                className="action-button"
+                onClick={() => {
+                  if (hasProductsByCategory(category.name)) {
+                    alert(
+                      `No se puede eliminar la categoría "${category.name}" porque tiene productos asociados. Podés marcarla como inactiva en su lugar.`
+                    );
+                    return;
+                  }
 
-                        if (confirmed) {
-                            onDeleteCategory(category.id);
-                        }
-                    }}
-                >
-                    🗑️
-                </button>
+                  const confirmed = window.confirm(
+                    `¿Eliminar la categoría "${category.name}"?`
+                  );
+
+                  if (confirmed) {
+                    onDeleteCategory(category.id);
+                  }
+                }}
+              >
+                🗑️
+              </button>
             </td>
           </tr>
         ))}

@@ -1,5 +1,6 @@
 import type { Brand } from "../data/brandsData";
 import { EmptyState } from "../../components/common/EmptyState";
+import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 
 type BrandsTableProps = {
   brands: Brand[];
@@ -14,6 +15,8 @@ export function BrandsTable({
   onDeleteBrand,
   onToggleBrandStatus,
 }: BrandsTableProps) {
+  const { hasProductsByBrand } = useDataIntegrity();
+
   return (
     <table className="products-table">
       <thead>
@@ -28,10 +31,7 @@ export function BrandsTable({
 
       <tbody>
         {brands.length === 0 ? (
-          <EmptyState
-            message="No se encontraron marcas."
-            colSpan={5}
-          />
+          <EmptyState message="No se encontraron marcas." colSpan={5} />
         ) : (
           brands.map((brand) => (
             <tr key={brand.id}>
@@ -42,29 +42,25 @@ export function BrandsTable({
               </td>
 
               <td>{brand.country}</td>
-
               <td>{brand.website || "-"}</td>
+              <td>{brand.active ? "🟢 Activa" : "🔴 Inactiva"}</td>
 
               <td>
-                {brand.active ? "🟢 Activa" : "🔴 Inactiva"}
-              </td>
-
-              <td>
-                <button
-                  className="action-button"
-                  onClick={() => onEditBrand(brand)}
-                >
+                <button className="action-button" onClick={() => onEditBrand(brand)}>
                   ✏️
                 </button>
 
                 <button
                   className="action-button"
                   onClick={() => {
-                    if (
-                      window.confirm(
-                        `¿Eliminar la marca "${brand.name}"?`
-                      )
-                    ) {
+                    if (hasProductsByBrand(brand.name)) {
+                      alert(
+                        `No se puede eliminar la marca "${brand.name}" porque tiene productos asociados. Podés marcarla como inactiva en su lugar.`
+                      );
+                      return;
+                    }
+
+                    if (window.confirm(`¿Eliminar la marca "${brand.name}"?`)) {
                       onDeleteBrand(brand.id);
                     }
                   }}
