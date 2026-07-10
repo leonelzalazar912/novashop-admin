@@ -5,6 +5,10 @@ import type {
   Purchase,
   PurchaseItem,
 } from "../data/purchasesData";
+import { ProductInfoCard } from "./ProductInfoCard";
+import { PurchaseSummary } from "./PurchaseSummary";
+import { PurchaseItemsTable } from "./PurchaseItemsTable";
+import { PurchaseItemForm } from "./PurchaseItemForm";
 
 type PurchaseFormProps = {
   products: Product[];
@@ -71,27 +75,63 @@ export function PurchaseForm({
     );
 
     function handleAddItem() {
-        if (!selectedProduct) return;
+      if (!selectedProduct) return;
 
+      const existingItem = items.find(
+        (item) => item.productId === selectedProduct.id
+      );
+
+      if (existingItem) {
+        setItems((prev) =>
+          prev.map((item) =>
+            item.productId === selectedProduct.id
+              ? {
+                  ...item,
+                  quantity: item.quantity + quantity,
+                  unitCost,
+                }
+              : item
+          )
+        );
+      } else {
         setItems((prev) => [
-            ...prev,
-            {
+          ...prev,
+          {
             productId: selectedProduct.id,
             productName: selectedProduct.name,
             quantity,
             unitCost,
-            },
+          },
         ]);
+      }
 
-        setQuantity(1);
-        setUnitCost(0);
-        }
+      setQuantity(1);
+      setUnitCost(0);
+    }
 
     function handleRemoveItem(indexToRemove: number) {
         setItems((prev) =>
             prev.filter((_, index) => index !== indexToRemove)
         );
         }
+
+    function handleUpdateItem(
+      indexToUpdate: number,
+      quantity: number,
+      unitCost: number
+    ) {
+      setItems((prev) =>
+        prev.map((item, index) =>
+          index === indexToUpdate
+            ? {
+                ...item,
+                quantity,
+                unitCost,
+              }
+            : item
+        )
+      );
+    }
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
@@ -121,81 +161,24 @@ export function PurchaseForm({
             onChange={(e) => setDate(e.target.value)}
           />
 
-          <select
-            value={productId}
-            onChange={(event) =>
-                setProductId(Number(event.target.value))
-            }
-            >
-            {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                {product.name}
-                </option>
-            ))}
-            </select>
-
-          <input
-            type="number"
-            min={1}
-            placeholder="Cantidad"
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
+          <PurchaseItemForm
+            products={products}
+            productId={productId}
+            quantity={quantity}
+            unitCost={unitCost}
+            onProductChange={setProductId}
+            onQuantityChange={setQuantity}
+            onUnitCostChange={setUnitCost}
+            onAddItem={handleAddItem}
           />
 
-          <input
-            type="number"
-            min={0}
-            placeholder="Costo unitario"
-            value={unitCost}
-            onChange={(e) => setUnitCost(Number(e.target.value))}
-          />
+            <PurchaseItemsTable
+              items={items}
+              onUpdateItem={handleUpdateItem}
+              onRemoveItem={handleRemoveItem}
+            />
 
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={handleAddItem}
-            disabled={!selectedProduct || quantity <= 0 || unitCost <= 0}
-            >
-            + Agregar producto
-            </button>
-
-            {items.length > 0 && (
-                <div className="purchase-items">
-                    <h3>Productos agregados</h3>
-
-                    {items.map((item, index) => (
-                    <div
-                        key={`${item.productId}-${index}`}
-                        className="purchase-item"
-                    >
-                        <strong>{item.productName}</strong>
-
-                        <span>
-                        {item.quantity} × $
-                        {item.unitCost.toLocaleString("es-AR")}
-                        </span>
-
-                        <span>
-                        = $
-                        {(item.quantity * item.unitCost).toLocaleString("es-AR")}
-                        </span>
-
-                        <button
-                            type="button"
-                            className="action-button"
-                            onClick={() => handleRemoveItem(index)}
-                            title="Quitar producto"
-                            >
-                            🗑️
-                            </button>
-                    </div>
-                    ))}
-                </div>
-                )}
-
-          <p>
-            <strong>Total:</strong> ${total.toLocaleString("es-AR")}
-          </p>
+          <PurchaseSummary total={total} />
 
           <div className="form-actions">
             <button

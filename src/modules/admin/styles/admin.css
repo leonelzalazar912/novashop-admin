@@ -716,3 +716,30 @@
 .product-form textarea::placeholder {
   color: #94a3b8;
 }
+
+.purchase-items {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.purchase-items .products-table {
+  width: 100%;
+  min-width: 620px;
+}
+
+.modal-content {
+  width: min(900px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.product-form {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.purchase-items input {
+  width: 110px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
