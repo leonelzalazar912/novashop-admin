@@ -1,11 +1,12 @@
 import type { User } from "../data/usersData";
+import type { UserValidationResult } from "../hooks/useUsers";
 import { EmptyState } from "../../components/common/EmptyState";
 
 type UsersTableProps = {
   users: User[];
   onEdit: (user: User) => void;
-  onDelete: (id: number) => void;
-  onToggleStatus: (id: number) => void;
+  onDelete: (id: number) => UserValidationResult;
+  onToggleStatus: (id: number) => UserValidationResult;
 };
 
 export function UsersTable({
@@ -14,6 +15,28 @@ export function UsersTable({
   onDelete,
   onToggleStatus,
 }: UsersTableProps) {
+  function handleDelete(user: User) {
+    const confirmed = window.confirm(
+      `¿Eliminar el usuario "${user.name}"?`
+    );
+
+    if (!confirmed) return;
+
+    const result = onDelete(user.id);
+
+    if (!result.success) {
+      alert(result.message);
+    }
+  }
+
+  function handleToggleStatus(user: User) {
+    const result = onToggleStatus(user.id);
+
+    if (!result.success) {
+      alert(result.message);
+    }
+  }
+
   return (
     <table className="products-table">
       <thead>
@@ -37,11 +60,8 @@ export function UsersTable({
           users.map((user) => (
             <tr key={user.id}>
               <td>{user.name}</td>
-
               <td>{user.email}</td>
-
               <td>{user.username}</td>
-
               <td>{user.role}</td>
 
               <td>
@@ -52,28 +72,23 @@ export function UsersTable({
                 <button
                   className="action-button"
                   onClick={() => onEdit(user)}
+                  title="Editar"
                 >
                   ✏️
                 </button>
 
                 <button
                   className="action-button"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `¿Eliminar el usuario "${user.name}"?`
-                      )
-                    ) {
-                      onDelete(user.id);
-                    }
-                  }}
+                  onClick={() => handleDelete(user)}
+                  title="Eliminar"
                 >
                   🗑️
                 </button>
 
                 <button
                   className="action-button"
-                  onClick={() => onToggleStatus(user.id)}
+                  onClick={() => handleToggleStatus(user)}
+                  title={user.active ? "Desactivar" : "Activar"}
                 >
                   {user.active ? "🚫" : "✅"}
                 </button>

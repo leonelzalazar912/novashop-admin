@@ -78,6 +78,17 @@ export function useUsers() {
   }
 
   function updateUser(updatedUser: User): UserValidationResult {
+    const currentUser = users.find(
+      (user) => user.id === updatedUser.id
+    );
+
+    if (!currentUser) {
+      return {
+        success: false,
+        message: "No se encontró el usuario que intentás editar.",
+      };
+    }
+
     const validation = validateUniqueUser(
       updatedUser.email,
       updatedUser.username,
@@ -86,6 +97,28 @@ export function useUsers() {
 
     if (!validation.success) {
       return validation;
+    }
+
+    const isRemovingActiveAdministrator =
+      currentUser.role === "Administrador" &&
+      currentUser.active &&
+      (updatedUser.role !== "Administrador" || !updatedUser.active);
+
+    if (isRemovingActiveAdministrator) {
+      const otherActiveAdministrators = users.filter(
+        (user) =>
+          user.id !== currentUser.id &&
+          user.role === "Administrador" &&
+          user.active
+      );
+
+      if (otherActiveAdministrators.length === 0) {
+        return {
+          success: false,
+          message:
+            "No se puede cambiar el rol ni desactivar al último administrador activo.",
+        };
+      }
     }
 
     saveUsers(
@@ -97,11 +130,63 @@ export function useUsers() {
     return { success: true };
   }
 
-  function deleteUser(id: number) {
+  function deleteUser(id: number): UserValidationResult {
+    const userToDelete = users.find((user) => user.id === id);
+
+    if (!userToDelete) {
+      return {
+        success: false,
+        message: "No se encontró el usuario que intentás eliminar.",
+      };
+    }
+
+    if (userToDelete.role === "Administrador") {
+      const administrators = users.filter(
+        (user) => user.role === "Administrador"
+      );
+
+      if (administrators.length === 1) {
+        return {
+          success: false,
+          message: "No se puede eliminar al último administrador.",
+        };
+      }
+    }
+
     saveUsers(users.filter((user) => user.id !== id));
+
+    return { success: true };
   }
 
-  function toggleUserStatus(id: number) {
+  function toggleUserStatus(id: number): UserValidationResult {
+    const userToToggle = users.find((user) => user.id === id);
+
+    if (!userToToggle) {
+      return {
+        success: false,
+        message: "No se encontró el usuario.",
+      };
+    }
+
+    if (
+      userToToggle.role === "Administrador" &&
+      userToToggle.active
+    ) {
+      const activeAdministrators = users.filter(
+        (user) =>
+          user.role === "Administrador" &&
+          user.active
+      );
+
+      if (activeAdministrators.length === 1) {
+        return {
+          success: false,
+          message:
+            "No se puede desactivar al último administrador activo.",
+        };
+      }
+    }
+
     saveUsers(
       users.map((user) =>
         user.id === id
@@ -109,6 +194,8 @@ export function useUsers() {
           : user
       )
     );
+
+    return { success: true };
   }
 
   return {

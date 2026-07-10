@@ -18,6 +18,7 @@ import { SuppliersPage } from "./suppliers/SuppliersPage";
 import { BrandsPage } from "./brands/BrandsPage";
 import { OrdersPage } from "./orders/OrdersPage";
 import { UsersPage } from "./users/UsersPage";
+import { PurchasesPage } from "./purchases/PurchasesPage";
 
 type AdminSection =
   | "dashboard"
@@ -27,7 +28,9 @@ type AdminSection =
   | "suppliers"
   | "brands"
   | "orders"
-  | "users";
+  | "users"
+  | "purchases";
+
 
 
 export function AdminDashboard() {
@@ -134,6 +137,13 @@ export function AdminDashboard() {
         {section === "orders" && <OrdersPage />}
 
         {section === "users" && <UsersPage />}
+
+        {section === "purchases" && (
+          <PurchasesPage
+            products={productsManager.products}
+            increaseProductStock={productsManager.increaseProductStock}
+          />
+        )}
 
       </main>
     </div>

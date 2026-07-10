@@ -112,8 +112,13 @@ export function useSuppliers() {
     currentPage * itemsPerPage
   );
 
+  const activeSuppliers = suppliers.filter(
+    (supplier) => supplier.active
+  );
+
   return {
     suppliers: paginatedSuppliers,
+    activeSuppliers,
     search,
     setSearch,
     sortBy,

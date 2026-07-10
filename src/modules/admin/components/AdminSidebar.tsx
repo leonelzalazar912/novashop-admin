@@ -6,7 +6,8 @@ type AdminSection =
   | "suppliers"
   | "brands"
   | "orders"
-  | "users";
+  | "users"
+  | "purchases"
 
 
 type AdminSidebarProps = {
@@ -22,6 +23,7 @@ const menuItems = [
   { label: "Marcas", section: "brands" },
   { label: "Pedidos", section: "orders" },
   { label: "Usuarios", section: "users" },
+  { label: "Compras", section: "purchases" },
 
 ] as const;
 
