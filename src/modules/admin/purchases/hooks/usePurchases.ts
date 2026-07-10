@@ -25,10 +25,28 @@ export function usePurchases() {
     );
   }
 
-  function addPurchase(purchase: Omit<Purchase, "id">) {
+  function addPurchase(
+    purchase: Omit<Purchase, "id" | "number">
+  ) {
+    const lastNumber = purchases.reduce((max, purchase) => {
+      if (!purchase.number) return max;
+
+      const current = Number(
+        purchase.number.replace("COMP-", "")
+      );
+
+      return Math.max(max, current);
+    }, 0);
+
+    const nextNumber = String(lastNumber + 1).padStart(
+      6,
+      "0"
+    );
+
     const newPurchase: Purchase = {
       ...purchase,
       id: Date.now(),
+      number: `COMP-${nextNumber}`,
     };
 
     savePurchases([...purchases, newPurchase]);

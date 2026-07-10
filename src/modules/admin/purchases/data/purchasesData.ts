@@ -7,6 +7,7 @@ export interface PurchaseItem {
 
 export interface Purchase {
   id: number;
+  number: string;
   supplier: string;
   date: string;
   items: PurchaseItem[];

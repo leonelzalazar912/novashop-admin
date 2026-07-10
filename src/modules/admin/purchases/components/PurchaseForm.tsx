@@ -14,7 +14,9 @@ type PurchaseFormProps = {
   products: Product[];
   suppliers: Supplier[];
   onCancel: () => void;
-  onSave: (purchase: Omit<Purchase, "id">) => void;
+  onSave: (
+    purchase: Omit<Purchase, "id" | "number">
+  ) => void;
 };
 
 export function PurchaseForm({

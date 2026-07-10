@@ -4,17 +4,20 @@ import { EmptyState } from "../../components/common/EmptyState";
 type PurchasesTableProps = {
   purchases: Purchase[];
   onDelete: (id: number) => void;
+  onView: (purchase: Purchase) => void;
 };
 
 export function PurchasesTable({
   purchases,
   onDelete,
+  onView,
 }: PurchasesTableProps) {
   return (
     <table className="products-table">
       <thead>
         <tr>
           <th>Fecha</th>
+          <th>Número</th>
           <th>Proveedor</th>
           <th>Productos</th>
           <th>Total</th>
@@ -27,11 +30,12 @@ export function PurchasesTable({
         {purchases.length === 0 ? (
           <EmptyState
             message="No se encontraron compras."
-            colSpan={6}
+            colSpan={7}
           />
         ) : (
           purchases.map((purchase) => (
             <tr key={purchase.id}>
+              <td>{purchase.number}</td>
               <td>{purchase.date}</td>
 
               <td>{purchase.supplier}</td>
@@ -56,6 +60,16 @@ export function PurchasesTable({
 
               <td>
                 <button
+                  type="button"
+                  className="action-button"
+                  title="Ver detalle"
+                  onClick={() => onView(purchase)}
+                >
+                  👁️
+                </button>
+
+                <button
+                  type="button"
                   className="action-button"
                   title="Eliminar"
                   onClick={() => {
