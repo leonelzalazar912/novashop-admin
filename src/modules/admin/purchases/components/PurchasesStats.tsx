@@ -46,8 +46,18 @@ export function PurchasesStats({
       </div>
 
       <div className="stat-card">
-        <span>Compras completadas</span>
-        <strong>{completedPurchases.length}</strong>
+        <span>Ticket promedio</span>
+
+        <strong>
+          $
+          {(
+            completedPurchases.length
+              ? totalAmount / completedPurchases.length
+              : 0
+          ).toLocaleString("es-AR", {
+            maximumFractionDigits: 0,
+          })}
+        </strong>
       </div>
     </div>
   );

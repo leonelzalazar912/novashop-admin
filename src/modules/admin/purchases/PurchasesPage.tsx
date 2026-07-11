@@ -8,6 +8,7 @@ import type { Purchase } from "./data/purchasesData";
 import { PurchaseDetailModal } from "./components/PurchaseDetailModal";
 import { PurchasesStats } from "./components/PurchasesStats";
 import { PurchasesFilters } from "./components/PurchasesFilters";
+import { exportPurchasesToCsv } from "./utils/exportPurchasesToCsv";
 
 type PurchasesPageProps = {
   products: Product[];
@@ -15,16 +16,21 @@ type PurchasesPageProps = {
     productId: number,
     quantity: number
   ) => void;
+  decreaseProductStock: (
+  productId: number,
+  quantity: number
+) => void;
 };
 
 export function PurchasesPage({
   products,
   increaseProductStock,
+  decreaseProductStock,
 }: PurchasesPageProps) {
   const {
     purchases,
     addPurchase,
-    deletePurchase,
+    cancelPurchase,
   } = usePurchases();
 
   const { activeSuppliers } = useSuppliers();
@@ -117,22 +123,35 @@ export function PurchasesPage({
     );
 
   return (
-    <section className="admin-page">
-      <div className="page-header">
-        <div>
-          <h1>Compras</h1>
-          <p>
-            Administrá las compras realizadas a proveedores.
-          </p>
-        </div>
+  <section className="admin-page">
+    <div className="page-header">
+      <div>
+        <h1>Compras</h1>
+        <p>
+          Administrá las compras realizadas a proveedores.
+        </p>
+      </div>
+
+      <div className="header-actions">
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() =>
+            exportPurchasesToCsv(sortedPurchases)
+          }
+        >
+          Exportar CSV
+        </button>
 
         <button
+          type="button"
           className="primary-button"
           onClick={() => setShowForm(true)}
         >
           + Nueva compra
         </button>
       </div>
+    </div>
 
       <PurchasesStats purchases={purchases} />
 
@@ -161,8 +180,29 @@ export function PurchasesPage({
 
       <PurchasesTable
         purchases={sortedPurchases}
-        onDelete={deletePurchase}
         onView={setSelectedPurchase}
+        onCancel={(purchase) => {
+          const cancelledPurchase = cancelPurchase(
+            purchase.id
+          );
+
+          if (!cancelledPurchase) {
+            return;
+          }
+
+          cancelledPurchase.items.forEach((item) => {
+            decreaseProductStock(
+              item.productId,
+              item.quantity
+            );
+          });
+
+          setSelectedPurchase((current) =>
+            current?.id === cancelledPurchase.id
+              ? cancelledPurchase
+              : current
+          );
+        }}
       />
 
       {showForm && (

@@ -39,6 +39,9 @@ export function PurchaseForm({
 
   const [quantity, setQuantity] = useState(1);
   const [unitCost, setUnitCost] = useState(0);
+  const [observations, setObservations] = useState("");
+  const [paymentMethod, setPaymentMethod] =
+    useState("Contado");
   const [items, setItems] = useState<PurchaseItem[]>([]);
 
   const selectedSupplier = useMemo(
@@ -182,6 +185,47 @@ export function PurchaseForm({
 
           <PurchaseSummary total={total} />
 
+          <div className="form-group">
+            <label htmlFor="purchase-observations">
+              Observaciones
+            </label>
+
+            <textarea
+              id="purchase-observations"
+              value={observations}
+              onChange={(event) =>
+                setObservations(event.target.value)
+              }
+              rows={4}
+              placeholder="Observaciones de la compra (opcional)..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="payment-method">
+              Forma de pago
+            </label>
+
+            <select
+              id="payment-method"
+              value={paymentMethod}
+              onChange={(event) =>
+                setPaymentMethod(event.target.value)
+              }
+            >
+              <option value="Contado">Contado</option>
+              <option value="Transferencia">
+                Transferencia
+              </option>
+              <option value="Tarjeta">
+                Tarjeta
+              </option>
+              <option value="Cuenta corriente">
+                Cuenta corriente
+              </option>
+            </select>
+          </div>
+
           <div className="form-actions">
             <button
               className="primary-button"
@@ -195,6 +239,8 @@ export function PurchaseForm({
                   date,
                   items,
                   total,
+                  observations,
+                  paymentMethod,
                   status: "Completada",
                 })
               }

@@ -111,6 +111,27 @@ const paginatedProducts = filteredProducts.slice(
 
       showToast("Stock actualizado por la compra");
     }
+
+  function decreaseProductStock(
+    productId: number,
+    quantity: number
+  ) {
+    setProducts((prev) =>
+      prev.map((product) =>
+        product.id === productId
+          ? {
+              ...product,
+              stock: Math.max(
+                0,
+                product.stock - quantity
+              ),
+            }
+          : product
+      )
+    );
+
+    showToast("Stock revertido por cancelación");
+  }
     
   return {
     products,
@@ -125,6 +146,7 @@ const paginatedProducts = filteredProducts.slice(
     handleDeleteProduct,
     handleUpdateProduct,
     increaseProductStock,
+    decreaseProductStock,
     toast,
     categoryFilter,
     setCategoryFilter,

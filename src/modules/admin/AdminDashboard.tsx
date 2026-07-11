@@ -141,7 +141,12 @@ export function AdminDashboard() {
         {section === "purchases" && (
           <PurchasesPage
             products={productsManager.products}
-            increaseProductStock={productsManager.increaseProductStock}
+            increaseProductStock={
+              productsManager.increaseProductStock
+            }
+            decreaseProductStock={
+              productsManager.decreaseProductStock
+            }
           />
         )}
 

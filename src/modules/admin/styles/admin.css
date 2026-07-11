@@ -828,3 +828,229 @@
   }
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.purchase-detail-modal {
+  width: min(920px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.purchase-print-area {
+  padding: 28px;
+}
+
+.purchase-document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.purchase-document-header h2 {
+  margin: 6px 0 0;
+}
+
+.purchase-document-label {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.purchase-document-status {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.purchase-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.purchase-status-completed {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.purchase-status-cancelled {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.purchase-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.purchase-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.purchase-detail-item span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.purchase-detail-item strong {
+  color: #f8fafc;
+  overflow-wrap: anywhere;
+}
+
+.purchase-items-section h3,
+.purchase-observations h3 {
+  margin: 0 0 14px;
+}
+
+.purchase-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.purchase-detail-table {
+  width: 100%;
+  margin: 0;
+}
+
+.purchase-detail-table th,
+.purchase-detail-table td {
+  white-space: nowrap;
+}
+
+.purchase-detail-table th:first-child,
+.purchase-detail-table td:first-child {
+  white-space: normal;
+}
+
+.purchase-detail-table td[colspan="4"] {
+  text-align: center;
+  color: #94a3b8;
+  padding: 28px;
+}
+
+.purchase-summary-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.purchase-summary-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.purchase-summary-card span {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.purchase-summary-card strong {
+  font-size: 20px;
+}
+
+.purchase-grand-total {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+.purchase-grand-total strong {
+  color: #60a5fa;
+  font-size: 24px;
+}
+
+.purchase-observations {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.purchase-observations p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.purchase-document-footer {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: center;
+}
+
+.purchase-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 760px) {
+  .purchase-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .purchase-summary-card {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .purchase-modal-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .purchase-print-area {
+    padding: 20px;
+  }
+
+  .purchase-document-header {
+    flex-direction: column;
+  }
+
+  .purchase-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.purchase-summary-single {
+  grid-template-columns: minmax(260px, 420px);
+  justify-content: flex-end;
+}
+

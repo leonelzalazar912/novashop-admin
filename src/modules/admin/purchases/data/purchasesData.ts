@@ -12,6 +12,8 @@ export interface Purchase {
   date: string;
   items: PurchaseItem[];
   total: number;
+  observations: string;
+  paymentMethod: string;
   status: "Completada" | "Cancelada";
 }
 
