@@ -14,12 +14,14 @@ type PurchasesPageProps = {
   products: Product[];
   increaseProductStock: (
     productId: string,
-    quantity: number
-  ) => void | Promise<void>;
+    quantity: number,
+    purchaseId: string
+  ) => boolean | Promise<boolean>;
   decreaseProductStock: (
     productId: string,
-    quantity: number
-  ) => void | Promise<void>;
+    quantity: number,
+    purchaseId: string
+  ) => boolean | Promise<boolean>;
 };
 
 export function PurchasesPage({
@@ -191,7 +193,8 @@ export function PurchasesPage({
           for (const item of cancelledPurchase.items) {
             await decreaseProductStock(
               item.productId,
-              item.quantity
+              item.quantity,
+              cancelledPurchase.id
             );
           }
 
@@ -219,7 +222,8 @@ export function PurchasesPage({
             for (const item of createdPurchase.items) {
               await increaseProductStock(
                 item.productId,
-                item.quantity
+                item.quantity,
+                createdPurchase.id
               );
             }
 

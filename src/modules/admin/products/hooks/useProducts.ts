@@ -115,6 +115,7 @@ export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [locationId, setLocationId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] =
@@ -155,6 +156,8 @@ export function useProducts() {
         setLoading(false);
         return;
       }
+
+      setUserId(user.id);
 
       const {
         data: membership,
@@ -586,17 +589,31 @@ export function useProducts() {
   async function updateProductStock(
     productId: string,
     quantity: number,
-    successMessage: string
-  ) {
-    if (!storeId || !locationId) return;
+    successMessage: string,
+    movementType: "purchase" | "purchase_cancel",
+    referenceId: string
+  ): Promise<boolean> {
+    if (!storeId || !locationId) {
+      setError("No se encontró la tienda o el depósito.");
+      return false;
+    }
 
     const product = products.find(
       (item) => item.id === productId
     );
 
-    if (!product) return;
+    if (!product) {
+      setError("No se encontró el producto.");
+      return false;
+    }
 
+    const previousStock = product.stock;
     const newStock = Math.max(0, quantity);
+    const quantityDelta = newStock - previousStock;
+
+    if (quantityDelta === 0) {
+      return true;
+    }
 
     const { error: stockError } = await supabase
       .from("inventory_levels")
@@ -616,7 +633,53 @@ export function useProducts() {
     if (stockError) {
       console.error(stockError);
       setError("No se pudo actualizar el stock.");
-      return;
+      return false;
+    }
+
+    const { error: movementError } = await supabase
+      .from("stock_movements")
+      .insert({
+        store_id: storeId,
+        product_id: productId,
+        location_id: locationId,
+        movement_type: movementType,
+        quantity_delta: quantityDelta,
+        reference_type: "purchase",
+        reference_id: referenceId,
+        notes:
+          movementType === "purchase"
+            ? "Ingreso de stock por compra"
+            : "Reversión de stock por cancelación de compra",
+        created_by: userId,
+      });
+
+    if (movementError) {
+      console.error(movementError);
+
+      const { error: rollbackError } = await supabase
+        .from("inventory_levels")
+        .upsert(
+          {
+            store_id: storeId,
+            product_id: productId,
+            location_id: locationId,
+            quantity: previousStock,
+            reserved_quantity: 0,
+          },
+          {
+            onConflict: "product_id,location_id",
+          }
+        );
+
+      if (rollbackError) {
+        console.error(rollbackError);
+      }
+
+      setError(
+        "No se pudo registrar el movimiento de stock."
+      );
+
+      return false;
     }
 
     setProducts((previous) =>
@@ -629,39 +692,47 @@ export function useProducts() {
 
     setError("");
     showToast(successMessage);
+
+    return true;
   }
 
   async function increaseProductStock(
     productId: string,
-    quantity: number
-  ) {
+    quantity: number,
+    purchaseId: string
+  ): Promise<boolean> {
     const product = products.find(
       (item) => item.id === productId
     );
 
-    if (!product) return;
+    if (!product) return false;
 
-    await updateProductStock(
+    return updateProductStock(
       productId,
       product.stock + quantity,
-      "Stock actualizado por la compra"
+      "Stock actualizado por la compra",
+      "purchase",
+      purchaseId
     );
   }
 
   async function decreaseProductStock(
     productId: string,
-    quantity: number
-  ) {
+    quantity: number,
+    purchaseId: string
+  ): Promise<boolean> {
     const product = products.find(
       (item) => item.id === productId
     );
 
-    if (!product) return;
+    if (!product) return false;
 
-    await updateProductStock(
+    return updateProductStock(
       productId,
       product.stock - quantity,
-      "Stock revertido por cancelación"
+      "Stock revertido por cancelación",
+      "purchase_cancel",
+      purchaseId
     );
   }
 
