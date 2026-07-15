@@ -60,7 +60,7 @@ export function OrderForm({
   }, [editingOrder]);
 
   const selectedProduct = products.find(
-    (product) => product.id === Number(productId)
+    (product) => product.id === productId
   );
 
   const total = items.reduce(
@@ -68,7 +68,7 @@ export function OrderForm({
     0
   );
 
-  function getProductName(id: number) {
+  function getProductName(id: string) {
     return products.find((product) => product.id === id)?.name ?? "Producto";
   }
 
@@ -112,7 +112,7 @@ export function OrderForm({
     setError("");
   }
 
-  function removeItem(productId: number) {
+  function removeItem(productId: string) {
     setItems((prev) =>
       prev.filter((item) => item.productId !== productId)
     );
@@ -146,7 +146,7 @@ export function OrderForm({
       });
     } else {
       onAddOrder({
-        clientId: Number(clientId),
+        clientId,
         items,
         status,
         paymentStatus,

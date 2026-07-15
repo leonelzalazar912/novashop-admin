@@ -7,13 +7,15 @@ type ClientFormProps = {
     name: string,
     email: string,
     phone: string,
+    street: string,
     city: string
   ) => void;
   onUpdateClient: (
-    id: number,
+    id: string,
     name: string,
     email: string,
     phone: string,
+    street: string,
     city: string
   ) => void;
   onCancelEdit: () => void;
@@ -28,6 +30,7 @@ export function ClientForm({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
 
   useEffect(() => {
@@ -35,27 +38,39 @@ export function ClientForm({
       setName(editingClient.name);
       setEmail(editingClient.email);
       setPhone(editingClient.phone);
+      setStreet(editingClient.street);
       setCity(editingClient.city);
     } else {
       setName("");
       setEmail("");
       setPhone("");
+      setStreet("");
       setCity("");
     }
   }, [editingClient]);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function clearForm() {
+    setName("");
+    setEmail("");
+    setPhone("");
+    setStreet("");
+    setCity("");
+  }
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
 
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     const trimmedPhone = phone.trim();
+    const trimmedStreet = street.trim();
     const trimmedCity = city.trim();
 
     if (
       !trimmedName ||
       !trimmedEmail ||
       !trimmedPhone ||
+      !trimmedStreet ||
       !trimmedCity
     ) {
       return;
@@ -67,6 +82,7 @@ export function ClientForm({
         trimmedName,
         trimmedEmail,
         trimmedPhone,
+        trimmedStreet,
         trimmedCity
       );
     } else {
@@ -74,63 +90,84 @@ export function ClientForm({
         trimmedName,
         trimmedEmail,
         trimmedPhone,
+        trimmedStreet,
         trimmedCity
       );
     }
 
-    setName("");
-    setEmail("");
-    setPhone("");
-    setCity("");
+    clearForm();
   }
 
   function handleCancel() {
-    setName("");
-    setEmail("");
-    setPhone("");
-    setCity("");
+    clearForm();
     onCancelEdit();
   }
 
   return (
-    <form className="product-form" onSubmit={handleSubmit}>
+    <form
+      className="product-form"
+      onSubmit={handleSubmit}
+    >
       <input
         type="text"
         placeholder="Nombre"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(event) =>
+          setName(event.target.value)
+        }
       />
 
       <input
         type="email"
         placeholder="Email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(event) =>
+          setEmail(event.target.value)
+        }
       />
 
       <input
         type="text"
         placeholder="Teléfono"
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={(event) =>
+          setPhone(event.target.value)
+        }
+      />
+
+      <input
+        type="text"
+        placeholder="Calle / Dirección"
+        value={street}
+        onChange={(event) =>
+          setStreet(event.target.value)
+        }
       />
 
       <input
         type="text"
         placeholder="Ciudad"
         value={city}
-        onChange={(e) => setCity(e.target.value)}
+        onChange={(event) =>
+          setCity(event.target.value)
+        }
       />
 
       <div className="form-actions">
-        <button className="primary-button" type="submit">
+        <button
+          className="primary-button"
+          type="submit"
+        >
           {editingClient
             ? "Guardar cambios"
             : "Agregar cliente"}
         </button>
 
         {editingClient && (
-          <button type="button" onClick={handleCancel}>
+          <button
+            type="button"
+            onClick={handleCancel}
+          >
             Cancelar
           </button>
         )}

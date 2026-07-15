@@ -45,7 +45,7 @@ export function OrdersPage() {
     setMessage("Pedido actualizado correctamente.");
   }
 
-  function handleDeleteOrder(id: number) {
+  function handleDeleteOrder(id: string) {
     deleteOrder(id);
     setMessage("Pedido eliminado correctamente.");
   }

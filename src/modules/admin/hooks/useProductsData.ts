@@ -1,20 +1,7 @@
-import { useMemo } from "react";
-import type { Product } from "../products/data/productsData";
+import { useProducts } from "../products/hooks/useProducts";
 
 export function useProductsData() {
-  const products = useMemo<Product[]>(() => {
-    const stored = localStorage.getItem("products");
-
-    if (!stored) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [];
-    }
-  }, []);
+  const { products } = useProducts();
 
   return products;
 }

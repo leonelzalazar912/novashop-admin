@@ -1,20 +1,7 @@
-import { useMemo } from "react";
-import { initialClients, type Client } from "../clients/data/clientsData";
+import { useClients } from "../clients/hooks/useClients";
 
 export function useClientsData() {
-  const clients = useMemo<Client[]>(() => {
-    const stored = localStorage.getItem("clients");
-
-    if (!stored) {
-      return initialClients;
-    }
-
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return initialClients;
-    }
-  }, []);
+  const { clients } = useClients();
 
   return clients.filter((client) => client.active);
 }

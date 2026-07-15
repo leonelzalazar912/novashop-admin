@@ -1,58 +1,80 @@
-import type { Order } from "../orders/data/ordersData";
-import type { Product } from "../products/data/productsData";
+import { supabase } from "../../../lib/supabase";
+
+async function recordExists(
+  table: string,
+  column: string,
+  value: string,
+  errorMessage: string
+): Promise<boolean> {
+  const { count, error } = await supabase
+    .from(table)
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq(column, value);
+
+  if (error) {
+    console.error(error);
+    throw new Error(errorMessage);
+  }
+
+  return (count ?? 0) > 0;
+}
 
 export function useDataIntegrity() {
-  function getOrders(): Order[] {
-    const stored = localStorage.getItem("orders");
-    if (!stored) return [];
-
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [];
-    }
-  }
-
-  function getProducts(): Product[] {
-    const stored = localStorage.getItem("products");
-    if (!stored) return [];
-
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [];
-    }
-  }
-
-  function hasOrdersByClient(clientId: number) {
-    return getOrders().some((order) => order.clientId === clientId);
-  }
-
-  function hasOrdersByProduct(productId: string) {
-    return getOrders().some((order) =>
-      order.items.some(
-        (item) => String(item.productId) === productId
-      )
+  function hasOrdersByClient(
+    clientId: string
+  ): Promise<boolean> {
+    return recordExists(
+      "orders",
+      "customer_id",
+      clientId,
+      "No se pudo comprobar si el cliente tiene pedidos."
     );
   }
 
-  function hasProductsByCategory(category: string) {
-    return getProducts().some(
-      (product) => product.category === category
+  function hasOrdersByProduct(
+    productId: string
+  ): Promise<boolean> {
+    return recordExists(
+      "order_items",
+      "product_id",
+      productId,
+      "No se pudo comprobar si el producto tiene pedidos."
     );
   }
 
-  function hasProductsByBrand(brand: string) {
-    return getProducts().some(
-      (product) =>
-        (product as Product & { brand?: string }).brand === brand
+  function hasProductsByCategory(
+    categoryId: string
+  ): Promise<boolean> {
+    return recordExists(
+      "products",
+      "category_id",
+      categoryId,
+      "No se pudo comprobar si la categoría tiene productos."
     );
   }
 
-  function hasProductsBySupplier(supplier: string) {
-    return getProducts().some(
-      (product) =>
-        (product as Product & { supplier?: string }).supplier === supplier
+  function hasProductsByBrand(
+    brandId: string
+  ): Promise<boolean> {
+    return recordExists(
+      "products",
+      "brand_id",
+      brandId,
+      "No se pudo comprobar si la marca tiene productos."
+    );
+  }
+
+  function hasProductsBySupplier(
+    supplierId: string
+  ): Promise<boolean> {
+    return recordExists(
+      "product_suppliers",
+      "supplier_id",
+      supplierId,
+      "No se pudo comprobar si el proveedor tiene productos."
     );
   }
 

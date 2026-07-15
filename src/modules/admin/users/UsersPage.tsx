@@ -15,16 +15,24 @@ export function UsersPage() {
 
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | undefined>();
+  const [editingUser, setEditingUser] =
+    useState<User | undefined>();
 
   const filteredUsers = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    const normalizedSearch = search
+      .trim()
+      .toLowerCase();
 
-    if (!normalizedSearch) return users;
+    if (!normalizedSearch) {
+      return users;
+    }
 
     return users.filter((user) =>
-      [user.name, user.email, user.username, user.role].some((value) =>
-        value.toLowerCase().includes(normalizedSearch)
+      [user.name, user.email, user.role].some(
+        (value) =>
+          value
+            .toLowerCase()
+            .includes(normalizedSearch)
       )
     );
   }, [users, search]);
@@ -49,10 +57,13 @@ export function UsersPage() {
       <div className="page-header">
         <div>
           <h1>Usuarios</h1>
-          <p>Administrá los usuarios y sus roles.</p>
+          <p>
+            Administrá los usuarios y sus roles.
+          </p>
         </div>
 
         <button
+          type="button"
           className="primary-button"
           onClick={handleCreateUser}
         >
@@ -62,9 +73,11 @@ export function UsersPage() {
 
       <input
         type="search"
-        placeholder="Buscar por nombre, email, usuario o rol..."
+        placeholder="Buscar por nombre, email o rol..."
         value={search}
-        onChange={(event) => setSearch(event.target.value)}
+        onChange={(event) =>
+          setSearch(event.target.value)
+        }
       />
 
       <UsersTable
@@ -81,18 +94,18 @@ export function UsersPage() {
           onSave={(userData) => {
             const result = editingUser
               ? updateUser({
-                ...userData,
-                id: editingUser.id,
-              })
-            : addUser(userData);
+                  ...userData,
+                  id: editingUser.id,
+                })
+              : addUser(userData);
 
-          if (!result.success) {
-            alert(result.message);
-            return;
-          }
+            if (!result.success) {
+              alert(result.message);
+              return;
+            }
 
-          handleCloseForm();
-        }}
+            handleCloseForm();
+          }}
         />
       )}
     </section>

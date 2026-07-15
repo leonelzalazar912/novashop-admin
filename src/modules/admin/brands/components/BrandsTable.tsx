@@ -5,8 +5,8 @@ import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 type BrandsTableProps = {
   brands: Brand[];
   onEditBrand: (brand: Brand) => void;
-  onDeleteBrand: (id: number) => void;
-  onToggleBrandStatus: (id: number) => void;
+  onDeleteBrand: (id: string) => void;
+  onToggleBrandStatus: (id: string) => void;
 };
 
 export function BrandsTable({
@@ -16,6 +16,37 @@ export function BrandsTable({
   onToggleBrandStatus,
 }: BrandsTableProps) {
   const { hasProductsByBrand } = useDataIntegrity();
+
+  async function handleDelete(brand: Brand) {
+    try {
+      const hasProducts = await hasProductsByBrand(
+        brand.id
+      );
+
+      if (hasProducts) {
+        alert(
+          `No se puede eliminar la marca "${brand.name}" porque tiene productos asociados. Podés marcarla como inactiva en su lugar.`
+        );
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `¿Eliminar la marca "${brand.name}"?`
+      );
+
+      if (confirmed) {
+        onDeleteBrand(brand.id);
+      }
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo comprobar la marca."
+      );
+    }
+  }
 
   return (
     <table className="products-table">
@@ -31,7 +62,10 @@ export function BrandsTable({
 
       <tbody>
         {brands.length === 0 ? (
-          <EmptyState message="No se encontraron marcas." colSpan={5} />
+          <EmptyState
+            message="No se encontraron marcas."
+            colSpan={5}
+          />
         ) : (
           brands.map((brand) => (
             <tr key={brand.id}>
@@ -43,34 +77,37 @@ export function BrandsTable({
 
               <td>{brand.country}</td>
               <td>{brand.website || "-"}</td>
-              <td>{brand.active ? "🟢 Activa" : "🔴 Inactiva"}</td>
+              <td>
+                {brand.active
+                  ? "🟢 Activa"
+                  : "🔴 Inactiva"}
+              </td>
 
               <td>
-                <button className="action-button" onClick={() => onEditBrand(brand)}>
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => onEditBrand(brand)}
+                >
                   ✏️
                 </button>
 
                 <button
+                  type="button"
                   className="action-button"
                   onClick={() => {
-                    if (hasProductsByBrand(brand.name)) {
-                      alert(
-                        `No se puede eliminar la marca "${brand.name}" porque tiene productos asociados. Podés marcarla como inactiva en su lugar.`
-                      );
-                      return;
-                    }
-
-                    if (window.confirm(`¿Eliminar la marca "${brand.name}"?`)) {
-                      onDeleteBrand(brand.id);
-                    }
+                    void handleDelete(brand);
                   }}
                 >
                   🗑️
                 </button>
 
                 <button
+                  type="button"
                   className="action-button"
-                  onClick={() => onToggleBrandStatus(brand.id)}
+                  onClick={() =>
+                    onToggleBrandStatus(brand.id)
+                  }
                 >
                   {brand.active ? "🚫" : "✅"}
                 </button>

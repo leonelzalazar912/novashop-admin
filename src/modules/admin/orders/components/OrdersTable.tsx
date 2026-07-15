@@ -6,7 +6,7 @@ import { EmptyState } from "../../components/common/EmptyState";
 type OrdersTableProps = {
   orders: Order[];
   onEditOrder: (order: Order) => void;
-  onDeleteOrder: (id: number) => void;
+  onDeleteOrder: (id: string) => void;
 };
 
 export function OrdersTable({
@@ -17,12 +17,20 @@ export function OrdersTable({
   const clients = useClientsData();
   const products = useProductsData();
 
-  function getClientName(clientId: number) {
-    return clients.find((client) => client.id === clientId)?.name ?? "Cliente no encontrado";
+  function getClientName(clientId: string) {
+    return (
+      clients.find(
+        (client) => String(client.id) === clientId
+      )?.name ?? "Cliente no encontrado"
+    );
   }
 
-  function getProductName(productId: number) {
-    return products.find((product) => product.id === productId)?.name ?? "Producto no encontrado";
+  function getProductName(productId: string) {
+    return (
+      products.find(
+        (product) => String(product.id) === productId
+      )?.name ?? "Producto no encontrado"
+    );
   }
 
   return (
@@ -42,7 +50,10 @@ export function OrdersTable({
 
       <tbody>
         {orders.length === 0 ? (
-          <EmptyState message="No se encontraron pedidos." colSpan={8} />
+          <EmptyState
+            message="No se encontraron pedidos."
+            colSpan={8}
+          />
         ) : (
           orders.map((order) => (
             <tr key={order.id}>
@@ -53,12 +64,15 @@ export function OrdersTable({
               <td>
                 {order.items.map((item) => (
                   <div key={item.productId}>
-                    • {getProductName(item.productId)} x{item.quantity}
+                    • {getProductName(item.productId)} x
+                    {item.quantity}
                   </div>
                 ))}
               </td>
 
-              <td>${order.total}</td>
+              <td>
+                ${order.total.toLocaleString("es-AR")}
+              </td>
 
               <td>{order.status}</td>
 
@@ -66,14 +80,15 @@ export function OrdersTable({
                 {order.paymentStatus === "Pendiente"
                   ? "Pago pendiente"
                   : order.paymentStatus === "Pagado"
-                  ? "Pagado"
-                  : "Pago rechazado"}
+                    ? "Pagado"
+                    : "Pago rechazado"}
               </td>
 
               <td>{order.date}</td>
 
               <td>
                 <button
+                  type="button"
                   className="action-button"
                   onClick={() => onEditOrder(order)}
                 >
@@ -81,9 +96,14 @@ export function OrdersTable({
                 </button>
 
                 <button
+                  type="button"
                   className="action-button"
                   onClick={() => {
-                    if (window.confirm("¿Eliminar este pedido?")) {
+                    const confirmed = window.confirm(
+                      "¿Eliminar este pedido?"
+                    );
+
+                    if (confirmed) {
                       onDeleteOrder(order.id);
                     }
                   }}

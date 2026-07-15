@@ -4,9 +4,9 @@ import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 
 type CategoriesTableProps = {
   categories: Category[];
-  onDeleteCategory: (id: number) => void;
+  onDeleteCategory: (id: string) => void;
   onEditCategory: (category: Category) => void;
-  onToggleCategoryStatus: (id: number) => void;
+  onToggleCategoryStatus: (id: string) => void;
 };
 
 export function CategoriesTable({
@@ -15,7 +15,40 @@ export function CategoriesTable({
   onEditCategory,
   onToggleCategoryStatus,
 }: CategoriesTableProps) {
-  const { hasProductsByCategory } = useDataIntegrity();
+  const { hasProductsByCategory } =
+    useDataIntegrity();
+
+  async function handleDelete(
+    category: Category
+  ) {
+    try {
+      const hasProducts =
+        await hasProductsByCategory(category.id);
+
+      if (hasProducts) {
+        alert(
+          `No se puede eliminar la categoría "${category.name}" porque tiene productos asociados. Podés marcarla como inactiva en su lugar.`
+        );
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `¿Eliminar la categoría "${category.name}"?`
+      );
+
+      if (confirmed) {
+        onDeleteCategory(category.id);
+      }
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo comprobar la categoría."
+      );
+    }
+  }
 
   return (
     <table className="products-table">
@@ -40,40 +73,40 @@ export function CategoriesTable({
           <tr key={category.id}>
             <td>{category.name}</td>
             <td>{category.description}</td>
-            <td>{category.active ? "Activa" : "Inactiva"}</td>
+            <td>
+              {category.active
+                ? "Activa"
+                : "Inactiva"}
+            </td>
 
             <td>
               <button
+                type="button"
                 className="action-button"
-                onClick={() => onEditCategory(category)}
+                onClick={() =>
+                  onEditCategory(category)
+                }
               >
                 ✏️
               </button>
 
               <button
+                type="button"
                 className="action-button"
-                onClick={() => onToggleCategoryStatus(category.id)}
+                onClick={() =>
+                  onToggleCategoryStatus(
+                    category.id
+                  )
+                }
               >
                 {category.active ? "⏸️" : "▶️"}
               </button>
 
               <button
+                type="button"
                 className="action-button"
                 onClick={() => {
-                  if (hasProductsByCategory(category.name)) {
-                    alert(
-                      `No se puede eliminar la categoría "${category.name}" porque tiene productos asociados. Podés marcarla como inactiva en su lugar.`
-                    );
-                    return;
-                  }
-
-                  const confirmed = window.confirm(
-                    `¿Eliminar la categoría "${category.name}"?`
-                  );
-
-                  if (confirmed) {
-                    onDeleteCategory(category.id);
-                  }
+                  void handleDelete(category);
                 }}
               >
                 🗑️

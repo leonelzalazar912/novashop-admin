@@ -43,25 +43,35 @@ export function ClientsPage() {
     name: string,
     email: string,
     phone: string,
+    street: string,
     city: string
   ) {
-    addClient(name, email, phone, city);
+    addClient(name, email, phone, street, city);
     setMessage("Cliente creado correctamente.");
   }
 
   function handleUpdateClient(
-    id: number,
+    id: string,
     name: string,
     email: string,
     phone: string,
+    street: string,
     city: string
   ) {
-    updateClient(id, name, email, phone, city);
+    updateClient(
+      id,
+      name,
+      email,
+      phone,
+      street,
+      city
+    );
+
     setEditingClient(null);
     setMessage("Cliente actualizado correctamente.");
   }
 
-  function handleDeleteClient(id: number) {
+  function handleDeleteClient(id: string) {
     deleteClient(id);
     setMessage("Cliente eliminado correctamente.");
   }

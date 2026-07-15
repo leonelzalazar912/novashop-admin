@@ -11,14 +11,14 @@ export type PaymentStatus =
   | "Rechazado";
 
 export type OrderItem = {
-  productId: number;
+  productId: string;
   quantity: number;
   price: number;
 };
 
 export type Order = {
-  id: number;
-  clientId: number;
+  id: string;
+  clientId: string;
   items: OrderItem[];
   status: OrderStatus;
   paymentStatus: PaymentStatus;
@@ -27,21 +27,4 @@ export type Order = {
   notes: string;
 };
 
-export const initialOrders: Order[] = [
-  {
-    id: 1,
-    clientId: 1,
-    items: [
-      {
-        productId: 1,
-        quantity: 1,
-        price: 850000,
-      },
-    ],
-    status: "Pendiente",
-    paymentStatus: "Pendiente",
-    date: "2026-07-06",
-    total: 850000,
-    notes: "Retira por sucursal.",
-  },
-];
+export const initialOrders: Order[] = [];

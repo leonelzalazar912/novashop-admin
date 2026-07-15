@@ -16,15 +16,35 @@ export function ProductsTable({
 }: ProductsTableProps) {
   const { hasOrdersByProduct } = useDataIntegrity();
 
-  function handleDelete(product: Product) {
-    if (hasOrdersByProduct(product.id)) {
-      alert(
-        `No se puede eliminar el producto "${product.name}" porque está asociado a uno o más pedidos. Podés marcarlo como inactivo en su lugar.`
+  async function handleDelete(product: Product) {
+    try {
+      const hasOrders = await hasOrdersByProduct(
+        product.id
       );
-      return;
-    }
 
-    onDelete(product.id);
+      if (hasOrders) {
+        alert(
+          `No se puede eliminar el producto "${product.name}" porque está asociado a uno o más pedidos. Podés marcarlo como inactivo en su lugar.`
+        );
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `¿Eliminar el producto "${product.name}"?`
+      );
+
+      if (confirmed) {
+        onDelete(product.id);
+      }
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo comprobar la integridad del producto."
+      );
+    }
   }
 
   return (
@@ -55,7 +75,9 @@ export function ProductsTable({
             key={product.id}
             product={product}
             onEdit={onEdit}
-            onDelete={() => handleDelete(product)}
+            onDelete={() => {
+              void handleDelete(product);
+            }}
           />
         ))}
       </tbody>

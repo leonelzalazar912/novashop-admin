@@ -5,8 +5,8 @@ import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 type SuppliersTableProps = {
   suppliers: Supplier[];
   onEditSupplier: (supplier: Supplier) => void;
-  onDeleteSupplier: (id: number) => void;
-  onToggleSupplierStatus: (id: number) => void;
+  onDeleteSupplier: (id: string) => void;
+  onToggleSupplierStatus: (id: string) => void;
 };
 
 export function SuppliersTable({
@@ -15,7 +15,40 @@ export function SuppliersTable({
   onDeleteSupplier,
   onToggleSupplierStatus,
 }: SuppliersTableProps) {
-  const { hasProductsBySupplier } = useDataIntegrity();
+  const { hasProductsBySupplier } =
+    useDataIntegrity();
+
+  async function handleDelete(
+    supplier: Supplier
+  ) {
+    try {
+      const hasProducts =
+        await hasProductsBySupplier(supplier.id);
+
+      if (hasProducts) {
+        alert(
+          `No se puede eliminar el proveedor "${supplier.company}" porque tiene productos asociados. Podés marcarlo como inactivo en su lugar.`
+        );
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `¿Eliminar proveedor "${supplier.company}"?`
+      );
+
+      if (confirmed) {
+        onDeleteSupplier(supplier.id);
+      }
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo comprobar el proveedor."
+      );
+    }
+  }
 
   return (
     <table className="products-table">
@@ -34,47 +67,51 @@ export function SuppliersTable({
 
       <tbody>
         {suppliers.length === 0 ? (
-          <EmptyState message="No se encontraron proveedores." colSpan={8} />
+          <EmptyState
+            message="No se encontraron proveedores."
+            colSpan={8}
+          />
         ) : (
           suppliers.map((supplier) => (
             <tr key={supplier.id}>
-              <td><strong>{supplier.company}</strong></td>
+              <td>
+                <strong>{supplier.company}</strong>
+              </td>
+
               <td>{supplier.type}</td>
+
               <td>
                 <div>{supplier.contact}</div>
                 <small>{supplier.email}</small>
               </td>
+
               <td>{supplier.city || "-"}</td>
               <td>{supplier.province || "-"}</td>
               <td>{supplier.cuit || "-"}</td>
-              <td>{supplier.active ? "🟢 Activo" : "🔴 Inactivo"}</td>
+
+              <td>
+                {supplier.active
+                  ? "🟢 Activo"
+                  : "🔴 Inactivo"}
+              </td>
 
               <td>
                 <button
+                  type="button"
                   className="action-button"
-                  onClick={() => onEditSupplier(supplier)}
+                  onClick={() =>
+                    onEditSupplier(supplier)
+                  }
                   title="Editar"
                 >
                   ✏️
                 </button>
 
                 <button
+                  type="button"
                   className="action-button"
                   onClick={() => {
-                    if (hasProductsBySupplier(supplier.company)) {
-                      alert(
-                        `No se puede eliminar el proveedor "${supplier.company}" porque tiene productos asociados. Podés marcarlo como inactivo en su lugar.`
-                      );
-                      return;
-                    }
-
-                    const confirmed = window.confirm(
-                      `¿Eliminar proveedor "${supplier.company}"?`
-                    );
-
-                    if (confirmed) {
-                      onDeleteSupplier(supplier.id);
-                    }
+                    void handleDelete(supplier);
                   }}
                   title="Eliminar"
                 >
@@ -82,9 +119,18 @@ export function SuppliersTable({
                 </button>
 
                 <button
+                  type="button"
                   className="action-button"
-                  onClick={() => onToggleSupplierStatus(supplier.id)}
-                  title={supplier.active ? "Desactivar proveedor" : "Activar proveedor"}
+                  onClick={() =>
+                    onToggleSupplierStatus(
+                      supplier.id
+                    )
+                  }
+                  title={
+                    supplier.active
+                      ? "Desactivar proveedor"
+                      : "Activar proveedor"
+                  }
                 >
                   {supplier.active ? "🚫" : "✅"}
                 </button>
