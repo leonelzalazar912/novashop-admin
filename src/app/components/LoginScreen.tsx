@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Gamepad2, LogIn, Chrome } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 interface Props {
   onGoRegister: () => void;
@@ -11,14 +12,30 @@ export function LoginScreen({ onGoRegister, onGoProfile }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (!email.trim() || !password.trim()) {
     setError("Completá correo electrónico y contraseña para continuar.");
     return;
   }
 
+  setLoading(true);
   setError("");
+
+  const { error: loginError } =
+    await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+  if (loginError) {
+    setError("Correo o contraseña incorrectos.");
+    setLoading(false);
+    return;
+  }
+
+  setLoading(false);
   onGoProfile();
 };
 
@@ -221,6 +238,7 @@ const handleLogin = () => {
 
           <button
             onClick={handleLogin}
+            disabled={loading}
             className="w-full flex items-center justify-center gap-2 rounded-lg mt-6 transition-all duration-200"
             style={{
               background: "#6A3CE6",
@@ -237,7 +255,7 @@ const handleLogin = () => {
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#6A3CE6"; }}
           >
             <LogIn size={16} />
-            INICIAR SESIÓN
+            {loading ? "INGRESANDO..." : "INICIAR SESIÓN"}
           </button>
         </div>
       </div>

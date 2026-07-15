@@ -6,7 +6,7 @@ import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 interface ProductsTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 export function ProductsTable({

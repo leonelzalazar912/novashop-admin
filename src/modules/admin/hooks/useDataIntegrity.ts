@@ -28,9 +28,11 @@ export function useDataIntegrity() {
     return getOrders().some((order) => order.clientId === clientId);
   }
 
-  function hasOrdersByProduct(productId: number) {
+  function hasOrdersByProduct(productId: string) {
     return getOrders().some((order) =>
-      order.items.some((item) => item.productId === productId)
+      order.items.some(
+        (item) => String(item.productId) === productId
+      )
     );
   }
 

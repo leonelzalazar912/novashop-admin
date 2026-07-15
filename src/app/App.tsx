@@ -49,7 +49,8 @@ export default function App() {
   | "completed"
   | "claims"
   | "admin"
->("admin");
+  | "admin-login"
+>("admin-login");
   const [catalogSearch, setCatalogSearch] = useState("");
   useEffect(() => {
   window.scrollTo({
@@ -81,11 +82,11 @@ const handleViewDetails = (game: Product) => {
   const ps5Games = products.filter((g) => g.category === "PS5").slice(0, 5);
   const xboxGames = products.filter((g) => g.category === "Xbox").slice(0, 5);
 
-  if (screen === "login") {
+  if (screen === "login" || screen === "admin-login") {
   return (
     <LoginScreen
       onGoRegister={() => setScreen("register")}
-      onGoProfile={() => setScreen("home")}
+      onGoProfile={() => setScreen("admin")}
     />
   );
 }

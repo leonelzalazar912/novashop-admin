@@ -1,18 +1,52 @@
-import { useMemo } from "react";
-import { initialCategories, type Category } from "../categories/data/categoriesData";
+import { useEffect, useState } from "react";
+import { supabase } from "../../../lib/supabase";
+import type { Category } from "../categories/data/categoriesData";
 
 export function useCategoriesData() {
-  const categories = useMemo<Category[]>(() => {
-    const stored = localStorage.getItem("categories");
+  const [categories, setCategories] = useState<Category[]>([]);
 
-    if (!stored) return initialCategories;
+  useEffect(() => {
+    async function loadCategories() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return initialCategories;
+      if (!user) return;
+
+      const { data: membership } = await supabase
+        .from("store_members")
+        .select("store_id")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (!membership) return;
+
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, description, active")
+        .eq("store_id", membership.store_id)
+        .eq("active", true)
+        .order("name");
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setCategories(
+        (data ?? []).map((category) => ({
+          id: category.id,
+          name: category.name,
+          description: category.description ?? "",
+          active: category.active,
+        }))
+      );
     }
+
+    void loadCategories();
   }, []);
 
-  return categories.filter((category) => category.active);
+  return categories;
 }

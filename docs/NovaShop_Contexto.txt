@@ -1,0 +1,1137 @@
+# NovaShop — Contexto General del Proyecto
+
+**Versión:** 1.0  
+**Última actualización:** 14/07/2026  
+**Estado:** En desarrollo  
+**Objetivo de este archivo:** recuperar rápidamente el contexto del proyecto al comenzar una conversación o cuando se pierda el historial.
+
+---
+
+## 1. Visión del producto
+
+NovaShop será una plataforma comercial adaptable a pequeños y medianos negocios de cualquier rubro.
+
+No es solamente una tienda online. El producto final combina:
+
+- Ecommerce público.
+- Panel administrativo.
+- Gestión de productos e inventario.
+- Compras y proveedores.
+- Pedidos, ventas, clientes y caja.
+- Reportes.
+- Usuarios, roles y permisos.
+- Configuración personalizada para cada comercio.
+
+Debe poder utilizarse para videojuegos, ropa, celulares, perfumería, librería, repuestos, electrónica, hogar y otros rubros sin modificar el código fuente.
+
+El objetivo final es comercializar NovaShop como una base reutilizable y configurable para diferentes negocios.
+
+---
+
+## 2. Alcance general
+
+### Ecommerce público
+
+Debe incluir:
+
+- Página de inicio.
+- Catálogo.
+- Buscador.
+- Categorías.
+- Filtros.
+- Detalle de producto.
+- Productos destacados.
+- Ofertas.
+- Carrito.
+- Checkout.
+- Métodos de entrega.
+- Métodos de pago.
+- Confirmación del pedido.
+- Cuenta del cliente.
+- Historial y seguimiento de pedidos.
+- Integración con WhatsApp.
+- Diseño responsive.
+
+### Panel administrativo
+
+Debe incluir:
+
+- Dashboard.
+- Productos.
+- Categorías.
+- Marcas.
+- Proveedores.
+- Compras.
+- Pedidos.
+- Clientes.
+- Ventas.
+- Caja.
+- Reportes.
+- Usuarios.
+- Roles y permisos.
+- Configuración del comercio.
+- Auditoría.
+- Importación y exportación de datos.
+
+### Plataforma comercial futura
+
+NovaShop deberá prepararse para:
+
+- Múltiples comercios.
+- Múltiples usuarios por comercio.
+- Diferentes planes comerciales.
+- Personalización de nombre, logo, colores y contacto.
+- Storage de imágenes.
+- Integraciones de pago y envío.
+- Seguridad por negocio.
+- Despliegue y mantenimiento comercial.
+
+---
+
+## 3. Tecnologías actuales
+
+### Frontend
+
+- React 18.
+- TypeScript.
+- Vite.
+- React Router.
+- Material UI.
+- Radix UI.
+- Recharts.
+- React Hook Form.
+- CSS y Tailwind disponibles.
+
+### Infraestructura elegida
+
+- Supabase.
+- PostgreSQL.
+- Supabase Auth.
+- Supabase Storage.
+- Row Level Security.
+
+### Persistencia temporal existente
+
+Los módulos actuales todavía usan principalmente:
+
+- Estado de React.
+- `localStorage`.
+- Archivos de datos iniciales.
+
+`localStorage` no será el almacenamiento definitivo.
+
+---
+
+## 4. Arquitectura actual del proyecto
+
+Estructura principal:
+
+```text
+src/
+├── app/
+├── config/
+├── core/
+├── hooks/
+├── lib/
+├── modules/
+├── services/
+├── styles/
+├── types/
+└── utils/
+Ecommerce actual
+En src/app/components/ existen pantallas y componentes para:
+
+Catálogo.
+
+Carrito.
+
+Checkout.
+
+Entrega.
+
+Pago.
+
+Confirmación.
+
+Login.
+
+Registro.
+
+Perfil.
+
+Reclamos.
+
+Header.
+
+Footer.
+
+Productos destacados.
+
+Ofertas.
+
+Estos componentes existen principalmente a nivel visual y todavía deben conectarse a datos reales.
+
+Carrito
+Existe una base en:
+
+src/core/cart/
+├── CartContext.tsx
+├── CartProvider.tsx
+├── cartTypes.ts
+└── useCart.ts
+Configuración
+Existen:
+
+src/config/business.ts
+src/config/categories.ts
+src/config/storeConfig.ts
+src/config/texts.ts
+src/config/theme.ts
+Panel administrativo
+Se encuentra principalmente en:
+
+src/modules/admin/
+Contiene módulos para:
+
+Dashboard.
+
+Productos.
+
+Categorías.
+
+Marcas.
+
+Proveedores.
+
+Compras.
+
+Clientes.
+
+Pedidos.
+
+Usuarios.
+
+También existen componentes comunes, hooks, datos y estilos administrativos.
+
+5. Estado funcional actual
+Los porcentajes son estimaciones del prototipo visual y local, no del producto comercial terminado.
+
+Dashboard administrativo
+Estado aproximado local: 90–95%
+
+Incluye:
+
+Indicadores.
+
+Tarjetas.
+
+Gráficos.
+
+Widgets.
+
+Productos con poco stock.
+
+Configuración de tarjetas visibles.
+
+Persistencia local.
+
+Diseño responsive.
+
+Pendiente:
+
+Conexión a datos reales.
+
+Métricas de ventas, caja y pedidos.
+
+Seguridad por usuario y comercio.
+
+Productos
+Estado aproximado local: 90–95%
+
+Incluye:
+
+Crear.
+
+Editar.
+
+Eliminar.
+
+Buscar.
+
+Filtrar.
+
+Ordenar.
+
+Paginar.
+
+Controlar stock.
+
+Mostrar mensajes y notificaciones.
+
+Persistir localmente.
+
+Modelo actual:
+
+export interface Product {
+  id: number;
+  image: string;
+  name: string;
+  category: string;
+  brand: string;
+  supplier: string;
+  price: number;
+  stock: number;
+}
+Problemas que deben corregirse al migrar:
+
+Los IDs actuales son numéricos.
+
+Categoría, marca y proveedor se guardan como texto.
+
+Falta costo.
+
+Falta SKU.
+
+Faltan variantes.
+
+Falta control real de imágenes.
+
+El stock está guardado directamente en el producto.
+
+Categorías
+Estado aproximado local: 85–90%
+
+Modelo actual:
+
+export type Category = {
+  id: number;
+  name: string;
+  description: string;
+  active: boolean;
+};
+La base definitiva deberá contemplar:
+
+Comercio propietario.
+
+Imagen.
+
+Categoría superior opcional.
+
+Orden de visualización.
+
+Estado.
+
+Fechas de creación y modificación.
+
+Marcas
+Estado aproximado local: 75–80%
+
+Existe el módulo con:
+
+Página.
+
+Formulario.
+
+Tabla.
+
+Datos.
+
+Hook.
+
+Todavía debe auditarse su modelo antes de diseñar la base.
+
+Proveedores
+Estado aproximado local: 90%
+
+Incluye:
+
+CRUD.
+
+Estado activo e inactivo.
+
+Búsqueda.
+
+Formulario.
+
+Tabla.
+
+Información comercial y de contacto.
+
+Modelo actual:
+
+export type Supplier = {
+  id: number;
+  company: string;
+  contact: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  province: string;
+  cuit: string;
+  website: string;
+  notes: string;
+  type: SupplierType;
+  active: boolean;
+};
+Compras
+Estado aproximado local: 95–97%
+
+Incluye:
+
+Alta de compras.
+
+Numeración automática.
+
+Proveedor.
+
+Productos y cantidades.
+
+Costo unitario.
+
+Total.
+
+Forma de pago.
+
+Observaciones.
+
+Estados completada y cancelada.
+
+Detalle.
+
+Filtros.
+
+Estadísticas.
+
+Exportación CSV.
+
+Impresión y guardado como PDF.
+
+Cancelación sin eliminación.
+
+Reversión del stock.
+
+Bloqueo de cancelación repetida.
+
+Historial local.
+
+Modelo actual:
+
+export interface PurchaseItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitCost: number;
+}
+
+export interface Purchase {
+  id: number;
+  number: string;
+  supplier: string;
+  date: string;
+  items: PurchaseItem[];
+  total: number;
+  observations: string;
+  paymentMethod: string;
+  status: "Completada" | "Cancelada";
+}
+Problemas que deben corregirse al migrar:
+
+Proveedor guardado como texto.
+
+Ítems guardados dentro de la compra.
+
+Nombres de productos duplicados.
+
+IDs numéricos.
+
+Stock modificado directamente desde el frontend.
+
+Falta transacción atómica entre compra, ítems y stock.
+
+Falta usuario responsable.
+
+Falta comercio propietario.
+
+Clientes
+Estado: base local existente.
+
+Existen:
+
+ClientsPage.tsx
+ClientForm.tsx
+ClientsTable.tsx
+clientsData.ts
+useClients.ts
+El modelo todavía debe revisarse.
+
+Pedidos
+Estado: base local existente.
+
+Existen:
+
+OrdersPage.tsx
+OrderForm.tsx
+OrdersTable.tsx
+ordersData.ts
+useOrders.ts
+El modelo todavía debe revisarse y conectarse con el checkout.
+
+Usuarios
+Estado: base local existente.
+
+Existen:
+
+UsersPage.tsx
+UserForm.tsx
+UsersTable.tsx
+usersData.ts
+useUsers.ts
+No representa todavía autenticación real ni permisos seguros.
+
+Ventas, caja y reportes
+No deben desarrollarse todavía.
+
+Primero debe completarse la infraestructura definitiva.
+
+6. Configuración actual del comercio
+Archivo:
+
+src/config/storeConfig.ts
+Configuración actual:
+
+export const storeConfig = {
+  appName: "NovaShop",
+  storeName: "Demo Store",
+  slogan: "Tu tienda online, simple y profesional",
+  logo: "/logo.png",
+  primaryColor: "#6A3CE6",
+  secondaryColor: "#8F6BFF",
+  backgroundColor: "#0d0e12",
+  currency: "ARS",
+  productLabel: "Productos",
+  categoryLabel: "Categorías",
+  featuredLabel: "Destacados",
+  whatsapp: "",
+  instagram: "",
+  email: "",
+  address: "",
+};
+Esta configuración deberá almacenarse por comercio en Supabase, posiblemente separando:
+
+Datos generales de la tienda.
+
+Apariencia.
+
+Contacto.
+
+Métodos de pago.
+
+Métodos de envío.
+
+Configuración fiscal.
+
+Configuración de dominio.
+
+7. Integración con Supabase realizada
+Ya se completó:
+
+Proyecto creado en Supabase.
+
+Paquete @supabase/supabase-js instalado.
+
+Archivo .env.local creado.
+
+Variables configuradas:
+
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+Las claves reales no deben compartirse por chat ni subirse a Git.
+
+.gitignore contiene:
+
+node_modules
+
+.env
+.env.local
+.env.*.local
+Cliente creado en:
+
+src/lib/supabase.ts
+Contenido:
+
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl) {
+  throw new Error(
+    "Falta la variable VITE_SUPABASE_URL"
+  );
+}
+
+if (!supabaseAnonKey) {
+  throw new Error(
+    "Falta la variable VITE_SUPABASE_ANON_KEY"
+  );
+}
+
+export const supabase = createClient(
+  supabaseUrl,
+  supabaseAnonKey
+);
+También se configuró:
+
+src/vite-env.d.ts
+con:
+
+/// <reference types="vite/client" />
+La aplicación inicia normalmente después de reiniciar Vite.
+
+No se creó ninguna tabla todavía.
+
+No se ejecutó SQL en Supabase.
+
+8. Decisiones tomadas
+Decisión 1 — Supabase será la infraestructura definitiva
+La aplicación dejará de usar localStorage como persistencia principal.
+
+localStorage podrá utilizarse únicamente para:
+
+Preferencias no sensibles.
+
+Caché.
+
+Estado temporal del carrito, cuando corresponda.
+
+Configuración visual local no crítica.
+
+Decisión 2 — No crear más módulos antes de la infraestructura
+Se detuvo el inicio de Ventas y de otros módulos.
+
+Antes de continuar se debe:
+
+Auditar los modelos actuales.
+
+Diseñar la base completa.
+
+Crear autenticación y seguridad.
+
+Crear una capa de servicios.
+
+Migrar los módulos existentes.
+
+Decisión 3 — NovaShop será multiempresa
+Los datos comerciales deberán pertenecer a un comercio.
+
+Las tablas relevantes deberán incluir una relación equivalente a:
+
+store_id
+Los usuarios solo podrán acceder a comercios donde tengan autorización.
+
+Decisión 4 — Usar UUID
+Los IDs definitivos no deben generarse con:
+
+Date.now()
+Supabase/PostgreSQL generará UUID.
+
+Decisión 5 — No guardar relaciones como texto
+No usar como relación definitiva:
+
+category: string
+brand: string
+supplier: string
+Usar identificadores:
+
+category_id
+brand_id
+supplier_id
+Decisión 6 — Separar interfaz y persistencia
+Los componentes React no deben acceder directamente a Supabase.
+
+Flujo recomendado:
+
+Componente
+→ hook
+→ servicio o repositorio
+→ Supabase
+Decisión 7 — Diseñar antes de ejecutar SQL
+No crear tablas manualmente una por una.
+
+Primero revisar todos los modelos necesarios.
+
+Después preparar y revisar un diseño consolidado.
+
+Finalmente ejecutar una migración SQL inicial.
+
+9. Error estratégico detectado
+Se construyeron varios módulos completos utilizando localStorage, aunque desde el inicio estaba prevista una base de datos real.
+
+Esto generará retrabajo principalmente en:
+
+Hooks.
+
+Persistencia.
+
+IDs.
+
+Relaciones.
+
+Manejo asíncrono.
+
+Estados de carga.
+
+Manejo de errores.
+
+Seguridad.
+
+Movimientos de stock.
+
+No se pierde la mayor parte del trabajo visual:
+
+Formularios.
+
+Tablas.
+
+Modales.
+
+CSS.
+
+Exportación CSV.
+
+Impresión.
+
+Filtros.
+
+Ordenamiento.
+
+Reglas funcionales.
+
+Regla resultante:
+
+No desarrollar módulos nuevos sobre una infraestructura que sabemos que será reemplazada.
+
+10. Modelo conceptual preliminar
+Todavía no está aprobado ni implementado.
+
+Núcleo multiempresa
+stores
+profiles
+store_members
+roles
+permissions
+role_permissions
+Catálogo e inventario
+categories
+brands
+products
+product_images
+product_variants
+inventory_locations
+stock_movements
+Compras
+suppliers
+purchases
+purchase_items
+purchase_payments
+Ecommerce y ventas
+customers
+addresses
+carts
+cart_items
+orders
+order_items
+order_status_history
+payments
+shipments
+sales
+sale_items
+Caja y administración
+cash_registers
+cash_sessions
+cash_movements
+store_settings
+audit_logs
+Este listado es preliminar. No debe transformarse todavía en SQL sin terminar la auditoría.
+
+11. Modelos que faltan revisar
+Antes de diseñar la base definitiva deben revisarse completos:
+
+src/modules/admin/brands/data/brandsData.ts
+src/modules/admin/clients/data/clientsData.ts
+src/modules/admin/orders/data/ordersData.ts
+src/modules/admin/users/data/usersData.ts
+src/core/cart/cartTypes.ts
+También conviene revisar después:
+
+src/config/business.ts
+src/config/categories.ts
+src/app/components/data.ts
+src/types/product.ts
+El último modelo revisado fue:
+
+src/modules/admin/categories/data/categoriesData.ts
+12. Próximo paso exacto
+No comenzar Ventas.
+
+No comenzar Caja.
+
+No comenzar Reportes.
+
+No ejecutar SQL todavía.
+
+No migrar componentes todavía.
+
+El siguiente archivo que debe revisarse es:
+
+src/modules/admin/brands/data/brandsData.ts
+Después, en este orden:
+
+src/modules/admin/clients/data/clientsData.ts
+src/modules/admin/orders/data/ordersData.ts
+src/modules/admin/users/data/usersData.ts
+src/core/cart/cartTypes.ts
+Con esos modelos se debe producir:
+
+Lista definitiva de entidades.
+
+Columnas de cada tabla.
+
+Relaciones.
+
+Restricciones.
+
+Estados permitidos.
+
+Estrategia multiempresa.
+
+Roles y permisos iniciales.
+
+Flujo de stock.
+
+Flujo de pedidos.
+
+Orden de migración.
+
+Solo después se prepara el SQL inicial consolidado.
+
+13. Orden de implementación previsto
+Fase inmediata — Diseño de datos
+Revisar modelos restantes.
+
+Definir alcance de la primera versión comercial.
+
+Diseñar relaciones.
+
+Definir estados y reglas.
+
+Definir seguridad.
+
+Infraestructura
+Crear esquema inicial en Supabase.
+
+Activar Row Level Security.
+
+Configurar Auth.
+
+Crear perfiles.
+
+Crear comercios y miembros.
+
+Crear roles básicos.
+
+Crear Storage.
+
+Crear servicios del frontend.
+
+Generar tipos de base de datos.
+
+Migración de módulos actuales
+Orden recomendado:
+
+Comercios y configuración.
+
+Autenticación y perfiles.
+
+Categorías.
+
+Marcas.
+
+Proveedores.
+
+Productos.
+
+Inventario.
+
+Compras.
+
+Clientes.
+
+Pedidos.
+
+Flujo comercial completo
+Cliente consulta catálogo
+→ agrega productos al carrito
+→ completa checkout
+→ se crea el pedido
+→ el administrador recibe el pedido
+→ cambia su estado
+→ se registra el pago
+→ se actualiza el stock
+→ se conserva el historial
+Expansión posterior
+Ventas.
+
+Caja.
+
+Reportes.
+
+Roles avanzados.
+
+Auditoría.
+
+Mercado Pago.
+
+WhatsApp.
+
+Emails.
+
+Envíos.
+
+Demos comerciales.
+
+14. Backlog futuro importante
+Catálogo
+SKU.
+
+Código de barras.
+
+Costo.
+
+Margen.
+
+Precio de oferta.
+
+Variantes.
+
+Talles.
+
+Colores.
+
+Imágenes múltiples.
+
+Productos relacionados.
+
+Combos.
+
+Kits.
+
+Listas de precios.
+
+Productos digitales.
+
+Productos por peso.
+
+Inventario
+Movimientos de stock.
+
+Ajustes.
+
+Reservas por pedidos.
+
+Stock disponible.
+
+Stock comprometido.
+
+Stock mínimo.
+
+Múltiples depósitos.
+
+Transferencias entre depósitos.
+
+Auditoría de movimientos.
+
+Compras
+Recepciones parciales.
+
+Cuenta corriente del proveedor.
+
+Pagos parciales.
+
+Comprobantes.
+
+Impuestos.
+
+Descuentos.
+
+Costos adicionales.
+
+Devoluciones a proveedores.
+
+Ecommerce
+Favoritos.
+
+Reseñas.
+
+Cupones.
+
+Gift cards.
+
+Productos relacionados.
+
+Recuperación de carrito.
+
+WhatsApp.
+
+Mercado Pago.
+
+Transferencia.
+
+Pago al retirar.
+
+Seguimiento.
+
+Emails automáticos.
+
+SEO.
+
+Analytics.
+
+Pixel de Meta.
+
+ERP
+Ventas.
+
+Clientes.
+
+Caja.
+
+Reportes.
+
+Presupuestos.
+
+Remitos.
+
+Devoluciones.
+
+Cuentas corrientes.
+
+Roles.
+
+Permisos.
+
+Auditoría.
+
+Importaciones masivas.
+
+Backups.
+
+Plataforma SaaS
+Planes.
+
+Suscripciones.
+
+Límites por plan.
+
+Panel interno de NovaShop.
+
+Gestión de comercios.
+
+Dominio personalizado.
+
+White label.
+
+Multimoneda.
+
+Multiidioma.
+
+Múltiples sucursales.
+
+Facturación del servicio.
+
+15. Reglas de trabajo
+Avanzar de a un paso cuando la tarea sea nueva para la persona que programa.
+
+No entregar muchos cambios simultáneos sin necesidad.
+
+Cuando se modifica un archivo de forma importante, entregar el código consolidado.
+
+No afirmar que un archivo queda cerrado si existe una dependencia futura evidente.
+
+Revisar el impacto de cada cambio en todo el producto.
+
+Priorizar infraestructura definitiva antes que módulos nuevos.
+
+Evitar duplicar hooks o fuentes de datos.
+
+No guardar relaciones comerciales como texto.
+
+No acceder a Supabase desde componentes.
+
+No ejecutar SQL sin revisar antes el modelo.
+
+No exponer claves privadas.
+
+No usar la clave service_role en el frontend.
+
+Mantener el proyecto genérico para cualquier rubro.
+
+Actualizar este archivo al terminar cada sesión importante.
+
+Registrar siempre el próximo paso exacto.
+
+16. Instrucciones para ChatGPT al leer este archivo
+Este archivo es el contexto principal de NovaShop.
+
+No asumir que los porcentajes locales representan un producto listo para vender.
+
+No proponer módulos nuevos antes de completar la infraestructura.
+
+No proponer ejecutar SQL hasta revisar los modelos pendientes.
+
+Continuar desde la sección “Próximo paso exacto”.
+
+Dar instrucciones de a un paso cuando se trabaje con Supabase.
+
+Evitar respuestas repetitivas o promesas innecesarias.
+
+No cambiar la estrategia sin explicar su impacto global.
+
+Antes de proponer código, comprobar que no genere retrabajo previsible.
+
+Mantener compatibilidad con un producto multiempresa.
+
+Al terminar una sesión, actualizar:
+
+fecha;
+
+trabajo realizado;
+
+decisiones;
+
+errores;
+
+estado;
+
+próximo paso.
+
+17. Resumen rápido para retomar
+NovaShop es un Ecommerce + ERP genérico y multiempresa que se pretende comercializar.
+
+El frontend y el panel administrativo tienen mucho trabajo visual y funcional local avanzado. Productos, categorías, marcas, proveedores y compras ya poseen prototipos importantes. Compras incluye CSV, impresión, cancelación y reversión local de stock.
+
+La persistencia actual mediante localStorage será reemplazada por Supabase.
+
+Supabase ya está instalado y configurado. Existe src/lib/supabase.ts, las variables están en .env.local y la aplicación inicia correctamente.
+
+Todavía no existen tablas ni se ejecutó SQL.
+
+El desarrollo de módulos nuevos está congelado.
+
+El siguiente paso es revisar:
+
+src/modules/admin/brands/data/brandsData.ts
+Después se revisarán clientes, pedidos, usuarios y carrito. Con todos esos modelos se diseñará la base definitiva antes de ejecutar SQL.
+

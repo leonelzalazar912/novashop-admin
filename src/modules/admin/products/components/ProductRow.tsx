@@ -3,7 +3,7 @@ import type { Product } from "../data/productsData";
 interface ProductRowProps {
   product: Product;
   onEdit: (product: Product) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 export function ProductRow({
