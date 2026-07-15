@@ -150,7 +150,7 @@ export function PurchaseForm({
           <select
             value={supplierId}
             onChange={(event) =>
-                setSupplierId(Number(event.target.value))
+                setSupplierId(event.target.value)
             }
             >
                 {suppliers.map((supplier) => (

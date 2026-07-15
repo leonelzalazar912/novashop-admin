@@ -2,10 +2,10 @@ import type { Product } from "../../products/data/productsData";
 
 type PurchaseItemFormProps = {
   products: Product[];
-  productId: number;
+  productId: string;
   quantity: number;
   unitCost: number;
-  onProductChange: (id: number) => void;
+  onProductChange: (id: string) => void;
   onQuantityChange: (quantity: number) => void;
   onUnitCostChange: (cost: number) => void;
   onAddItem: () => void;
@@ -26,7 +26,7 @@ export function PurchaseItemForm({
       <select
         value={productId}
         onChange={(event) =>
-          onProductChange(Number(event.target.value))
+          onProductChange(event.target.value)
         }
       >
         {products.map((product) => (

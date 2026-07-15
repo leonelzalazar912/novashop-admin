@@ -1,12 +1,12 @@
 export interface PurchaseItem {
-  productId: number;
+  productId: string;
   productName: string;
   quantity: number;
   unitCost: number;
 }
 
 export interface Purchase {
-  id: number;
+  id: string;
   number: string;
   supplier: string;
   date: string;

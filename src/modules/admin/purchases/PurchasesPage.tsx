@@ -13,13 +13,13 @@ import { exportPurchasesToCsv } from "./utils/exportPurchasesToCsv";
 type PurchasesPageProps = {
   products: Product[];
   increaseProductStock: (
-    productId: number,
+    productId: string,
     quantity: number
-  ) => void;
+  ) => void | Promise<void>;
   decreaseProductStock: (
-  productId: number,
-  quantity: number
-) => void;
+    productId: string,
+    quantity: number
+  ) => void | Promise<void>;
 };
 
 export function PurchasesPage({
@@ -37,34 +37,35 @@ export function PurchasesPage({
 
   const [showForm, setShowForm] = useState(false);
 
-    const [selectedPurchase, setSelectedPurchase] =
-      useState<Purchase | null>(null);
+  const [selectedPurchase, setSelectedPurchase] =
+    useState<Purchase | null>(null);
 
-    const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("");
 
-    const [supplierFilter, setSupplierFilter] =
-      useState("Todos");
+  const [supplierFilter, setSupplierFilter] =
+    useState("Todos");
 
-    const [statusFilter, setStatusFilter] =
-      useState("Todos");
+  const [statusFilter, setStatusFilter] =
+    useState("Todos");
 
-    const [dateFrom, setDateFrom] = useState("");
-    const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-    const [sortBy, setSortBy] = useState("date-desc");
+  const [sortBy, setSortBy] = useState("date-desc");
 
-    const suppliers = [
-      "Todos",
-      ...new Set(
-        purchases.map((purchase) => purchase.supplier)
-      ),
-    ];
+  const suppliers = [
+    "Todos",
+    ...new Set(
+      purchases.map((purchase) => purchase.supplier)
+    ),
+  ];
 
-    const filteredPurchases = purchases.filter((purchase) => {
+  const filteredPurchases = purchases.filter(
+    (purchase) => {
       const term = search.toLowerCase();
 
       const matchesSearch =
-        (purchase.number ?? "")
+        purchase.number
           .toLowerCase()
           .includes(term) ||
         purchase.supplier
@@ -92,66 +93,64 @@ export function PurchasesPage({
         matchesDateFrom &&
         matchesDateTo
       );
-    });
+    }
+  );
 
-    const sortedPurchases = [...filteredPurchases].sort(
-      (a, b) => {
-        switch (sortBy) {
-          case "date-asc":
-            return a.date.localeCompare(b.date);
+  const sortedPurchases = [...filteredPurchases].sort(
+    (a, b) => {
+      switch (sortBy) {
+        case "date-asc":
+          return a.date.localeCompare(b.date);
 
-          case "total-desc":
-            return b.total - a.total;
+        case "total-desc":
+          return b.total - a.total;
 
-          case "total-asc":
-            return a.total - b.total;
+        case "total-asc":
+          return a.total - b.total;
 
-          case "number-desc":
-            return (b.number ?? "").localeCompare(
-              a.number ?? ""
-            );
+        case "number-desc":
+          return b.number.localeCompare(a.number);
 
-          case "number-asc":
-            return (a.number ?? "").localeCompare(
-              b.number ?? ""
-            );
+        case "number-asc":
+          return a.number.localeCompare(b.number);
 
-          default:
-            return b.date.localeCompare(a.date);
-        }
+        default:
+          return b.date.localeCompare(a.date);
       }
-    );
+    }
+  );
 
   return (
-  <section className="admin-page">
-    <div className="page-header">
-      <div>
-        <h1>Compras</h1>
-        <p>
-          Administrá las compras realizadas a proveedores.
-        </p>
-      </div>
+    <section className="admin-page">
+      <div className="page-header">
+        <div>
+          <h1>Compras</h1>
 
-      <div className="header-actions">
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() =>
-            exportPurchasesToCsv(sortedPurchases)
-          }
-        >
-          Exportar CSV
-        </button>
+          <p>
+            Administrá las compras realizadas a proveedores.
+          </p>
+        </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => setShowForm(true)}
-        >
-          + Nueva compra
-        </button>
+        <div className="header-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() =>
+              exportPurchasesToCsv(sortedPurchases)
+            }
+          >
+            Exportar CSV
+          </button>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setShowForm(true)}
+          >
+            + Nueva compra
+          </button>
+        </div>
       </div>
-    </div>
 
       <PurchasesStats purchases={purchases} />
 
@@ -181,21 +180,20 @@ export function PurchasesPage({
       <PurchasesTable
         purchases={sortedPurchases}
         onView={setSelectedPurchase}
-        onCancel={(purchase) => {
-          const cancelledPurchase = cancelPurchase(
-            purchase.id
-          );
+        onCancel={async (purchase) => {
+          const cancelledPurchase =
+            await cancelPurchase(purchase.id);
 
           if (!cancelledPurchase) {
             return;
           }
 
-          cancelledPurchase.items.forEach((item) => {
-            decreaseProductStock(
+          for (const item of cancelledPurchase.items) {
+            await decreaseProductStock(
               item.productId,
               item.quantity
             );
-          });
+          }
 
           setSelectedPurchase((current) =>
             current?.id === cancelledPurchase.id
@@ -210,15 +208,20 @@ export function PurchasesPage({
           products={products}
           suppliers={activeSuppliers}
           onCancel={() => setShowForm(false)}
-          onSave={(purchase) => {
-            addPurchase(purchase);
+          onSave={async (purchase) => {
+            const createdPurchase =
+              await addPurchase(purchase);
 
-            purchase.items.forEach((item) => {
-              increaseProductStock(
+            if (!createdPurchase) {
+              return;
+            }
+
+            for (const item of createdPurchase.items) {
+              await increaseProductStock(
                 item.productId,
                 item.quantity
               );
-            });
+            }
 
             setShowForm(false);
           }}
