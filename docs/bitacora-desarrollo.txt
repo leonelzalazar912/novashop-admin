@@ -1,0 +1,205 @@
+# Bitácora de desarrollo — NovaShop
+
+Esta bitácora registra el estado de cada sesión de programación, los archivos modificados, las decisiones técnicas, los errores encontrados y el siguiente paso recomendado.
+
+---
+
+## Sesión — 21/07/2026
+
+### Situación inicial
+
+Se retomó el desarrollo de NovaShop utilizando como referencia principal el documento maestro `estructura-proyecto.txt`, versión 2.0, actualizado el 15/07/2026.
+
+No se recordaba con precisión cuál había sido el último archivo trabajado ni cuál era el siguiente paso del proyecto.
+
+Se realizó una reconstrucción del estado mediante Git y la revisión del código existente.
+
+### Estado recuperado mediante Git
+
+Último commit relevante:
+
+`749a5c8 — Migración de clientes, pedidos, validaciones y usuarios`
+
+El proyecto no tenía cambios pendientes dentro de `src`.
+
+El módulo Usuarios había sido adaptado a UUID y nuevos roles, pero continuaba utilizando `localStorage`.
+
+### Verificaciones realizadas
+
+- `npm run build` completado correctamente.
+- Vite generó la aplicación sin errores bloqueantes.
+- Se detectó una advertencia por el tamaño del bundle de JavaScript.
+- Node.js instalado: versión 24.16.0.
+- Administrador de paquetes confirmado: npm.
+- Supabase CLI instalada: versión 2.109.1.
+- Proyecto local vinculado con `novashop-development`.
+
+### Diagnóstico del módulo Usuarios
+
+El modelo visual actual contiene:
+
+- id;
+- nombre;
+- correo;
+- rol;
+- estado activo.
+
+La información real se distribuye de la siguiente manera:
+
+- `profiles.full_name`: nombre.
+- `auth.users.email`: correo.
+- `store_members.active`: estado.
+- `store_members.role_id`: rol asignado.
+- `roles.name`: nombre visible del rol.
+- `store_members.store_id`: tienda.
+
+Se confirmó que existen los siguientes roles:
+
+- Propietario.
+- Administrador.
+- Empleado.
+- Vendedor.
+
+Actualmente existe una única membresía activa correspondiente al propietario de la tienda.
+
+### Decisiones técnicas
+
+- No administrar `auth.users` directamente desde React.
+- No exponer la clave `service_role` en variables de Vite.
+- Utilizar una Edge Function para las operaciones administrativas.
+- Mantener el modelo `User` como DTO para la interfaz.
+- Interpretar la eliminación como retiro de la membresía de una tienda, no como eliminación automática de la cuenta global.
+- Validar en el backend la protección del último propietario.
+- Mantener `verify_jwt = true`.
+- Separar el acceso a Supabase mediante `usersService.ts`.
+- No migrar parcialmente el hook dejando lecturas remotas y escrituras locales.
+
+### Infraestructura creada
+
+Se inicializó:
+
+`supabase/config.toml`
+
+Se creó la Edge Function:
+
+`supabase/functions/manage-users/index.ts`
+
+También se generaron:
+
+- `supabase/functions/manage-users/deno.json`
+- `supabase/functions/manage-users/.npmrc`
+- `.vscode/settings.json`
+
+### Edge Function `manage-users`
+
+Se implementó inicialmente únicamente la acción:
+
+`list`
+
+La función realiza:
+
+1. Validación del método POST.
+2. Validación del usuario autenticado.
+3. Búsqueda de su membresía activa.
+4. Verificación del rol Propietario o Administrador.
+5. Obtención de los miembros de la tienda.
+6. Lectura de perfiles.
+7. Lectura de roles.
+8. Lectura segura de correos desde Supabase Auth.
+9. Construcción del DTO utilizado por React.
+10. Devolución de los usuarios ordenados por nombre.
+
+### Despliegue
+
+La función `manage-users` fue desplegada correctamente en el proyecto remoto de Supabase.
+
+Se realizó una prueba desde la consola del navegador mediante:
+
+`supabase.functions.invoke("manage-users")`
+
+Resultado:
+
+- `success: true`
+- tienda identificada correctamente;
+- un usuario recuperado;
+- rol Propietario;
+- estado activo.
+
+### Servicio creado
+
+Archivo:
+
+`src/modules/admin/users/services/usersService.ts`
+
+Actualmente implementa:
+
+- invocación de la acción `list`;
+- interpretación de respuestas exitosas;
+- interpretación de errores de Edge Functions;
+- retorno tipado de usuarios y tienda.
+
+El archivo no presenta errores en Visual Studio Code.
+
+### Archivos creados
+
+- `docs/bitacora-desarrollo.txt`
+- `.vscode/settings.json`
+- `supabase/config.toml`
+- `supabase/functions/manage-users/index.ts`
+- `supabase/functions/manage-users/deno.json`
+- `supabase/functions/manage-users/.npmrc`
+- `src/modules/admin/users/services/usersService.ts`
+
+### Archivos modificados automáticamente
+
+- `package.json`
+- `package-lock.json`
+
+Se agregó Supabase CLI como dependencia de desarrollo.
+
+### Archivos todavía no modificados
+
+- `src/modules/admin/users/hooks/useUsers.ts`
+- `src/modules/admin/users/UsersPage.tsx`
+- `src/modules/admin/users/components/UserForm.tsx`
+- `src/modules/admin/users/components/UsersTable.tsx`
+- `src/modules/admin/users/data/usersData.ts`
+
+### Observaciones pendientes
+
+- Revisar las vulnerabilidades informadas por `npm audit`.
+- No ejecutar `npm audit fix --force` sin analizar previamente sus consecuencias.
+- Revisar `.gitignore`.
+- Evitar que `dist/` se incorpore al repositorio.
+- Confirmar que los archivos locales con variables de entorno estén ignorados.
+- Ejecutar nuevamente `npm run build` después de los cambios.
+- Resolver en el futuro la selección de tienda activa para usuarios con múltiples tiendas.
+- Configurar correctamente las URL de redirección antes de implementar invitaciones.
+
+### Próximo objetivo
+
+Completar las operaciones administrativas de la Edge Function antes de conectar el hook y la interfaz.
+
+Orden recomendado:
+
+1. Ejecutar `npm run build`.
+2. Revisar `git status`.
+3. Revisar `.gitignore`.
+4. Implementar la acción para crear o invitar usuarios.
+5. Implementar actualización de nombre, correo, rol y estado.
+6. Implementar activación y desactivación.
+7. Implementar retiro de la membresía.
+8. Probar cada acción individualmente.
+9. Ampliar `usersService.ts`.
+10. Migrar `useUsers.ts`.
+11. Adaptar `UsersPage.tsx`.
+12. Adaptar `UserForm.tsx`.
+13. Adaptar `UsersTable.tsx`.
+
+### Próximo archivo recomendado
+
+`supabase/functions/manage-users/index.ts`
+
+### Estado de la sesión
+
+Finalizada correctamente.
