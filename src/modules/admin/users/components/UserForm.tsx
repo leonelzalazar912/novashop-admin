@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 import type {
   User,
   UserRole,
@@ -6,7 +9,9 @@ import type {
 
 type UserFormProps = {
   onCancel: () => void;
-  onSave: (user: Omit<User, "id">) => void;
+  onSave: (
+    user: Omit<User, "id">
+  ) => void;
   initialUser?: User;
 };
 
@@ -15,25 +20,48 @@ export function UserForm({
   onSave,
   initialUser,
 }: UserFormProps) {
-  const [name, setName] = useState(
-    initialUser?.name ?? ""
-  );
-  const [email, setEmail] = useState(
-    initialUser?.email ?? ""
-  );
-  const [role, setRole] = useState<UserRole>(
-    initialUser?.role ?? "Empleado"
-  );
-  const [active, setActive] = useState(
-    initialUser?.active ?? true
-  );
+  const isEditing =
+    initialUser !== undefined;
+
+  const [name, setName] =
+    useState(
+      initialUser?.name ?? ""
+    );
+
+  const [email, setEmail] =
+    useState(
+      initialUser?.email ?? ""
+    );
+
+  const [role, setRole] =
+    useState<UserRole>(
+      initialUser?.role ?? "Empleado"
+    );
+
+  const [active, setActive] =
+    useState(
+      initialUser?.active ?? true
+    );
 
   const isFormValid =
     name.trim() !== "" &&
     email.trim() !== "";
 
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
+    setName(initialUser?.name ?? "");
+    setEmail(initialUser?.email ?? "");
+    setRole(
+      initialUser?.role ?? "Empleado"
+    );
+    setActive(
+      initialUser?.active ?? true
+    );
+  }, [initialUser]);
+
+  useEffect(() => {
+    function handleKeyDown(
+      event: KeyboardEvent
+    ) {
       if (event.key === "Escape") {
         onCancel();
       }
@@ -52,6 +80,25 @@ export function UserForm({
     };
   }, [onCancel]);
 
+  function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!isFormValid) {
+      return;
+    }
+
+    onSave({
+      name: name.trim(),
+      email: email
+        .trim()
+        .toLowerCase(),
+      role,
+      active,
+    });
+  }
+
   return (
     <div
       className="modal-overlay"
@@ -63,19 +110,32 @@ export function UserForm({
           event.stopPropagation()
         }
       >
-        <div className="product-form">
+        <form
+          className="product-form"
+          onSubmit={handleSubmit}
+        >
           <h2>
-            {initialUser
+            {isEditing
               ? "Editar usuario"
-              : "Nuevo usuario"}
+              : "Invitar usuario"}
           </h2>
+
+          {!isEditing && (
+            <p>
+              El usuario recibirá un correo
+              para configurar su contraseña.
+            </p>
+          )}
 
           <input
             type="text"
             placeholder="Nombre completo"
             value={name}
+            autoComplete="name"
             onChange={(event) =>
-              setName(event.target.value)
+              setName(
+                event.target.value
+              )
             }
           />
 
@@ -83,28 +143,59 @@ export function UserForm({
             type="email"
             placeholder="Correo electrónico"
             value={email}
-            onChange={(event) =>
-              setEmail(event.target.value)
+            autoComplete="email"
+            readOnly={isEditing}
+            aria-readonly={isEditing}
+            title={
+              isEditing
+                ? "El correo todavía no puede modificarse desde esta pantalla."
+                : undefined
             }
+            style={
+              isEditing
+                ? {
+                    opacity: 0.7,
+                    cursor: "not-allowed",
+                  }
+                : undefined
+            }
+            onChange={(event) => {
+              if (!isEditing) {
+                setEmail(
+                  event.target.value
+                );
+              }
+            }}
           />
+
+          {isEditing && (
+            <small>
+              El correo electrónico no puede
+              modificarse por el momento.
+            </small>
+          )}
 
           <select
             value={role}
             onChange={(event) =>
               setRole(
-                event.target.value as UserRole
+                event.target
+                  .value as UserRole
               )
             }
           >
             <option value="Propietario">
               Propietario
             </option>
+
             <option value="Administrador">
               Administrador
             </option>
+
             <option value="Empleado">
               Empleado
             </option>
+
             <option value="Vendedor">
               Vendedor
             </option>
@@ -115,31 +206,24 @@ export function UserForm({
               type="checkbox"
               checked={active}
               onChange={(event) =>
-                setActive(event.target.checked)
+                setActive(
+                  event.target.checked
+                )
               }
             />
+
             Usuario activo
           </label>
 
           <div className="form-actions">
             <button
-              type="button"
+              type="submit"
               className="primary-button"
               disabled={!isFormValid}
-              onClick={() => {
-                if (!isFormValid) return;
-
-                onSave({
-                  name: name.trim(),
-                  email: email.trim(),
-                  role,
-                  active,
-                });
-              }}
             >
-              {initialUser
+              {isEditing
                 ? "Guardar cambios"
-                : "Guardar"}
+                : "Enviar invitación"}
             </button>
 
             <button
@@ -149,7 +233,7 @@ export function UserForm({
               Cancelar
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

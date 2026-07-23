@@ -1,14 +1,24 @@
+import { useState } from "react";
 import type { User } from "../data/usersData";
 import type { UserValidationResult } from "../hooks/useUsers";
 import { EmptyState } from "../../components/common/EmptyState";
 
+type UserActionResult =
+  | UserValidationResult
+  | Promise<UserValidationResult>;
+
+type PendingAction = {
+  userId: string;
+  type: "delete" | "toggle";
+};
+
 type UsersTableProps = {
   users: User[];
   onEdit: (user: User) => void;
-  onDelete: (id: string) => UserValidationResult;
+  onDelete: (id: string) => UserActionResult;
   onToggleStatus: (
     id: string
-  ) => UserValidationResult;
+  ) => UserActionResult;
 };
 
 export function UsersTable({
@@ -17,25 +27,90 @@ export function UsersTable({
   onDelete,
   onToggleStatus,
 }: UsersTableProps) {
-  function handleDelete(user: User) {
+  const [pendingAction, setPendingAction] =
+    useState<PendingAction | null>(null);
+
+  const hasPendingAction =
+    pendingAction !== null;
+
+  function isPending(
+    userId: string,
+    type: PendingAction["type"]
+  ) {
+    return (
+      pendingAction?.userId === userId &&
+      pendingAction.type === type
+    );
+  }
+
+  async function handleDelete(
+    user: User
+  ) {
+    if (hasPendingAction) {
+      return;
+    }
+
     const confirmed = window.confirm(
-      `¿Eliminar el usuario "${user.name}"?`
+      `¿Quitar de la tienda a "${user.name}"? La cuenta de acceso no será eliminada.`
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
-    const result = onDelete(user.id);
+    setPendingAction({
+      userId: user.id,
+      type: "delete",
+    });
 
-    if (!result.success) {
-      alert(result.message);
+    try {
+      const result = await onDelete(
+        user.id
+      );
+
+      if (!result.success) {
+        alert(result.message);
+      }
+    } catch (caughtError) {
+      console.error(caughtError);
+
+      alert(
+        "Ocurrió un error inesperado al quitar el usuario."
+      );
+    } finally {
+      setPendingAction(null);
     }
   }
 
-  function handleToggleStatus(user: User) {
-    const result = onToggleStatus(user.id);
+  async function handleToggleStatus(
+    user: User
+  ) {
+    if (hasPendingAction) {
+      return;
+    }
 
-    if (!result.success) {
-      alert(result.message);
+    setPendingAction({
+      userId: user.id,
+      type: "toggle",
+    });
+
+    try {
+      const result =
+        await onToggleStatus(user.id);
+
+      if (!result.success) {
+        alert(result.message);
+      }
+    } catch (caughtError) {
+      console.error(caughtError);
+
+      alert(
+        user.active
+          ? "Ocurrió un error inesperado al desactivar el usuario."
+          : "Ocurrió un error inesperado al activar el usuario."
+      );
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -58,56 +133,91 @@ export function UsersTable({
             colSpan={5}
           />
         ) : (
-          users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>{user.role}</td>
+          users.map((user) => {
+            const deletingUser =
+              isPending(
+                user.id,
+                "delete"
+              );
 
-              <td>
-                {user.active
-                  ? "🟢 Activo"
-                  : "🔴 Inactivo"}
-              </td>
+            const togglingUser =
+              isPending(
+                user.id,
+                "toggle"
+              );
 
-              <td>
-                <button
-                  type="button"
-                  className="action-button"
-                  onClick={() => onEdit(user)}
-                  title="Editar"
-                >
-                  ✏️
-                </button>
+            return (
+              <tr key={user.id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
 
-                <button
-                  type="button"
-                  className="action-button"
-                  onClick={() =>
-                    handleDelete(user)
-                  }
-                  title="Eliminar"
-                >
-                  🗑️
-                </button>
+                <td>
+                  {user.active
+                    ? "🟢 Activo"
+                    : "🔴 Inactivo"}
+                </td>
 
-                <button
-                  type="button"
-                  className="action-button"
-                  onClick={() =>
-                    handleToggleStatus(user)
-                  }
-                  title={
-                    user.active
-                      ? "Desactivar"
-                      : "Activar"
-                  }
-                >
-                  {user.active ? "🚫" : "✅"}
-                </button>
-              </td>
-            </tr>
-          ))
+                <td>
+                  <button
+                    type="button"
+                    className="action-button"
+                    onClick={() =>
+                      onEdit(user)
+                    }
+                    title="Editar"
+                    disabled={
+                      hasPendingAction
+                    }
+                  >
+                    ✏️
+                  </button>
+
+                  <button
+                    type="button"
+                    className="action-button"
+                    onClick={() =>
+                      void handleDelete(
+                        user
+                      )
+                    }
+                    title="Quitar de la tienda"
+                    disabled={
+                      hasPendingAction
+                    }
+                  >
+                    {deletingUser
+                      ? "⏳"
+                      : "🗑️"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="action-button"
+                    onClick={() =>
+                      void handleToggleStatus(
+                        user
+                      )
+                    }
+                    title={
+                      user.active
+                        ? "Desactivar"
+                        : "Activar"
+                    }
+                    disabled={
+                      hasPendingAction
+                    }
+                  >
+                    {togglingUser
+                      ? "⏳"
+                      : user.active
+                        ? "🚫"
+                        : "✅"}
+                  </button>
+                </td>
+              </tr>
+            );
+          })
         )}
       </tbody>
     </table>

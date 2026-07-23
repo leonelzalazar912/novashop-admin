@@ -1,4 +1,4 @@
-type AdminSection =
+export type AdminSection =
   | "dashboard"
   | "products"
   | "categories"
@@ -7,40 +7,88 @@ type AdminSection =
   | "brands"
   | "orders"
   | "users"
-  | "purchases"
-
+  | "purchases";
 
 type AdminSidebarProps = {
-  onNavigate: (section: AdminSection) => void;
+  onNavigate: (
+    section: AdminSection
+  ) => void;
+  canManageUsers?: boolean;
 };
 
-const menuItems = [
-  { label: "Dashboard", section: "dashboard" },
-  { label: "Productos", section: "products" },
-  { label: "Categorías", section: "categories" },
-  { label: "Clientes", section: "clients" },
-  { label: "Proveedores", section: "suppliers" },
-  { label: "Marcas", section: "brands" },
-  { label: "Pedidos", section: "orders" },
-  { label: "Usuarios", section: "users" },
-  { label: "Compras", section: "purchases" },
+const menuItems: Array<{
+  label: string;
+  section: AdminSection;
+}> = [
+  {
+    label: "Dashboard",
+    section: "dashboard",
+  },
+  {
+    label: "Productos",
+    section: "products",
+  },
+  {
+    label: "Categorías",
+    section: "categories",
+  },
+  {
+    label: "Clientes",
+    section: "clients",
+  },
+  {
+    label: "Proveedores",
+    section: "suppliers",
+  },
+  {
+    label: "Marcas",
+    section: "brands",
+  },
+  {
+    label: "Pedidos",
+    section: "orders",
+  },
+  {
+    label: "Usuarios",
+    section: "users",
+  },
+  {
+    label: "Compras",
+    section: "purchases",
+  },
+];
 
-] as const;
+export function AdminSidebar({
+  onNavigate,
+  canManageUsers = true,
+}: AdminSidebarProps) {
+  const visibleMenuItems =
+    menuItems.filter(
+      (item) =>
+        item.section !== "users" ||
+        canManageUsers
+    );
 
-export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   return (
     <aside className="admin-sidebar">
       <h2>NovaShop Admin</h2>
 
       <nav>
-        {menuItems.map((item) => (
-          <button
-            key={item.section}
-            onClick={() => onNavigate(item.section)}
-          >
-            {item.label}
-          </button>
-        ))}
+        {visibleMenuItems.map(
+          (item) => (
+            <button
+              key={item.section}
+              type="button"
+              onClick={() =>
+                onNavigate(
+                  item.section
+                )
+              }
+            >
+              {item.label}
+            </button>
+          )
+        )}
       </nav>
     </aside>
   );

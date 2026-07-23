@@ -203,3 +203,825 @@ Orden recomendado:
 ### Estado de la sesión
 
 Finalizada correctamente.
+
+---
+
+## Sesión — 23/07/2026
+
+### Objetivo de la sesión
+
+Continuar la migración del módulo Usuarios desde `localStorage` hacia Supabase, completar las operaciones administrativas de la Edge Function `manage-users` y validar el flujo real de invitación, creación de contraseña, actualización y retiro de miembros.
+
+### Verificaciones iniciales
+
+- Se ejecutó nuevamente `npm run build`.
+- La compilación finalizó correctamente.
+- Vite transformó 2358 módulos.
+- Se mantuvo la advertencia por un bundle de JavaScript superior a 500 kB.
+- La advertencia no bloqueó la compilación ni las pruebas.
+- Se verificó que el repositorio estuviera limpio antes de comenzar los cambios principales.
+
+### Limpieza del repositorio
+
+Se actualizó `.gitignore` para ignorar:
+
+- `node_modules/`;
+- `dist/`;
+- `.env`;
+- `.env.local`;
+- `.env.*.local`.
+
+También se retiró `dist/` del seguimiento de Git mediante:
+
+`git rm -r --cached dist`
+
+La limpieza de `dist/` y `.gitignore` fue confirmada, versionada y enviada al repositorio remoto.
+
+Importante: los cambios realizados posteriormente durante esta sesión todavía deben revisarse con `git status`, compilarse nuevamente y guardarse en un commit separado.
+
+### Verificación de la estructura real de Supabase
+
+Se confirmó la estructura necesaria para Usuarios:
+
+#### Tabla `profiles`
+
+- `id`: UUID, clave primaria y referencia a `auth.users.id`.
+- `full_name`: nombre visible del usuario.
+- `phone`.
+- `avatar_url`.
+- `created_at`.
+- `updated_at`.
+
+#### Tabla `roles`
+
+- `id`.
+- `store_id`.
+- `code`.
+- `name`.
+- `description`.
+- `is_system`.
+- `created_at`.
+
+Restricción confirmada:
+
+`UNIQUE (store_id, code)`
+
+#### Tabla `store_members`
+
+- `id`.
+- `store_id`.
+- `user_id`.
+- `role_id`.
+- `active`.
+- `invited_at`.
+- `joined_at`.
+- `created_at`.
+- `updated_at`.
+
+Restricción confirmada:
+
+`UNIQUE (store_id, user_id)`
+
+#### Roles existentes
+
+- `owner` — Propietario.
+- `admin` — Administrador.
+- `employee` — Empleado.
+- `seller` — Vendedor.
+
+También se confirmó la existencia del trigger `on_auth_user_created`, que crea automáticamente un registro en `profiles` al generarse un usuario en Supabase Auth.
+
+### Edge Function `manage-users`
+
+Archivo principal:
+
+`supabase/functions/manage-users/index.ts`
+
+La función quedó configurada con:
+
+- autenticación obligatoria;
+- `verify_jwt = true`;
+- validación de método POST;
+- validación del usuario autenticado;
+- resolución de la tienda activa;
+- verificación de membresía activa;
+- autorización exclusiva para Propietario o Administrador;
+- uso de `context.supabaseAdmin` únicamente dentro de la Edge Function;
+- respuestas tipadas con mensajes de error claros.
+
+### Acción `list`
+
+La acción `list` había sido implementada en la sesión anterior y volvió a ser validada.
+
+Realiza:
+
+1. Obtención de los miembros de la tienda.
+2. Lectura de perfiles.
+3. Lectura de roles.
+4. Lectura de correos desde Supabase Auth.
+5. Construcción del DTO utilizado por la interfaz.
+6. Ordenamiento alfabético de usuarios.
+7. Retorno de `id`, `name`, `email`, `role` y `active`.
+
+Resultado:
+
+- funcionamiento correcto con una cuenta Propietario;
+- rechazo correcto con una cuenta Empleado;
+- respuesta de seguridad comprobada: HTTP `403`;
+- mensaje comprobado: `No tenés permisos para administrar usuarios.`
+
+### Acción `invite`
+
+Se implementó y desplegó la acción:
+
+`invite`
+
+Comportamiento implementado:
+
+- validación de nombre, correo, rol y estado;
+- búsqueda de usuarios existentes en Supabase Auth;
+- prevención de membresías duplicadas;
+- invitación por correo cuando la cuenta todavía no existe;
+- asociación directa cuando el usuario ya existe en Auth;
+- creación de la membresía en `store_members`;
+- creación o actualización del perfil cuando corresponde;
+- asignación del rol solicitado;
+- protección para que solamente un Propietario pueda asignar el rol Propietario;
+- reversión de la membresía o del usuario recién invitado si una operación posterior falla.
+
+### Configuración de URL de autenticación
+
+En Supabase Authentication se configuró:
+
+- Site URL: `http://localhost:5173`
+- Redirect URL: `http://localhost:5173/**`
+
+Esta configuración corresponde al puerto utilizado por Vite durante el desarrollo local.
+
+### Flujo de aceptación de invitaciones
+
+Se revisó `src/app/App.tsx` y se confirmó que NovaShop todavía no utiliza React Router. La navegación continúa controlándose mediante un estado local llamado `screen`.
+
+Se creó:
+
+`src/app/components/SetPasswordScreen.tsx`
+
+La nueva pantalla permite:
+
+- detectar una sesión válida generada por un enlace de invitación;
+- validar que la invitación haya producido una sesión;
+- ingresar una nueva contraseña;
+- confirmar la contraseña;
+- exigir al menos 8 caracteres;
+- actualizar la contraseña mediante `supabase.auth.updateUser`;
+- mostrar estados de validación, error y finalización;
+- ingresar al panel administrativo después de configurar la contraseña.
+
+Se modificó:
+
+`src/app/App.tsx`
+
+Cambios principales:
+
+- incorporación de la pantalla `set-password`;
+- detección inicial de flujos `invite` y `recovery` en la URL;
+- apertura de `SetPasswordScreen` cuando corresponde;
+- limpieza de los parámetros de autenticación de la URL al finalizar;
+- acceso al panel administrativo después de configurar la contraseña.
+
+Se revisó:
+
+`src/app/components/LoginScreen.tsx`
+
+El inicio de sesión normal ya utiliza:
+
+`supabase.auth.signInWithPassword`
+
+No fue necesario modificar este archivo durante esta etapa.
+
+### Compilación del flujo de invitación
+
+Después de incorporar `SetPasswordScreen` y modificar `App.tsx`, se ejecutó:
+
+`npm run build`
+
+Resultado:
+
+- compilación correcta;
+- 2358 módulos transformados;
+- sin errores bloqueantes;
+- se mantuvo únicamente la advertencia por tamaño del bundle.
+
+### Prueba real de invitación
+
+Se realizó una prueba completa con un correo secundario real.
+
+Resultado validado:
+
+1. La Edge Function devolvió `success: true`.
+2. La invitación fue enviada.
+3. El correo de invitación fue recibido.
+4. El enlace abrió NovaShop en `http://localhost:5173`.
+5. La aplicación detectó correctamente el flujo de invitación.
+6. Se mostró `SetPasswordScreen`.
+7. La contraseña fue guardada correctamente.
+8. La cuenta secundaria pudo ingresar al panel.
+9. La nueva membresía fue creada con rol Empleado.
+10. La seguridad del backend rechazó la acción `list` ejecutada por el Empleado con HTTP `403`.
+
+### Acción `update`
+
+Se implementó y desplegó la acción:
+
+`update`
+
+Permite modificar:
+
+- nombre;
+- rol;
+- estado activo.
+
+No modifica todavía el correo electrónico.
+
+Protecciones implementadas:
+
+- solamente Propietario o Administrador pueden actualizar miembros;
+- un Administrador no puede modificar a un Propietario;
+- solamente un Propietario puede asignar el rol Propietario;
+- no se puede cambiar el rol ni desactivar al último Propietario activo;
+- se protege también al último Administrador activo;
+- se valida que el usuario pertenezca a la tienda;
+- se actualiza `profiles.full_name`;
+- se actualizan `store_members.role_id` y `store_members.active`;
+- se intenta revertir el perfil si la actualización de la membresía falla.
+
+### Pruebas de `update`
+
+Primera prueba:
+
+- se seleccionó por error al Propietario;
+- la función rechazó correctamente la operación;
+- respuesta: HTTP `409`;
+- mensaje: `No se puede cambiar el rol ni desactivar al último propietario activo.`
+
+Esta prueba confirmó que la protección del último Propietario funciona.
+
+Segunda prueba:
+
+- se intentó actualizar al usuario secundario;
+- apareció un error HTTP `500`;
+- el log remoto mostró `AuthApiError: invalid JWT`;
+- código: `bad_jwt`;
+- la falla provenía de una llamada redundante a `auth.admin.getUserById` dentro de `update`.
+
+Corrección aplicada:
+
+- se retiró la dependencia innecesaria de esa llamada administrativa para actualizar nombre, rol y estado;
+- se volvió a desplegar la Edge Function.
+
+Prueba final:
+
+- nombre actualizado correctamente;
+- rol cambiado de Empleado a Vendedor;
+- estado activo conservado;
+- respuesta `success: true`;
+- mensaje: `El usuario fue actualizado correctamente.`
+
+### Acción `remove`
+
+Se implementó la acción:
+
+`remove`
+
+Decisión funcional conservada:
+
+Quitar un usuario significa eliminar su membresía de una tienda, no eliminar automáticamente su cuenta global.
+
+Comportamiento:
+
+- elimina el registro correspondiente de `store_members`;
+- no elimina la cuenta de Supabase Auth;
+- no elimina el registro de `profiles`;
+- no permite que un Administrador quite a un Propietario;
+- protege al último Propietario activo;
+- protege al último Administrador activo;
+- impide que el usuario autenticado se quite a sí mismo;
+- devuelve `removedUserId` para que el frontend pueda retirar el usuario de la tabla.
+
+### Incidente de versionado durante `remove`
+
+En un primer despliegue la función respondió:
+
+- HTTP `400`;
+- mensaje: `La acción solicitada no está disponible.`
+
+La causa fue que el archivo desplegado no contenía realmente la acción `remove`, aunque se había indicado lo contrario durante el proceso.
+
+Para evitar otro despliegue incorrecto se verificó el archivo local con PowerShell:
+
+`Select-String -Path ".\supabase\functions\manage-users\index.ts" -Pattern 'body.action !== "remove"','body.action === "remove"'`
+
+Se confirmaron tres coincidencias:
+
+- validación de la acción;
+- bloque de ejecución de `remove`;
+- mensaje de error inesperado específico.
+
+Después de esta verificación se desplegó nuevamente la función.
+
+### Prueba final de `remove`
+
+La prueba fue ejecutada desde la cuenta Propietario sobre el usuario secundario.
+
+Resultado:
+
+- `success: true`;
+- mensaje: `El usuario fue quitado de la tienda correctamente.`;
+- `removedUserId` devuelto correctamente;
+- la membresía fue eliminada de `store_members`;
+- la cuenta de Auth permanece existente;
+- el perfil permanece existente.
+
+Al cierre de la sesión, la tienda vuelve a tener únicamente al Propietario como miembro activo.
+
+### Lecciones del proceso
+
+Durante esta sesión se repitieron varios reemplazos y despliegues del mismo archivo. Esto generó demoras y confusión.
+
+Reglas reforzadas para las próximas sesiones:
+
+1. No afirmar que una operación está incorporada sin verificar el archivo exacto.
+2. Antes de desplegar, comprobar por búsqueda que la acción exista en la validación y en su bloque de ejecución.
+3. Verificar que el archivo local que se despliega sea el mismo que se entregó.
+4. Ejecutar una sola prueba controlada por operación.
+5. No repetir invitaciones ni crear usuarios innecesarios.
+6. Mantener un solo archivo fuente considerado definitivo por cada etapa.
+7. Después de modificar una Edge Function, revisar errores del editor, desplegar y comprobar los logs solamente si la respuesta falla.
+8. Registrar inmediatamente en esta bitácora cualquier diferencia entre la versión local y la desplegada.
+
+### Archivos creados durante la sesión
+
+- `src/app/components/SetPasswordScreen.tsx`
+
+### Archivos modificados durante la sesión
+
+- `.gitignore`
+- `src/app/App.tsx`
+- `supabase/functions/manage-users/index.ts`
+
+### Configuración remota modificada
+
+- Supabase Authentication Site URL.
+- Supabase Authentication Redirect URLs.
+- Edge Function `manage-users` desplegada en varias iteraciones.
+
+### Archivos revisados sin cambios definitivos
+
+- `src/app/components/LoginScreen.tsx`
+- `src/modules/admin/users/services/usersService.ts`
+
+### Estado actual de `usersService.ts`
+
+El servicio todavía contiene únicamente la operación remota para:
+
+`list`
+
+Todavía falta agregar:
+
+- `invite`;
+- `update`;
+- cambio de estado mediante `update`;
+- `remove`;
+- interpretación común de errores para todas las acciones.
+
+### Archivos de frontend todavía pendientes de migración
+
+- `src/modules/admin/users/services/usersService.ts`
+- `src/modules/admin/users/hooks/useUsers.ts`
+- `src/modules/admin/users/UsersPage.tsx`
+- `src/modules/admin/users/components/UserForm.tsx`
+- `src/modules/admin/users/components/UsersTable.tsx`
+- `src/modules/admin/users/data/usersData.ts`
+
+Estos archivos continúan dependiendo total o parcialmente del flujo anterior basado en `localStorage`.
+
+### Estado funcional del backend de Usuarios
+
+Operaciones implementadas y probadas:
+
+- `list`;
+- `invite`;
+- `update`;
+- activación y desactivación mediante `update`;
+- `remove`;
+- autorización por rol;
+- protección del último Propietario activo;
+- protección del último Administrador activo;
+- aceptación de invitación;
+- creación de contraseña;
+- retiro de membresía sin borrar la cuenta global.
+
+Operación pendiente:
+
+- cambio administrativo de correo electrónico.
+
+El cambio de correo se pospone porque afecta Supabase Auth y requiere una operación administrativa específica del lado servidor.
+
+### Estado de Git pendiente
+
+La limpieza de `.gitignore` y `dist/` fue guardada y enviada al repositorio.
+
+Los cambios posteriores de esta sesión deben verificarse antes del próximo commit:
+
+- ejecutar `git status`;
+- revisar que no haya archivos generados o secretos;
+- ejecutar `npm run build`;
+- confirmar el contenido final de `manage-users/index.ts`;
+- crear un commit descriptivo;
+- enviar el commit al remoto.
+
+### Próximo objetivo
+
+Conectar el frontend del módulo Usuarios con la Edge Function y retirar definitivamente el uso de `localStorage`.
+
+Orden recomendado:
+
+1. Revisar el archivo actual `usersService.ts`.
+2. Agregar operaciones tipadas para `invite`, `update` y `remove`.
+3. Unificar la lectura de errores de Edge Functions.
+4. Ejecutar `npm run build`.
+5. Migrar `useUsers.ts` a operaciones asíncronas.
+6. Adaptar `UsersPage.tsx` a estados de carga y error.
+7. Adaptar `UserForm.tsx` al flujo de invitación y edición.
+8. Adaptar `UsersTable.tsx` a acciones asíncronas y confirmaciones.
+9. Eliminar el uso de `localStorage`.
+10. Probar desde la interfaz:
+    - listado;
+    - invitación;
+    - edición;
+    - activación/desactivación;
+    - retiro de membresía;
+    - restricciones por rol.
+11. Ejecutar `npm run build`.
+12. Revisar `git status`.
+13. Crear commit y push.
+
+### Próximo archivo recomendado
+
+`src/modules/admin/users/services/usersService.ts`
+
+### Estado de la sesión
+
+Backend del módulo Usuarios completado y probado.
+
+Flujo de invitación y creación de contraseña completado y probado.
+
+Migración del frontend todavía pendiente.
+
+---
+
+## Continuación de la sesión — 23/07/2026
+
+### Objetivo de esta etapa
+
+Completar la migración del frontend del módulo Usuarios hacia Supabase, retirar definitivamente el uso de `localStorage`, adaptar la interfaz a operaciones asíncronas y validar las restricciones visuales y funcionales según el rol del usuario autenticado.
+
+### Servicio remoto de Usuarios completado
+
+Se actualizó:
+
+`src/modules/admin/users/services/usersService.ts`
+
+El servicio quedó conectado con la Edge Function `manage-users` y ahora implementa:
+
+- `loadUsers`;
+- `inviteUser`;
+- `updateUser`;
+- `removeUser`;
+- interpretación centralizada de respuestas exitosas;
+- interpretación común de errores de Supabase Functions;
+- validación de los datos devueltos por el backend;
+- tipos específicos para listado, invitación, actualización y retiro.
+
+La respuesta de actualización se adaptó para aceptar únicamente los campos que realmente devuelve el backend:
+
+- `id`;
+- `name`;
+- `role`;
+- `active`.
+
+El correo se conserva desde el estado existente porque todavía no forma parte de la operación administrativa `update`.
+
+### Hook `useUsers` migrado a Supabase
+
+Se reemplazó el flujo anterior de:
+
+`src/modules/admin/users/hooks/useUsers.ts`
+
+El hook dejó de utilizar almacenamiento local y ahora:
+
+- inicia con una lista vacía;
+- carga los usuarios desde Supabase;
+- expone estado de carga;
+- expone mensajes de error;
+- permite reintentar la carga;
+- invita o agrega miembros mediante la Edge Function;
+- actualiza nombre, rol y estado;
+- activa o desactiva usuarios;
+- retira membresías;
+- mantiene la tabla sincronizada con las respuestas del servidor;
+- ordena los usuarios por nombre;
+- rechaza cambios de correo desde la edición actual.
+
+### Página de Usuarios adaptada
+
+Se modificó:
+
+`src/modules/admin/users/UsersPage.tsx`
+
+Cambios realizados:
+
+- incorporación del estado `loading`;
+- incorporación del estado `loadError`;
+- mensaje visible `Cargando usuarios...`;
+- mensaje de error con botón `Reintentar`;
+- bloqueo temporal de acciones mientras se guarda un usuario;
+- manejo asíncrono de creación y edición;
+- cierre del formulario solamente después de una operación correcta;
+- prevención de mostrar falsamente una tabla vacía durante la carga inicial;
+- desactivación del buscador y del botón de creación cuando la página está ocupada o existe un error de carga.
+
+### Formulario de Usuarios adaptado
+
+Se modificó:
+
+`src/modules/admin/users/components/UserForm.tsx`
+
+Comportamiento actual:
+
+- en modo creación funciona como formulario de invitación;
+- el título indica `Invitar usuario`;
+- informa que el usuario recibirá un correo para establecer su contraseña;
+- el botón principal indica `Enviar invitación`;
+- normaliza el correo a minúsculas;
+- en modo edición el correo se muestra como solo lectura;
+- informa que el correo electrónico todavía no puede modificarse;
+- conserva la edición de nombre, rol y estado.
+
+### Tabla de Usuarios adaptada
+
+Se modificó:
+
+`src/modules/admin/users/components/UsersTable.tsx`
+
+Cambios realizados:
+
+- soporte para acciones asíncronas;
+- espera de la respuesta antes de actualizar la interfaz;
+- estado visual de operación pendiente;
+- desactivación temporal de botones mientras se procesa una acción;
+- confirmación antes de retirar una membresía;
+- aclaración de que quitar un usuario de la tienda no elimina su cuenta global;
+- visualización de errores devueltos por el backend.
+
+### Retiro definitivo de `localStorage` en Usuarios
+
+Se ejecutó:
+
+`Get-ChildItem ".\src\modules\admin\users" -Recurse -Include *.ts,*.tsx | Select-String -Pattern "localStorage"`
+
+Resultado:
+
+- no se encontró ninguna coincidencia;
+- el módulo Usuarios ya no depende de `localStorage`;
+- las lecturas y escrituras se realizan mediante Supabase y la Edge Function.
+
+El uso de `localStorage` que permanece en `AdminDashboard.tsx` corresponde únicamente a la personalización visual de tarjetas del Dashboard y no al módulo Usuarios.
+
+### Pruebas completas desde la interfaz
+
+Se realizaron las siguientes pruebas con la cuenta Propietario:
+
+1. Carga del listado real de miembros.
+2. Visualización correcta del estado `Cargando usuarios...`.
+3. Incorporación de una cuenta secundaria ya existente en Supabase Auth.
+4. Creación correcta de su membresía en la tienda.
+5. Edición del nombre desde la interfaz.
+6. Cambio de rol de Empleado a Vendedor.
+7. Confirmación de que el correo permanece bloqueado en edición.
+8. Desactivación del usuario secundario.
+9. Reactivación del usuario secundario.
+10. Retiro de la membresía desde la tabla.
+11. Confirmación de que el usuario desaparece después de recargar.
+12. Nueva incorporación de la cuenta secundaria para probar permisos.
+13. Protección del último Propietario activo al intentar desactivarlo.
+14. Protección del último Propietario activo al intentar quitarlo de la tienda.
+
+Resultados:
+
+- todas las operaciones permitidas funcionaron correctamente;
+- las operaciones protegidas fueron rechazadas;
+- la tabla permaneció sincronizada con el backend;
+- después de una recarga los datos persistieron correctamente en Supabase.
+
+### Restricciones por rol en el backend
+
+Se confirmó nuevamente que una cuenta con rol Vendedor no puede administrar usuarios.
+
+Al intentar cargar el módulo, el backend respondió:
+
+- HTTP `403`;
+- mensaje: `No tenés permisos para administrar usuarios.`
+
+Esto confirma que la seguridad principal permanece en el servidor y no depende únicamente de ocultar elementos visuales.
+
+### Restricción visual del menú Usuarios
+
+Se revisaron y modificaron:
+
+- `src/modules/admin/components/AdminSidebar.tsx`;
+- `src/modules/admin/AdminDashboard.tsx`.
+
+#### Cambios en `AdminSidebar.tsx`
+
+- se exportó el tipo `AdminSection`;
+- se agregó la propiedad opcional `canManageUsers`;
+- el elemento `Usuarios` se filtra cuando el usuario no posee permiso;
+- se mantuvo compatibilidad con el resto de las secciones.
+
+#### Cambios en `AdminDashboard.tsx`
+
+- se agregó una comprobación inicial de permiso mediante `loadUsers`;
+- mientras el permiso se resuelve, Usuarios permanece oculto;
+- si la operación funciona, el usuario puede administrar miembros;
+- si la operación devuelve un error de autorización, Usuarios se oculta;
+- se bloquea también la renderización de `UsersPage`;
+- si un usuario sin permiso estuviera ubicado en esa sección, se lo redirige al Dashboard;
+- se añadió una validación adicional dentro de `handleNavigate`.
+
+### Pruebas visuales por rol
+
+Prueba con rol Vendedor:
+
+- se inició sesión con la cuenta secundaria;
+- se recargó la aplicación;
+- la opción `Usuarios` desapareció del menú;
+- las demás secciones continuaron funcionando normalmente.
+
+Prueba con rol Propietario:
+
+- se volvió a iniciar sesión con la cuenta principal;
+- la opción `Usuarios` apareció correctamente;
+- la tabla cargó sin errores;
+- todas las operaciones continuaron disponibles.
+
+Resultado:
+
+- Propietario puede ver y utilizar Usuarios;
+- Administrador queda habilitado por la misma autorización del backend;
+- Empleado y Vendedor no pueden cargar la información;
+- Empleado y Vendedor no ven Usuarios en el menú.
+
+### Compilación final del frontend
+
+Después de integrar la restricción visual se ejecutó:
+
+`npm run build`
+
+Resultado:
+
+- compilación correcta;
+- 2358 módulos transformados;
+- archivo CSS generado: aproximadamente 105.84 kB;
+- archivo JavaScript generado: aproximadamente 1,027.86 kB;
+- tiempo de compilación: 16.45 segundos;
+- sin errores de TypeScript;
+- sin errores bloqueantes de Vite.
+
+Permanece la advertencia:
+
+- algunos chunks superan los 500 kB después de la minificación.
+
+Esta advertencia no impide la compilación. La división del bundle mediante carga dinámica queda como mejora futura.
+
+### Revisión de formato de Git
+
+Se ejecutó:
+
+`git diff --check`
+
+Resultado:
+
+- no se detectaron errores de espacios;
+- no se detectaron conflictos de formato;
+- aparecieron únicamente advertencias de conversión de finales de línea de `LF` a `CRLF` en Windows para:
+  - `src/app/App.tsx`;
+  - `supabase/functions/manage-users/index.ts`.
+
+Estas advertencias no representan errores de código.
+
+### Estado de Git antes del commit final
+
+Archivos modificados:
+
+- `docs/bitacora-desarrollo.txt`;
+- `src/app/App.tsx`;
+- `src/modules/admin/AdminDashboard.tsx`;
+- `src/modules/admin/components/AdminSidebar.tsx`;
+- `src/modules/admin/users/UsersPage.tsx`;
+- `src/modules/admin/users/components/UserForm.tsx`;
+- `src/modules/admin/users/components/UsersTable.tsx`;
+- `src/modules/admin/users/hooks/useUsers.ts`;
+- `src/modules/admin/users/services/usersService.ts`;
+- `supabase/functions/manage-users/index.ts`.
+
+Archivo nuevo:
+
+- `src/app/components/SetPasswordScreen.tsx`.
+
+No se detectaron archivos generados de `dist/` ni archivos de entorno dentro de los cambios pendientes.
+
+### Estado funcional final del módulo Usuarios
+
+Completado y probado:
+
+- listado desde Supabase;
+- invitación de cuentas nuevas;
+- incorporación de cuentas existentes;
+- aceptación de invitaciones;
+- creación de contraseña;
+- actualización de nombre;
+- actualización de rol;
+- activación;
+- desactivación;
+- retiro de membresía;
+- protección del último Propietario;
+- protección del último Administrador en el backend;
+- restricción para que un Administrador no modifique a un Propietario;
+- autorización de Propietario y Administrador;
+- rechazo de Empleado y Vendedor;
+- ocultamiento visual de Usuarios para roles sin permiso;
+- eliminación completa de `localStorage` dentro del módulo;
+- estados de carga, error y reintento;
+- compilación final correcta.
+
+### Mejoras futuras
+
+Quedan fuera de esta etapa:
+
+- cambio administrativo de correo electrónico;
+- recuperación de contraseña desde la pantalla de inicio de sesión;
+- selector de tienda activa para usuarios con múltiples tiendas;
+- una acción específica para consultar permisos o identidad actual, evitando utilizar `list` como comprobación de acceso;
+- división del bundle mediante `import()` dinámico;
+- mejoras visuales adicionales para mostrar el estado de guardado dentro del formulario;
+- revisión controlada de vulnerabilidades informadas por `npm audit`.
+
+### Archivos creados durante toda la sesión
+
+- `src/app/components/SetPasswordScreen.tsx`.
+
+### Archivos modificados durante toda la sesión
+
+- `.gitignore`;
+- `docs/bitacora-desarrollo.txt`;
+- `src/app/App.tsx`;
+- `src/modules/admin/AdminDashboard.tsx`;
+- `src/modules/admin/components/AdminSidebar.tsx`;
+- `src/modules/admin/users/UsersPage.tsx`;
+- `src/modules/admin/users/components/UserForm.tsx`;
+- `src/modules/admin/users/components/UsersTable.tsx`;
+- `src/modules/admin/users/hooks/useUsers.ts`;
+- `src/modules/admin/users/services/usersService.ts`;
+- `supabase/functions/manage-users/index.ts`.
+
+La modificación de `.gitignore` y el retiro de `dist/` fueron guardados previamente en un commit separado y enviados al repositorio remoto.
+
+### Pendiente inmediato
+
+Antes de cerrar completamente la sesión:
+
+1. reemplazar `docs/bitacora-desarrollo.txt` con esta versión actualizada;
+2. ejecutar `git status --short`;
+3. agregar los archivos al área de preparación;
+4. crear un commit descriptivo;
+5. enviar el commit al repositorio remoto;
+6. registrar el hash final del commit.
+
+### Mensaje de commit recomendado
+
+`feat: completar gestión de usuarios con Supabase y permisos por rol`
+
+### Estado de la sesión
+
+Backend de Usuarios completado y desplegado.
+
+Frontend de Usuarios migrado completamente a Supabase.
+
+Flujo de invitación y contraseña completado.
+
+Restricciones funcionales y visuales por rol validadas.
+
+Compilación final correcta.
+
+Commit y push finales todavía pendientes.
