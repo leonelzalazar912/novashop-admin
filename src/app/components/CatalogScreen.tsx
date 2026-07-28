@@ -11,6 +11,12 @@ interface CatalogScreenProps {
   initialSelectedGame?: Product | null;
 }
 
+function metadataLabel(key: string): string {
+  return key
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export function CatalogScreen({
   games,
   initialSearch,
@@ -19,8 +25,6 @@ export function CatalogScreen({
   initialSelectedGame,
 }: CatalogScreenProps) {
   const [selectedPlatform, setSelectedPlatform] = useState("Todos");
-  const [selectedGenre, setSelectedGenre] = useState("Todos");
-  const [selectedEra, setSelectedEra] = useState("");
   const [onlyStock, setOnlyStock] = useState(false);
   const [sortBy, setSortBy] = useState("default");
   const [search, setSearch] = useState(initialSearch);
@@ -35,16 +39,21 @@ export function CatalogScreen({
   }
 }, [initialSelectedGame]);
   const [activeTab, setActiveTab] = useState("description");
-  const clearFilters = () => {  
+  const clearFilters = () => {
   setSearch("");
   setSelectedPlatform("Todos");
-  setSelectedGenre("Todos");
-  setSelectedEra("");
   setOnlyStock(false);
   setSortBy("default");
 };
 
   if (selectedGame) {
+  const primaryImage =
+    selectedGame.images.find((image) => image.isPrimary) ?? selectedGame.images[0];
+
+  const metadataEntries = Object.entries(selectedGame.metadata).filter(
+    ([, value]) => value !== null && value !== undefined && value !== ""
+  );
+
   return (
     <div style={{ background: "#0d0e12", minHeight: "100vh", color: "#fff", padding: "32px" }}>
   <button
@@ -72,8 +81,8 @@ export function CatalogScreen({
 >
     <div style={{ position: "relative" }}>
     <img
-      src={selectedGame.image}
-      alt={selectedGame.name}
+      src={primaryImage?.url ?? "/logo.png"}
+      alt={primaryImage?.alt ?? selectedGame.name}
       style={{
         width: "100%",
         height: "520px",
@@ -83,8 +92,9 @@ export function CatalogScreen({
         border: "1px solid rgba(255,255,255,0.08)",
       }}
     />
-    <span
-    style={{
+    {selectedGame.category && (
+      <span
+      style={{
         position: "absolute",
         bottom: "16px",
         left: "16px",
@@ -94,10 +104,11 @@ export function CatalogScreen({
         borderRadius: "6px",
         fontSize: "0.8rem",
         fontWeight: 600,
-  }}
->
-  {selectedGame.category}
-</span>
+    }}
+  >
+    {selectedGame.category.name}
+  </span>
+    )}
 </div>
 
     <div>
@@ -111,9 +122,8 @@ export function CatalogScreen({
   {selectedGame.name}
 </h1>
 
-
       <p style={{ color: theme.colors.textSoft, marginBottom: "20px" }}>
-        {selectedGame.genre} · {selectedGame.category} · {selectedGame.releaseYear}
+        {[selectedGame.category?.name, selectedGame.brand?.name].filter(Boolean).join(" · ")}
       </p>
 
       <div
@@ -125,18 +135,6 @@ export function CatalogScreen({
     border: "1px solid rgba(0, 200, 215, 0.35)",
   }}
 >
-  {selectedGame.originalPrice && (
-    <p
-      style={{
-        color: theme.colors.textSoft,
-        textDecoration: "line-through",
-        marginBottom: "6px",
-      }}
-    >
-      ${selectedGame.originalPrice.toLocaleString("es-AR")} ARS
-    </p>
-  )}
-
   <p
     style={{
       fontSize: "2.4rem",
@@ -145,14 +143,8 @@ export function CatalogScreen({
       color: "#00f5d4",
     }}
   >
-    ${selectedGame.price.toLocaleString("es-AR")} ARS
+    ${selectedGame.price.toLocaleString("es-AR")} {selectedGame.currency}
   </p>
-
-  {selectedGame.discount && (
-    <p style={{ color: "#6A3CE6", fontWeight: "bold", marginTop: "8px" }}>
-      {selectedGame.discount}% OFF
-    </p>
-  )}
 </div>
 
       <div
@@ -160,13 +152,13 @@ export function CatalogScreen({
     marginBottom: "16px",
     padding: "12px 14px",
     borderRadius: "10px",
-    background: (selectedGame.stock ?? 0) > 0 ? "#003f35" : "#3a1111",
-    color: (selectedGame.stock ?? 0) > 0 ? "#00ffd0" : "#ff6b6b",
+    background: selectedGame.stock > 0 ? "#003f35" : "#3a1111",
+    color: selectedGame.stock > 0 ? "#00ffd0" : "#ff6b6b",
     fontWeight: 600,
     border: "1px solid rgba(0, 255, 208, 0.25)",
   }}
 >
-  {(selectedGame.stock ?? 0) > 0
+  {selectedGame.stock > 0
     ? `🟢 ${selectedGame.stock} unidades en stock`
     : "🔴 Sin stock"}
 </div>
@@ -199,27 +191,29 @@ export function CatalogScreen({
     Descripción
   </button>
 
-  <button
-    onClick={() => setActiveTab("specs")}
-    style={{
-      padding: "10px 16px",
-      borderRadius: "10px",
-      border: "none",
-      background: activeTab === "specs" ? "#6A3CE6" : "transparent",
-      color: activeTab === "specs" ? "#ffffff" : "#9da0b8",
-      fontWeight: 700,
-      cursor: "pointer",
-    }}
-  >
-    Especificaciones
-  </button>
+  {metadataEntries.length > 0 && (
+    <button
+      onClick={() => setActiveTab("specs")}
+      style={{
+        padding: "10px 16px",
+        borderRadius: "10px",
+        border: "none",
+        background: activeTab === "specs" ? "#6A3CE6" : "transparent",
+        color: activeTab === "specs" ? "#ffffff" : "#9da0b8",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      Especificaciones
+    </button>
+  )}
 </div>
 
   {activeTab === "description" && (
-    <p style={{ lineHeight: 1.6 }}>{selectedGame.description}</p>
+    <p style={{ lineHeight: 1.6 }}>{selectedGame.description ?? "Sin descripción."}</p>
   )}
 
-  {activeTab === "specs" && (
+  {activeTab === "specs" && metadataEntries.length > 0 && (
   <div
     style={{
       background: "#161720",
@@ -229,14 +223,9 @@ export function CatalogScreen({
       maxWidth: "520px",
     }}
   >
-    {[
-      ["Desarrollador", selectedGame.developer],
-      ["Plataforma", selectedGame.category],
-      ["Género", selectedGame.genre],
-      ["Año", selectedGame.releaseYear],
-    ].map(([label, value]) => (
+    {metadataEntries.map(([key, value]) => (
       <div
-        key={label}
+        key={key}
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -246,34 +235,32 @@ export function CatalogScreen({
         }}
       >
         <span style={{ color: "#9da0b8", fontWeight: 600 }}>
-          {label}
+          {metadataLabel(key)}
         </span>
         <span style={{ color: "#E8E9F0", fontWeight: 700 }}>
-          {value}
+          {String(value)}
         </span>
       </div>
     ))}
   </div>
 )}
-
-  
 </div>
 
       <button
-        disabled={(selectedGame.stock ?? 0) <= 0}
+        disabled={selectedGame.stock <= 0}
         onClick={() => onAddToCart(selectedGame)}
         style={{
           marginTop: "24px",
           padding: "12px 18px",
           border: "none",
           borderRadius: "10px",
-          background: (selectedGame.stock ?? 0) <= 0 ? "#555" : "#6A3CE6",
+          background: selectedGame.stock <= 0 ? "#555" : "#6A3CE6",
           color: "#0d0e12",
           fontWeight: "bold",
-          cursor: (selectedGame.stock ?? 0) <= 0 ? "not-allowed" : "pointer",
+          cursor: selectedGame.stock <= 0 ? "not-allowed" : "pointer",
         }}
       >
-        {(selectedGame.stock ?? 0) <= 0 ? "Sin stock" : "Agregar al carrito"}
+        {selectedGame.stock <= 0 ? "Sin stock" : "Agregar al carrito"}
       </button>
       <div
   style={{
@@ -334,24 +321,27 @@ export function CatalogScreen({
   );
 }
 
-const platforms = ["Todos", ...Array.from(new Set(games.map((game) => game.category)))];
-const genres = ["Todos", ...Array.from(new Set(games.map((game) => game.genre ?? "Acción")))];
-const eras = ["Retro", "Actuales"];
+const platforms = [
+  "Todos",
+  ...Array.from(
+    new Set(
+      games
+        .map((game) => game.category?.name)
+        .filter((name): name is string => Boolean(name))
+    )
+  ),
+];
 
 const filteredGames = games
   .filter((game) => {
     if (search && !game.name.toLowerCase().includes(search.toLowerCase())) return false;
-    if (selectedPlatform !== "Todos" && game.category !== selectedPlatform) return false;
-    if (selectedGenre !== "Todos" && (game.genre ?? "Acción") !== selectedGenre) return false;
-    if (selectedEra === "Retro" && (game.releaseYear ?? 9999) > 2013) return false;
-    if (selectedEra === "Actuales" && (game.releaseYear ?? 0) <= 2013) return false;
-    if (onlyStock && (game.stock ?? 0) <= 0) return false;
+    if (selectedPlatform !== "Todos" && game.category?.name !== selectedPlatform) return false;
+    if (onlyStock && game.stock <= 0) return false;
     return true;
   })
   .sort((a, b) => {
     if (sortBy === "price-asc") return a.price - b.price;
     if (sortBy === "price-desc") return b.price - a.price;
-    if (sortBy === "discount") return (b.discount ?? 0) - (a.discount ?? 0);
     return 0;
   });
     return (
@@ -384,7 +374,7 @@ const filteredGames = games
       marginBottom: 8,
     }}
   >
-    🎮 CATÁLOGO DE JUEGOS
+    🛒 CATÁLOGO
   </h1>
 
   <p
@@ -395,7 +385,7 @@ const filteredGames = games
       maxWidth: 520,
     }}
   >
-    Explorá todos los títulos disponibles y encontrá tu próximo juego favorito.
+    Explorá todos los productos disponibles.
   </p>
 
   <span
@@ -410,7 +400,7 @@ const filteredGames = games
       fontWeight: 600,
     }}
   >
-    {filteredGames.length} juegos disponibles
+    {filteredGames.length} productos disponibles
   </span>
 </div>
       <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: "24px", alignItems: "start" }}>
@@ -433,7 +423,7 @@ const filteredGames = games
 <div style={{ display: "none" }}>
   <input
     type="text"
-    placeholder="Buscar juego..."
+    placeholder="Buscar producto..."
     value={search}
     onChange={(e) => setSearch(e.target.value)}
     style={{
@@ -448,7 +438,7 @@ const filteredGames = games
   />
   </div>
 
-  <p style={{ color: theme.colors.textSoft, fontSize: "0.75rem", fontWeight: 700 }}>PLATAFORMA</p>
+  <p style={{ color: theme.colors.textSoft, fontSize: "0.75rem", fontWeight: 700 }}>CATEGORÍA</p>
   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
     {platforms.map((platform) => (
       <button
@@ -463,60 +453,13 @@ fontWeight: 700,
           cursor: "pointer",
           background: selectedPlatform === platform ? "#6A3CE6" : "#161720",
           color: selectedPlatform === platform ? "#ffffff" : "#e8eaf0",
-          
+
         }}
       >
         {platform}
       </button>
     ))}
   </div>
-
-  <p style={{ color: theme.colors.textSoft, fontSize: "0.75rem", fontWeight: 700 }}>GÉNERO</p>
-  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
-    {genres.map((genre) => (
-      <button
-        key={genre}
-        onClick={() => setSelectedGenre(genre)}
-        style={{
-          padding: "7px 10px",
-borderRadius: "999px",
-fontSize: "0.78rem",
-fontWeight: 700,
-          border: "1px solid rgba(255,255,255,0.08)",
-          cursor: "pointer",
-          background: selectedGenre === genre ? "#7b2fff" : "#161720",
-          color: "#fff",
-          
-        }}
-      >
-        {genre}
-      </button>
-    ))}
-  </div>
-
-  <p style={{ color: theme.colors.textSoft, fontSize: "0.75rem", fontWeight: 700 }}>ÉPOCA</p>
-  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
-    {eras.map((era) => (
-      <button
-        key={era}
-        onClick={() => setSelectedEra(era)}
-        style={{
-          padding: "7px 10px",
-borderRadius: "999px",
-fontSize: "0.78rem",
-fontWeight: 700,
-          border: "1px solid rgba(255,255,255,0.08)",
-          cursor: "pointer",
-          background: selectedEra === era ? "#ff8c00" : "#161720",
-          color: "#fff",
-          
-        }}
-      >
-        {era}
-      </button>
-    ))}
-  </div>
-
 
   <button
     onClick={() => setOnlyStock(!onlyStock)}
@@ -551,7 +494,6 @@ fontWeight: 700,
     <option value="default">Ordenar</option>
     <option value="price-asc">Precio: menor a mayor</option>
     <option value="price-desc">Precio: mayor a menor</option>
-    <option value="discount">Mayor descuento</option>
   </select>
 
   <button

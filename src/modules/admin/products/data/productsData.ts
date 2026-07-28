@@ -7,6 +7,8 @@ export interface Product {
   supplier: string;
   price: number;
   stock: number;
+  published: boolean;
+  active: boolean;
 }
 
 export const products: Product[] = [];

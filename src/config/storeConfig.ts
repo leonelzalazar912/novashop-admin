@@ -1,5 +1,6 @@
 export const storeConfig = {
   appName: "NovaShop",
+  storeSlug: "novashop-demo",
   storeName: "Demo Store",
   slogan: "Tu tienda online, simple y profesional",
 

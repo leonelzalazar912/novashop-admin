@@ -43,13 +43,13 @@ export function CategoriesPage() {
     setMessage("Categoría creada correctamente.");
   }
 
-  function handleDeleteCategory(id: number) {
+  function handleDeleteCategory(id: string) {
     deleteCategory(id);
     setMessage("Categoría eliminada correctamente.");
   }
 
   function handleUpdateCategory(
-    id: number,
+    id: string,
     name: string,
     description: string
   ) {

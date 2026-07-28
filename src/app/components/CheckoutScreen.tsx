@@ -6,9 +6,9 @@ interface CheckoutScreenProps {
   items: CartItem[];  
   onBack: () => void;
   onContinue: () => void;
-  onRemoveItem: (id: number) => void;
-  onIncreaseItem: (id: number) => void;
-  onDecreaseItem: (id: number) => void;
+  onRemoveItem: (id: string) => void;
+  onIncreaseItem: (id: string) => void;
+  onDecreaseItem: (id: string) => void;
 }
 
 
@@ -118,7 +118,7 @@ export function CheckoutScreen({
   }}
 >
     <img
-  src={item.image}
+  src={(item.images.find((image) => image.isPrimary) ?? item.images[0])?.url ?? "/logo.png"}
   alt={item.name}
   style={{
     width: 90,
@@ -156,7 +156,7 @@ export function CheckoutScreen({
         fontSize: 14,
       }}
     >
-      {item.category}
+      {item.category?.name}
     </p>
   </div>
 

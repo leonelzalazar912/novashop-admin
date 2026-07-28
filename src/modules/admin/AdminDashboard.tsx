@@ -27,7 +27,11 @@ import { UsersPage } from "./users/UsersPage";
 import { PurchasesPage } from "./purchases/PurchasesPage";
 import { loadUsers } from "./users/services/usersService";
 
-export function AdminDashboard() {
+interface AdminDashboardProps {
+  onGoStore?: () => void;
+}
+
+export function AdminDashboard({ onGoStore }: AdminDashboardProps) {
   const [section, setSection] =
     useState<AdminSection>("dashboard");
 
@@ -222,6 +226,7 @@ export function AdminDashboard() {
         canManageUsers={
           canManageUsers
         }
+        onGoStore={onGoStore}
       />
 
       <main className="admin-content">

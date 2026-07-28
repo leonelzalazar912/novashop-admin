@@ -34,8 +34,8 @@ export function SuppliersPage() {
     return () => clearTimeout(timer);
   }, [message]);
 
-  function handleAddSupplier(supplier: Omit<Supplier, "id" | "active">) {
-    const success = addSupplier(supplier);
+  async function handleAddSupplier(supplier: Omit<Supplier, "id" | "active">) {
+    const success = await addSupplier(supplier);
 
     setMessage(
       success
@@ -56,12 +56,12 @@ export function SuppliersPage() {
     setMessage("Proveedor actualizado correctamente.");
   }
 
-  function handleDeleteSupplier(id: number) {
+  function handleDeleteSupplier(id: string) {
     deleteSupplier(id);
     setMessage("Proveedor eliminado correctamente.");
   }
 
-  function handleToggleSupplierStatus(id: number) {
+  function handleToggleSupplierStatus(id: string) {
     toggleSupplierStatus(id);
     setMessage("Estado del proveedor actualizado.");
   }

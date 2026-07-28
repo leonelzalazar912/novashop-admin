@@ -45,6 +45,28 @@ export function useDataIntegrity() {
     );
   }
 
+  function hasStockMovementsByProduct(
+    productId: string
+  ): Promise<boolean> {
+    return recordExists(
+      "stock_movements",
+      "product_id",
+      productId,
+      "No se pudo comprobar si el producto tiene movimientos de stock."
+    );
+  }
+
+  function hasPurchaseItemsByProduct(
+    productId: string
+  ): Promise<boolean> {
+    return recordExists(
+      "purchase_items",
+      "product_id",
+      productId,
+      "No se pudo comprobar si el producto tiene compras asociadas."
+    );
+  }
+
   function hasProductsByCategory(
     categoryId: string
   ): Promise<boolean> {
@@ -81,6 +103,8 @@ export function useDataIntegrity() {
   return {
     hasOrdersByClient,
     hasOrdersByProduct,
+    hasStockMovementsByProduct,
+    hasPurchaseItemsByProduct,
     hasProductsByCategory,
     hasProductsByBrand,
     hasProductsBySupplier,

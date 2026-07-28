@@ -9,24 +9,19 @@ import { ConsoleCategories } from "./components/ConsoleCategories";
 import { ProductGrid } from "./components/ProductGrid";
 import { CartDrawer } from "./components/CartDrawer";
 import { Footer } from "./components/Footer";
-import { ProductCard } from "./components/ProductCard";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
 import { SetPasswordScreen } from "./components/SetPasswordScreen";
-import {
-  products,
-  featuredGames,
-} from "./components/data";
 import { CatalogScreen } from "./components/CatalogScreen";
 import { CheckoutScreen } from "./components/CheckoutScreen";
 import { PaymentScreen } from "./components/PaymentScreen";
 import { CompletedScreen } from "./components/CompletedScreen";
 import { DeliveryScreen } from "./components/DeliveryScreen";
 import { ClaimsScreen } from "./components/ClaimsScreen";
-import { storeConfig } from "../config/storeConfig";
 import type { Product } from "../types/product";
 import { useCart } from "../core/cart/useCart";
+import { useCatalog } from "../core/catalog/useCatalog";
 import { AdminDashboard } from "../modules/admin/AdminDashboard";
 
 type AppScreen =
@@ -91,6 +86,13 @@ export default function App() {
     clearCart,
   } = useCart();
 
+  const {
+    products,
+    categories,
+    loading: catalogLoading,
+    error: catalogError,
+  } = useCatalog();
+
   const [
     activeCategory,
     setActiveCategory,
@@ -140,7 +142,7 @@ export default function App() {
   const addToCart = (
     game: Product
   ) => {
-    if ((game.stock ?? 0) <= 0) {
+    if (game.stock <= 0) {
       return;
     }
 
@@ -153,20 +155,6 @@ export default function App() {
       total + item.qty,
     0
   );
-
-  const ps5Games = products
-    .filter(
-      (game) =>
-        game.category === "PS5"
-    )
-    .slice(0, 5);
-
-  const xboxGames = products
-    .filter(
-      (game) =>
-        game.category === "Xbox"
-    )
-    .slice(0, 5);
 
   if (screen === "set-password") {
     return (
@@ -225,6 +213,42 @@ export default function App() {
     );
   }
 
+  if (
+    (screen === "catalog" || screen === "home") &&
+    catalogLoading
+  ) {
+    return (
+      <div
+        className="min-h-screen w-full flex items-center justify-center"
+        style={{
+          backgroundColor: "#0d0e12",
+          color: "#e8eaf0",
+          fontFamily: "'Inter', sans-serif",
+        }}
+      >
+        Cargando catálogo...
+      </div>
+    );
+  }
+
+  if (
+    (screen === "catalog" || screen === "home") &&
+    catalogError
+  ) {
+    return (
+      <div
+        className="min-h-screen w-full flex items-center justify-center"
+        style={{
+          backgroundColor: "#0d0e12",
+          color: "#ef4444",
+          fontFamily: "'Inter', sans-serif",
+        }}
+      >
+        {catalogError}
+      </div>
+    );
+  }
+
   if (screen === "catalog") {
     return (
       <div
@@ -236,6 +260,7 @@ export default function App() {
         }}
       >
         <Header
+          products={products}
           cartCount={cartCount}
           onCartClick={() =>
             setCartOpen(true)
@@ -366,7 +391,11 @@ export default function App() {
   }
 
   if (screen === "admin") {
-    return <AdminDashboard />;
+    return (
+      <AdminDashboard
+        onGoStore={() => setScreen("home")}
+      />
+    );
   }
 
   return (
@@ -379,6 +408,7 @@ export default function App() {
       }}
     >
       <Header
+        products={products}
         cartCount={cartCount}
         onCartClick={() =>
           setCartOpen(true)
@@ -413,6 +443,7 @@ export default function App() {
         />
 
         <ConsoleCategories
+          categories={categories}
           onFilter={
             setActiveCategory
           }

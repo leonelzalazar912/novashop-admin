@@ -1,5 +1,5 @@
 import { DashboardSection } from "./DashboardSection";
-import type { Product } from "../data/productsData";
+import type { Product } from "../products/data/productsData";
 
 interface LowStockProductsProps {
   products: Product[];

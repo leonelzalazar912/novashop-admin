@@ -14,6 +14,7 @@ type AdminSidebarProps = {
     section: AdminSection
   ) => void;
   canManageUsers?: boolean;
+  onGoStore?: () => void;
 };
 
 const menuItems: Array<{
@@ -61,6 +62,7 @@ const menuItems: Array<{
 export function AdminSidebar({
   onNavigate,
   canManageUsers = true,
+  onGoStore,
 }: AdminSidebarProps) {
   const visibleMenuItems =
     menuItems.filter(
@@ -90,6 +92,16 @@ export function AdminSidebar({
           )
         )}
       </nav>
+
+      {onGoStore && (
+        <button
+          type="button"
+          className="admin-sidebar-store-link"
+          onClick={onGoStore}
+        >
+          🛍️ Ver tienda
+        </button>
+      )}
     </aside>
   );
 }

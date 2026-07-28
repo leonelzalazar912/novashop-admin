@@ -2,15 +2,6 @@ import { ShoppingCart, Heart } from "lucide-react";
 import { theme } from "../../config/theme";
 import type { Product } from "../../types/product";
 
-
-const categoryLabels: Record<string, string> = {
-  electronics: "Electrónica",
-  clothing: "Ropa",
-  beauty: "Perfumería",
-  toys: "Juguetes",
-  gaming: "Gaming",
-};
-
 interface ProductCardProps {
   game: Product;
   onAddToCart: (game: Product) => void;
@@ -18,6 +9,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardProps) {
+  const primaryImage = game.images.find((image) => image.isPrimary) ?? game.images[0];
+
   return (
     <div
   onClick={() => onViewDetails?.(game)}
@@ -27,22 +20,6 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
         border: "1px solid rgba(255,255,255,0.07)",
       }}
     >
-      {/* Discount badge */}
-      {game.discount && (
-        <div
-          className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded text-xs"
-          style={{
-            backgroundColor: "#e8003d",
-            color: "#fff",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.8rem",
-          }}
-        >
-          -{game.discount}%
-        </div>
-      )}
-
       {/* Wishlist */}
       <button
   className="hidden"
@@ -52,26 +29,26 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
   <Heart size={14} color="#e8eaf0" />
 </button>
 
-      {/* Platform label */}
-      <div
-        className="absolute top-2 left-0 right-0 flex justify-center z-10 pointer-events-none"
-        style={{ marginTop: game.discount ? "0" : "0" }}
-      >
-        <span
-          className="px-2 py-0.5 rounded"
-          style={{
-            backgroundColor: game.categoryColor,
-            color: "#fff",
-            fontSize: "0.62rem",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            marginLeft: game.discount ? "60px" : "0",
-          }}
+      {/* Category label */}
+      {game.category && (
+        <div
+          className="absolute top-2 left-0 right-0 flex justify-center z-10 pointer-events-none"
         >
-          {categoryLabels[game.category] ?? game.category}
-        </span>
-      </div>
+          <span
+            className="px-2 py-0.5 rounded"
+            style={{
+              backgroundColor: "rgba(106,60,230,0.85)",
+              color: "#fff",
+              fontSize: "0.62rem",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+            }}
+          >
+            {game.category.name}
+          </span>
+        </div>
+      )}
 
       {/* Image */}
 <div
@@ -83,8 +60,8 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
   }}
 >
   <img
-    src={game.image}
-    alt={game.name}
+    src={primaryImage?.url ?? "/logo.png"}
+    alt={primaryImage?.alt ?? game.name}
     style={{
       width: "100%",
       height: "100%",
@@ -99,24 +76,12 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
 
       {/* Info */}
       <div className="flex flex-col gap-1 p-3 flex-1">
-        <span
-          className="text-xs uppercase"
-          style={{
-            color: theme.colors.textSoft,
-            fontFamily: "'Inter', sans-serif",
-            letterSpacing: "0.05em",
-            fontSize: "0.65rem",
-          }}
-        >
-          {game.genre ?? "Acción"}
-        </span>
-        
-<p
+        <p
   style={{
     color:
-      (game.stock ?? 0) === 0
+      game.stock === 0
         ? "#ef4444"
-        : (game.stock ?? 0) <= 5
+        : game.stock <= 5
         ? "#facc15"
         : "#22c55e",
     fontSize: "0.75rem",
@@ -124,9 +89,9 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
     fontWeight: 600,
   }}
 >
-  {(game.stock ?? 0) === 0
+  {game.stock === 0
     ? "🔴 Sin stock"
-    : (game.stock ?? 0) <= 5
+    : game.stock <= 5
     ? "⚠️ Últimas unidades"
     : "🟢 En stock"}
 </p>
@@ -142,22 +107,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
           {game.name}
         </h3>
 
-        <div className="flex items-center gap-2 mt-auto pt-2">
-          {game.originalPrice && (
-            <span
-              style={{
-                color: theme.colors.textSoft,
-                textDecoration: "line-through",
-                fontSize: "0.72rem",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              ${game.originalPrice.toLocaleString("es-AR")} ARS
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-auto pt-2">
           <span
             style={{
               color: theme.colors.text,
@@ -166,7 +116,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
               fontSize: "1rem",
             }}
           >
-            Desde ${game.price.toLocaleString("es-AR")} ARS
+            Desde ${game.price.toLocaleString("es-AR")} {game.currency}
           </span>
         </div>
 
@@ -177,9 +127,9 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
           }}
           className="mt-2 w-full flex items-center justify-center gap-2 py-2 rounded text-sm transition-all hover:opacity-90 active:scale-95"
           style={{
-            backgroundColor: (game.stock ?? 0) === 0 ? "#3a3a46" : "#6A3CE6",
-            cursor: (game.stock ?? 0) === 0 ? "not-allowed" : "pointer",
-            opacity: (game.stock ?? 0) === 0 ? 0.55 : 1,
+            backgroundColor: game.stock === 0 ? "#3a3a46" : "#6A3CE6",
+            cursor: game.stock === 0 ? "not-allowed" : "pointer",
+            opacity: game.stock === 0 ? 0.55 : 1,
             color: "#ffffff",
             fontFamily: "'Rajdhani', sans-serif",
             fontWeight: 700,
@@ -189,7 +139,7 @@ export function ProductCard({ game, onAddToCart, onViewDetails }: ProductCardPro
           }}
         >
           <ShoppingCart size={14} strokeWidth={2.5} />
-          {(game.stock ?? 0) === 0 ? "SIN STOCK" : "AGREGAR"}
+          {game.stock === 0 ? "SIN STOCK" : "AGREGAR"}
         </button>
       </div>
     </div>

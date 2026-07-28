@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, ShoppingCart, Menu, X, Store } from "lucide-react";import { products } from "./data";
+import { Search, ShoppingCart, Menu, X, Store } from "lucide-react";
 import type { Product } from "../../types/product";
 import { storeConfig } from "../../config/storeConfig";
 import { theme } from "../../config/theme";
@@ -11,6 +11,7 @@ const navLinks = navigation;
 
 
 interface HeaderProps {
+  products: Product[];
   cartCount: number;
   onCartClick: () => void;
   onProfileClick: () => void;
@@ -20,6 +21,7 @@ interface HeaderProps {
 }
 
 export function Header({
+  products,
   cartCount,
   onCartClick,
   onProfileClick,
@@ -166,7 +168,7 @@ onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         }}
       >
         <img
-          src={game.image}
+          src={(game.images.find((image) => image.isPrimary) ?? game.images[0])?.url ?? "/logo.png"}
           alt={game.name}
           style={{
             width: "42px",

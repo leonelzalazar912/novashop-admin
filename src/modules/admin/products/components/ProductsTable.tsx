@@ -7,14 +7,20 @@ interface ProductsTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
+  onToggleActive: (id: string) => void;
 }
 
 export function ProductsTable({
   products,
   onEdit,
   onDelete,
+  onToggleActive,
 }: ProductsTableProps) {
-  const { hasOrdersByProduct } = useDataIntegrity();
+  const {
+    hasOrdersByProduct,
+    hasStockMovementsByProduct,
+    hasPurchaseItemsByProduct,
+  } = useDataIntegrity();
 
   async function handleDelete(product: Product) {
     try {
@@ -25,6 +31,28 @@ export function ProductsTable({
       if (hasOrders) {
         alert(
           `No se puede eliminar el producto "${product.name}" porque está asociado a uno o más pedidos. Podés marcarlo como inactivo en su lugar.`
+        );
+        return;
+      }
+
+      const hasPurchases = await hasPurchaseItemsByProduct(
+        product.id
+      );
+
+      if (hasPurchases) {
+        alert(
+          `No se puede eliminar el producto "${product.name}" porque está asociado a una o más compras. Podés marcarlo como inactivo en su lugar.`
+        );
+        return;
+      }
+
+      const hasStockMovements = await hasStockMovementsByProduct(
+        product.id
+      );
+
+      if (hasStockMovements) {
+        alert(
+          `No se puede eliminar el producto "${product.name}" porque tiene movimientos de stock registrados. Podés marcarlo como inactivo en su lugar.`
         );
         return;
       }
@@ -58,6 +86,7 @@ export function ProductsTable({
           <th>Proveedor</th>
           <th>Precio</th>
           <th>Stock</th>
+          <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -66,7 +95,7 @@ export function ProductsTable({
         {products.length === 0 && (
           <EmptyState
             message="No se encontraron productos."
-            colSpan={8}
+            colSpan={9}
           />
         )}
 
@@ -78,6 +107,7 @@ export function ProductsTable({
             onDelete={() => {
               void handleDelete(product);
             }}
+            onToggleActive={() => onToggleActive(product.id)}
           />
         ))}
       </tbody>

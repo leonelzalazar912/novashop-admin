@@ -7,7 +7,7 @@ interface CartDrawerProps {
   open: boolean;
   items: CartItem[];
   onClose: () => void;
-  onRemove: (id: number) => void;
+  onRemove: (id: string) => void;
   onCheckout: () => void;
 }
 
@@ -110,26 +110,28 @@ export function CartDrawer({ open, items, onClose, onRemove, onCheckout }: CartD
                 style={{ backgroundColor: "#1e1f2e" }}
               >
                 <img
-                  src={item.image}
+                  src={(item.images.find((image) => image.isPrimary) ?? item.images[0])?.url ?? "/logo.png"}
                   alt={item.name}
                   className="w-16 h-20 object-cover rounded"
                   style={{ backgroundColor: "#0d0e12" }}
                 />
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
-                    <span
-                      className="inline-block px-1.5 py-0.5 rounded text-xs mb-1"
-                      style={{
-                        backgroundColor: item.categoryColor + "22",
-                        color: item.categoryColor === "#003791" ? "#4a9eff" : item.categoryColor,
-                        fontFamily: "'Barlow Condensed', sans-serif",
-                        fontWeight: 700,
-                        fontSize: "0.6rem",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      {item.category}
-                    </span>
+                    {item.category && (
+                      <span
+                        className="inline-block px-1.5 py-0.5 rounded text-xs mb-1"
+                        style={{
+                          backgroundColor: "rgba(106,60,230,0.18)",
+                          color: "#8F6BFF",
+                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontWeight: 700,
+                          fontSize: "0.6rem",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        {item.category.name}
+                      </span>
+                    )}
                     <p
                       className="leading-tight"
                       style={{

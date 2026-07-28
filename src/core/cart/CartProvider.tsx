@@ -25,11 +25,11 @@ export function CartProvider({ children }: Props) {
     });
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const updateQuantity = (id: number, qty: number) => {
+  const updateQuantity = (id: string, qty: number) => {
     setCartItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, qty } : item))
     );
@@ -39,7 +39,7 @@ export function CartProvider({ children }: Props) {
   setCartItems([]);
 };
 
-const increaseQuantity = (id: number) => {
+const increaseQuantity = (id: string) => {
   setCartItems((prev) =>
     prev.map((item) =>
       item.id === id ? { ...item, qty: item.qty + 1 } : item
@@ -47,7 +47,7 @@ const increaseQuantity = (id: number) => {
   );
 };
 
-const decreaseQuantity = (id: number) => {
+const decreaseQuantity = (id: string) => {
   setCartItems((prev) =>
     prev
       .map((item) =>

@@ -2,6 +2,7 @@ import { ProductForm } from "./components/ProductForm";
 import { ProductsTable } from "./components/ProductsTable";
 import { ProductsToolbar } from "./components/ProductsToolbar";
 import { Toast } from "../components/common/Toast";
+import { Message } from "../components/common/Message";
 import { Pagination } from "../components/common/Pagination";
 import type { useProducts } from "./hooks/useProducts";
 
@@ -21,8 +22,10 @@ export function ProductsPage({ productsManager }: ProductsPageProps) {
     handleAddProduct,
     handleDeleteProduct,
     handleUpdateProduct,
+    toggleProductActive,
     toast,
-    categoryFilter , 
+    error,
+    categoryFilter ,
     setCategoryFilter,
     categories,
     sortBy,
@@ -34,6 +37,8 @@ export function ProductsPage({ productsManager }: ProductsPageProps) {
 
   return (
     <>
+      <Message message={error} />
+
       <ProductsToolbar
         search={search}
         onSearchChange={setSearch}
@@ -70,6 +75,7 @@ export function ProductsPage({ productsManager }: ProductsPageProps) {
         products={filteredProducts}
         onEdit={setEditingProduct}
         onDelete={handleDeleteProduct}
+        onToggleActive={toggleProductActive}
         />
 
       <Pagination

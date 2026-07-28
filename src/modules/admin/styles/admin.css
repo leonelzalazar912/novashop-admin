@@ -39,6 +39,13 @@
   background: #374151;
 }
 
+.admin-sidebar-store-link {
+  margin-top: auto;
+  border-top: 1px solid #374151 !important;
+  padding-top: 16px !important;
+  color: #a78bfa !important;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -273,6 +280,21 @@
   border: 1px solid #374151;
   border-radius: 10px;
   padding: 12px;
+}
+
+.published-toggle {
+  display: flex;
+  gap: 10px;
+}
+
+.published-toggle button {
+  flex: 1;
+  background: #111827;
+  color: #d1d5db;
+  border: 1px solid #374151;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
 }
 
 .form-actions {

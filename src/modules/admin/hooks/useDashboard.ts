@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Product } from "../data/productsData";
+import type { Product } from "../products/data/productsData";
 import type { DashboardAlert } from "../types/dashboard";
 
 

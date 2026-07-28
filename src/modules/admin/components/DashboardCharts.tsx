@@ -1,4 +1,4 @@
-import type { Product } from "../data/productsData";
+import type { Product } from "../products/data/productsData";
 import { CategoryChart } from "./CategoryChart";
 import { InventoryPieChart } from "./InventoryPieChart";
 

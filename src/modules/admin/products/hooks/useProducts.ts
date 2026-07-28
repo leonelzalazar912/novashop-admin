@@ -2,12 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../../lib/supabase";
 import type { Product } from "../data/productsData";
 
-type ProductInput = Omit<Product, "id">;
+type ProductInput = Omit<Product, "id" | "active"> & {
+  imageFile?: File | null;
+};
+
+type ProductUpdateInput = Product & {
+  imageFile?: File | null;
+};
+
+const PRODUCT_IMAGES_BUCKET = "product-images";
 
 type ProductDatabaseRow = {
   id: string;
   name: string;
   price: number | string;
+  published: boolean;
+  active: boolean;
   categories:
     | { name: string }
     | { name: string }[]
@@ -39,6 +49,58 @@ type ProductDatabaseRow = {
       }[]
     | null;
 };
+
+function getStoragePathFromPublicUrl(url: string): string | null {
+  const marker = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
+  const index = url.indexOf(marker);
+
+  if (index === -1) {
+    return null;
+  }
+
+  return url.slice(index + marker.length);
+}
+
+async function uploadProductImage(
+  storeId: string,
+  productId: string,
+  file: File
+): Promise<string> {
+  const dotIndex = file.name.lastIndexOf(".");
+  const extension = dotIndex >= 0 ? file.name.slice(dotIndex + 1) : "jpg";
+  const path = `${storeId}/${productId}/${crypto.randomUUID()}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(PRODUCT_IMAGES_BUCKET)
+    .upload(path, file);
+
+  if (uploadError) {
+    console.error(uploadError);
+    throw new Error("No se pudo subir la imagen del producto.");
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
+
+  return publicUrl;
+}
+
+async function removeProductImage(url: string): Promise<void> {
+  const path = getStoragePathFromPublicUrl(url);
+
+  if (!path) {
+    return;
+  }
+
+  const { error } = await supabase.storage
+    .from(PRODUCT_IMAGES_BUCKET)
+    .remove([path]);
+
+  if (error) {
+    console.error(error);
+  }
+}
 
 function createSlug(name: string): string {
   return name
@@ -108,6 +170,8 @@ function mapProduct(row: ProductDatabaseRow): Product {
     supplier: getSupplierName(row.product_suppliers),
     price: Number(row.price),
     stock,
+    published: row.published,
+    active: row.active,
   };
 }
 
@@ -213,6 +277,8 @@ export function useProducts() {
           id,
           name,
           price,
+          published,
+          active,
           categories (
             name
           ),
@@ -362,7 +428,7 @@ export function useProducts() {
           minimum_stock: 0,
           track_stock: true,
           active: true,
-          published: false,
+          published: product.published,
           featured: false,
         })
         .select("id")
@@ -375,6 +441,25 @@ export function useProducts() {
 
       const productId = createdProduct.id;
 
+      let imageUrl = product.image || "🎮";
+
+      if (product.imageFile) {
+        try {
+          imageUrl = await uploadProductImage(
+            storeId,
+            productId,
+            product.imageFile
+          );
+        } catch (uploadError) {
+          await supabase
+            .from("products")
+            .delete()
+            .eq("id", productId);
+
+          throw uploadError;
+        }
+      }
+
       const [
         imageResult,
         supplierLinkResult,
@@ -383,7 +468,7 @@ export function useProducts() {
         supabase.from("product_images").insert({
           store_id: storeId,
           product_id: productId,
-          image_url: product.image || "🎮",
+          image_url: imageUrl,
           display_order: 0,
           is_primary: true,
         }),
@@ -418,12 +503,22 @@ export function useProducts() {
         throw relatedError;
       }
 
+      const newProduct: Product = {
+        id: productId,
+        image: imageUrl,
+        name: product.name,
+        category: product.category,
+        brand: product.brand,
+        supplier: product.supplier,
+        price: product.price,
+        stock: product.stock,
+        published: product.published,
+        active: true,
+      };
+
       setProducts((previous) => [
         ...previous,
-        {
-          id: productId,
-          ...product,
-        },
+        newProduct,
       ]);
 
       setShowForm(false);
@@ -440,7 +535,7 @@ export function useProducts() {
   }
 
   async function handleUpdateProduct(
-    product: Product
+    product: ProductUpdateInput
   ) {
     if (!storeId || !locationId) {
       setError(
@@ -452,11 +547,25 @@ export function useProducts() {
     try {
       setError("");
 
+      const previousImage = products.find(
+        (item) => item.id === product.id
+      )?.image;
+
       const {
         categoryId,
         brandId,
         supplierId,
       } = await findRelatedIds(product);
+
+      let newImageUrl = product.image || "🎮";
+
+      if (product.imageFile) {
+        newImageUrl = await uploadProductImage(
+          storeId,
+          product.id,
+          product.imageFile
+        );
+      }
 
       const { error: productError } = await supabase
         .from("products")
@@ -469,6 +578,7 @@ export function useProducts() {
             8
           )}`,
           price: product.price,
+          published: product.published,
         })
         .eq("id", product.id)
         .eq("store_id", storeId);
@@ -492,13 +602,17 @@ export function useProducts() {
         .insert({
           store_id: storeId,
           product_id: product.id,
-          image_url: product.image || "🎮",
+          image_url: newImageUrl,
           display_order: 0,
           is_primary: true,
         });
 
       if (imageError) {
         throw imageError;
+      }
+
+      if (previousImage && previousImage !== newImageUrl) {
+        await removeProductImage(previousImage);
       }
 
       const { error: deleteSupplierError } =
@@ -545,9 +659,22 @@ export function useProducts() {
         throw inventoryError;
       }
 
+      const updatedProduct: Product = {
+        id: product.id,
+        image: newImageUrl,
+        name: product.name,
+        category: product.category,
+        brand: product.brand,
+        supplier: product.supplier,
+        price: product.price,
+        stock: product.stock,
+        published: product.published,
+        active: product.active,
+      };
+
       setProducts((previous) =>
         previous.map((item) =>
-          item.id === product.id ? product : item
+          item.id === product.id ? updatedProduct : item
         )
       );
 
@@ -561,7 +688,42 @@ export function useProducts() {
   }
 
   async function handleDeleteProduct(id: string) {
-    if (!window.confirm("¿Eliminar este producto?")) {
+    setError("");
+
+    const productToDelete = products.find(
+      (item) => item.id === id
+    );
+
+    const { error: imagesError } = await supabase
+      .from("product_images")
+      .delete()
+      .eq("product_id", id);
+
+    if (imagesError) {
+      console.error(imagesError);
+      setError("No se pudo eliminar el producto.");
+      return;
+    }
+
+    const { error: suppliersError } = await supabase
+      .from("product_suppliers")
+      .delete()
+      .eq("product_id", id);
+
+    if (suppliersError) {
+      console.error(suppliersError);
+      setError("No se pudo eliminar el producto.");
+      return;
+    }
+
+    const { error: inventoryError } = await supabase
+      .from("inventory_levels")
+      .delete()
+      .eq("product_id", id);
+
+    if (inventoryError) {
+      console.error(inventoryError);
+      setError("No se pudo eliminar el producto.");
       return;
     }
 
@@ -572,18 +734,66 @@ export function useProducts() {
 
     if (deleteError) {
       console.error(deleteError);
+
       setError(
-        "No se pudo eliminar el producto. Puede tener movimientos asociados."
+        deleteError.code === "23503"
+          ? "No se pudo eliminar el producto porque tiene movimientos de stock o compras asociadas. Marcalo como inactivo en su lugar."
+          : "No se pudo eliminar el producto."
       );
+
       return;
+    }
+
+    if (productToDelete) {
+      await removeProductImage(productToDelete.image);
     }
 
     setProducts((previous) =>
       previous.filter((product) => product.id !== id)
     );
 
-    setError("");
     showToast("Producto eliminado");
+  }
+
+  async function toggleProductActive(
+    id: string
+  ): Promise<boolean> {
+    if (!storeId) {
+      setError("No se encontró la tienda.");
+      return false;
+    }
+
+    const product = products.find(
+      (item) => item.id === id
+    );
+
+    if (!product) {
+      setError("No se encontró el producto.");
+      return false;
+    }
+
+    const newActive = !product.active;
+
+    const { error: statusError } = await supabase
+      .from("products")
+      .update({ active: newActive })
+      .eq("id", id)
+      .eq("store_id", storeId);
+
+    if (statusError) {
+      console.error(statusError);
+      setError("No se pudo cambiar el estado del producto.");
+      return false;
+    }
+
+    setProducts((previous) =>
+      previous.map((item) =>
+        item.id === id ? { ...item, active: newActive } : item
+      )
+    );
+
+    setError("");
+    return true;
   }
 
   async function updateProductStock(
@@ -793,6 +1003,7 @@ export function useProducts() {
     handleAddProduct,
     handleDeleteProduct,
     handleUpdateProduct,
+    toggleProductActive,
     increaseProductStock,
     decreaseProductStock,
     toast,

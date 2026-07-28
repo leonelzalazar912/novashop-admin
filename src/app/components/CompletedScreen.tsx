@@ -108,7 +108,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
       {items.map((item) => (
         <div key={item.id} style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 16 }}>
           <img
-            src={item.image}
+            src={(item.images.find((image) => image.isPrimary) ?? item.images[0])?.url ?? "/logo.png"}
             alt={item.name}
             style={{ width: 58, height: 76, objectFit: "cover", borderRadius: 10 }}
           />
@@ -116,7 +116,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
           <div style={{ flex: 1 }}>
             <strong>{item.name}</strong>
             <p style={{ color: "#A0A3B8", margin: "4px 0" }}>
-              {item.category} · Cantidad: {item.qty}
+              {item.category?.name} · Cantidad: {item.qty}
             </p>
           </div>
 

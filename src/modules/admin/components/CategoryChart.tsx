@@ -8,7 +8,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import type { Product } from "../data/productsData";
+import type { Product } from "../products/data/productsData";
 import { ChartCard } from "./ChartCard";
 
 interface CategoryChartProps {

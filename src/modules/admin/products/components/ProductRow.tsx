@@ -4,12 +4,14 @@ interface ProductRowProps {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
+  onToggleActive: (id: string) => void;
 }
 
 export function ProductRow({
   product,
   onEdit,
   onDelete,
+  onToggleActive,
 }: ProductRowProps) {
   return (
     <tr>
@@ -54,6 +56,10 @@ export function ProductRow({
       </td>
 
       <td>
+        {product.active ? "🟢 Activo" : "🔴 Inactivo"}
+      </td>
+
+      <td>
         <button
           className="action-button"
           onClick={() => onEdit(product)}
@@ -66,6 +72,14 @@ export function ProductRow({
           onClick={() => onDelete(product.id)}
         >
           🗑️
+        </button>
+
+        <button
+          type="button"
+          className="action-button"
+          onClick={() => onToggleActive(product.id)}
+        >
+          {product.active ? "Desactivar" : "Activar"}
         </button>
       </td>
     </tr>

@@ -5,7 +5,7 @@ type CategoryFormProps = {
   editingCategory: Category | null;
   onAddCategory: (name: string, description: string) => void;
   onUpdateCategory: (
-    id: number,
+    id: string,
     name: string,
     description: string
   ) => void;

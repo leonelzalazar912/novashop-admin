@@ -36,8 +36,8 @@ export function BrandsPage() {
     return () => clearTimeout(timer);
   }, [message]);
 
-  function handleAddBrand(brand: Omit<Brand, "id" | "active">) {
-    const success = addBrand(brand);
+  async function handleAddBrand(brand: Omit<Brand, "id" | "active">) {
+    const success = await addBrand(brand);
 
     setMessage(
       success
@@ -58,12 +58,12 @@ export function BrandsPage() {
     setMessage("Marca actualizada correctamente.");
   }
 
-  function handleDeleteBrand(id: number) {
+  function handleDeleteBrand(id: string) {
     deleteBrand(id);
     setMessage("Marca eliminada correctamente.");
   }
 
-  function handleToggleBrandStatus(id: number) {
+  function handleToggleBrandStatus(id: string) {
     toggleBrandStatus(id);
     setMessage("Estado actualizado.");
   }

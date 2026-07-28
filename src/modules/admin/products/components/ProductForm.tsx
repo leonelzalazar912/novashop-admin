@@ -7,12 +7,14 @@ interface ProductFormProps {
   onCancel: () => void;
   onAddProduct: (product: {
     image: string;
+    imageFile?: File | null;
     name: string;
     category: string;
     brand: string;
     supplier: string;
     price: number;
     stock: number;
+    published: boolean;
   }) => void;
   initialProduct?: {
     image: string;
@@ -22,6 +24,7 @@ interface ProductFormProps {
     supplier: string;
     price: number;
     stock: number;
+    published: boolean;
   };
 }
 
@@ -41,7 +44,9 @@ export function ProductForm({
   const [price, setPrice] = useState(initialProduct?.price?.toString() ?? "");
   const [stock, setStock] = useState(initialProduct?.stock?.toString() ?? "");
   const [image, setImage] = useState(initialProduct?.image ?? "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(initialProduct?.image ?? "");
+  const [published, setPublished] = useState(initialProduct?.published ?? false);
 
   const isFormValid =
     name &&
@@ -56,15 +61,9 @@ export function ProductForm({
 
     if (!file) return;
 
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      const imageBase64 = reader.result as string;
-      setImage(imageBase64);
-      setPreview(imageBase64);
-    };
-
-    reader.readAsDataURL(file);
+    setImage("");
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
   }
 
   useEffect(() => {
@@ -80,6 +79,14 @@ export function ProductForm({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [onCancel]);
+
+  useEffect(() => {
+    return () => {
+      if (preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
   return (
     <div
@@ -170,9 +177,10 @@ export function ProductForm({
             <input
               type="text"
               placeholder="https://..."
-              value={image.startsWith("data:") ? "" : image}
+              value={image}
               onChange={(e) => {
                 setImage(e.target.value);
+                setImageFile(null);
                 setPreview(e.target.value);
               }}
             />
@@ -192,6 +200,34 @@ export function ProductForm({
             )}
           </div>
 
+          <div className="form-group">
+            <label>Estado de publicación</label>
+
+            <div className="published-toggle">
+              <button
+                type="button"
+                className={published ? "primary-button" : ""}
+                onClick={() => setPublished(true)}
+              >
+                Publicado
+              </button>
+
+              <button
+                type="button"
+                className={!published ? "primary-button" : ""}
+                onClick={() => setPublished(false)}
+              >
+                Borrador
+              </button>
+            </div>
+
+            <small>
+              {published
+                ? "Visible para los clientes en la tienda pública."
+                : "Oculto en la tienda pública hasta que lo publiques."}
+            </small>
+          </div>
+
           <div className="form-actions">
             <button
               className="primary-button"
@@ -201,12 +237,14 @@ export function ProductForm({
 
                 onAddProduct({
                   image: image || "🎮",
+                  imageFile,
                   name,
                   category,
                   brand,
                   supplier,
                   price: Number(price),
                   stock: Number(stock),
+                  published,
                 });
               }}
             >

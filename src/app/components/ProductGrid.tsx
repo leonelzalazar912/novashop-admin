@@ -16,9 +16,9 @@ export function ProductGrid({ games, onAddToCart, category, onGoCatalog, onViewD
   const filtered =
   category === "Todos"
     ? games
-    : games.filter((g) => g.category === category);
+    : games.filter((g) => g.category?.name === category);
 
-  const sorted = [...filtered].sort((a, b) => a.id - b.id);
+  const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <section className="w-full py-8" style={{ backgroundColor: "#0d0e12" }}>
