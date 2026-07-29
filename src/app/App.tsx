@@ -20,9 +20,24 @@ import { CompletedScreen } from "./components/CompletedScreen";
 import { DeliveryScreen } from "./components/DeliveryScreen";
 import { ClaimsScreen } from "./components/ClaimsScreen";
 import type { Product } from "../types/product";
+import type { CartItem } from "../core/cart/cartTypes";
 import { useCart } from "../core/cart/useCart";
 import { useCatalog } from "../core/catalog/useCatalog";
+import { useCheckout } from "../core/checkout/useCheckout";
+import type {
+  CheckoutCustomer,
+  CheckoutDelivery,
+  PaymentMethodLabel,
+} from "../core/checkout/checkoutTypes";
 import { AdminDashboard } from "../modules/admin/AdminDashboard";
+
+interface CompletedOrder {
+  orderNumber: string;
+  items: CartItem[];
+  customer: CheckoutCustomer;
+  delivery: CheckoutDelivery;
+  paymentMethod: PaymentMethodLabel;
+}
 
 type AppScreen =
   | "login"
@@ -92,6 +107,14 @@ export default function App() {
     loading: catalogLoading,
     error: catalogError,
   } = useCatalog();
+
+  const checkout = useCheckout();
+
+  const [deliveryData, setDeliveryData] =
+    useState<CheckoutDelivery | null>(null);
+
+  const [completedOrder, setCompletedOrder] =
+    useState<CompletedOrder | null>(null);
 
   const [
     activeCategory,
@@ -317,9 +340,10 @@ export default function App() {
         onBack={() =>
           setScreen("checkout")
         }
-        onContinue={() =>
-          setScreen("payment")
-        }
+        onContinue={(delivery) => {
+          setDeliveryData(delivery);
+          setScreen("payment");
+        }}
       />
     );
   }
@@ -355,22 +379,42 @@ export default function App() {
         onBack={() =>
           setScreen("delivery")
         }
-        onComplete={() =>
-          setScreen("completed")
-        }
+        submitting={checkout.submitting}
+        submitError={checkout.error}
+        onComplete={async (customer, paymentMethod) => {
+          if (!deliveryData) {
+            return;
+          }
+
+          const result = await checkout.submit({
+            items: cartItems,
+            customer,
+            delivery: deliveryData,
+            paymentMethod,
+          });
+
+          if (result) {
+            setCompletedOrder({
+              orderNumber: result.orderNumber,
+              items: cartItems,
+              customer,
+              delivery: deliveryData,
+              paymentMethod,
+            });
+            clearCart();
+            setScreen("completed");
+          }
+        }}
       />
     );
   }
 
-  if (screen === "completed") {
+  if (screen === "completed" && completedOrder) {
     return (
       <CompletedScreen
-        items={cartItems}
-        onBackPayment={() =>
-          setScreen("payment")
-        }
+        order={completedOrder}
         onBackHome={() => {
-          clearCart();
+          setCompletedOrder(null);
           setScreen("home");
         }}
       />

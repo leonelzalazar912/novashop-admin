@@ -224,6 +224,7 @@ export function CheckoutScreen({
 
     <button
       onClick={() => onIncreaseItem(item.id)}
+      disabled={item.qty >= item.stock}
       style={{
         width: "32px",
         height: "32px",
@@ -231,13 +232,20 @@ export function CheckoutScreen({
         border: "1px solid rgba(255,255,255,0.12)",
         background: "#1E1F2E",
         color: "#fff",
-        cursor: "pointer",
+        cursor: item.qty >= item.stock ? "not-allowed" : "pointer",
+        opacity: item.qty >= item.stock ? 0.4 : 1,
         fontWeight: 700,
       }}
     >
       +
     </button>
   </div>
+
+  {item.qty >= item.stock && (
+    <span style={{ color: "#ff8a8a", fontSize: 12, marginBottom: 8 }}>
+      Stock máximo alcanzado ({item.stock})
+    </span>
+  )}
 
   <strong style={{ color: "#E8E9F0", fontSize: "1.05rem" }}>
     ${(item.price * item.qty).toLocaleString("es-AR")} ARS

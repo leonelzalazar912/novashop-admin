@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { theme } from "../../config/theme";
+import type { CheckoutDelivery } from "../../core/checkout/checkoutTypes";
 
 interface DeliveryScreenProps {
   onBack: () => void;
-  onContinue: () => void;
+  onContinue: (delivery: CheckoutDelivery) => void;
 }
 
 export function DeliveryScreen({ onBack, onContinue }: DeliveryScreenProps) {
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("shipping");
   const [formData, setFormData] = useState({
-  fullName: "",
-  email: "",
-  phone: "",
   province: "",
   city: "",
   address: "",
@@ -260,7 +258,17 @@ boxShadow: "0 18px 50px rgba(0,0,0,0.35), 0 0 35px rgba(106,60,230,0.18)",
   }}
 >
   <button
-  onClick={onContinue}
+  onClick={() =>
+    onContinue({
+      method: deliveryMethod,
+      province: formData.province,
+      city: formData.city,
+      address: formData.address,
+      number: formData.number,
+      postalCode: formData.postalCode,
+      references: formData.references,
+    })
+  }
   disabled={!canContinue}
   style={{
     background: "#6A3CE6",

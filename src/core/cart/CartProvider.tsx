@@ -16,6 +16,9 @@ export function CartProvider({ children }: Props) {
       const existing = prev.find((item) => item.id === product.id);
 
       if (existing) {
+        if (existing.qty >= existing.stock) {
+          return prev;
+        }
         return prev.map((item) =>
           item.id === product.id ? { ...item, qty: item.qty + 1 } : item
         );
@@ -42,7 +45,9 @@ export function CartProvider({ children }: Props) {
 const increaseQuantity = (id: string) => {
   setCartItems((prev) =>
     prev.map((item) =>
-      item.id === id ? { ...item, qty: item.qty + 1 } : item
+      item.id === id && item.qty < item.stock
+        ? { ...item, qty: item.qty + 1 }
+        : item
     )
   );
 };

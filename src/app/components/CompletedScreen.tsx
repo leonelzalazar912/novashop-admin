@@ -1,17 +1,26 @@
-import { useState } from "react";
 import { theme } from "../../config/theme";
 import type { CartItem } from "../../core/cart/cartTypes";
+import type {
+  CheckoutCustomer,
+  CheckoutDelivery,
+  PaymentMethodLabel,
+} from "../../core/checkout/checkoutTypes";
 
-
-interface CompletedScreenProps {
+interface CompletedOrder {
+  orderNumber: string;
   items: CartItem[];
-  onBackHome: () => void;
-  onBackPayment: () => void;
+  customer: CheckoutCustomer;
+  delivery: CheckoutDelivery;
+  paymentMethod: PaymentMethodLabel;
 }
 
-export function CompletedScreen({ items, onBackHome, onBackPayment }: CompletedScreenProps) {
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const orderNumber = "NP-2026-000184";
+interface CompletedScreenProps {
+  order: CompletedOrder;
+  onBackHome: () => void;
+}
+
+export function CompletedScreen({ order, onBackHome }: CompletedScreenProps) {
+  const { items, orderNumber, customer, delivery, paymentMethod } = order;
   const date = new Date().toLocaleDateString("es-AR");
   const subtotal = items.reduce((acc, item) => acc + item.price * item.qty, 0);
   const summaryBoxStyle = {
@@ -23,6 +32,7 @@ export function CompletedScreen({ items, onBackHome, onBackPayment }: CompletedS
 };
   const shipping = 0;
   const total = subtotal + shipping;
+  const customerName = `${customer.firstName} ${customer.lastName}`.trim();
 
   return (
     <div
@@ -63,7 +73,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
             boxShadow: "0 24px 80px rgba(0,0,0,0.45)",
           }}
         >
-          <div style={{ display: "none" }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div
               style={{
                 width: 92,
@@ -88,7 +98,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
             </h1>
 
             <p style={{ color: "#A0A3B8", lineHeight: 1.6 }}>
-              Tu compra fue procesada correctamente.
+              Tu compra fue registrada con éxito. En breve validaremos el pago para comenzar su preparación.
             </p>
           </div>
 
@@ -129,28 +139,27 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     <div style={summaryBoxStyle}>
       <h3 style={{ color: "#9B7CFF", letterSpacing: 3 }}>📍 DATOS DE ENTREGA</h3>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-        <p>Nombre completo:<br /><strong>Alejandro Fernández</strong></p>
-        <p>Teléfono:<br /><strong>+54 381 456-7890</strong></p>
-        <p>Dirección:<br /><strong>Av. Belgrano 1245, 3°B</strong></p>
-        <p>Ciudad / CP:<br /><strong>San Miguel de Tucumán, 4000</strong></p>
-      </div>
+      {delivery.method === "shipping" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+          <p>Nombre completo:<br /><strong>{customerName}</strong></p>
+          <p>Teléfono:<br /><strong>{customer.phone}</strong></p>
+          <p>Dirección:<br /><strong>{delivery.address} {delivery.number}</strong></p>
+          <p>Ciudad / CP:<br /><strong>{delivery.city}, {delivery.postalCode}</strong></p>
+        </div>
+      ) : (
+        <p style={{ color: "#E8E9F0" }}>
+          Retiro en el local · <strong>{customerName}</strong>
+        </p>
+      )}
     </div>
 
     {/* Forma de pago */}
     <div style={summaryBoxStyle}>
       <h3 style={{ color: "#9B7CFF", letterSpacing: 3 }}>💳 FORMA DE PAGO</h3>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ background: "#1A5FD0", padding: "8px 14px", borderRadius: 10, fontWeight: 900 }}>
-          VISA
-        </div>
-
-        <div>
-          <strong>Tarjeta de crédito •••• 1234</strong>
-          <p style={{ color: "#A0A3B8", margin: "4px 0" }}>Vence 08/2028</p>
-        </div>
-      </div>
+      <p style={{ color: "#E8E9F0" }}>
+        <strong>{paymentMethod}</strong>
+      </p>
     </div>
   </div>
 
@@ -248,7 +257,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
   </div>
 
   <button
-    onClick={() => setShowSuccessModal(true)}
+    onClick={onBackHome}
     style={{
       width: "100%",
       background: "linear-gradient(135deg, #6A3CE6, #8F6BFF)",
@@ -262,7 +271,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
       boxShadow: "0 8px 24px rgba(106,60,230,.35)",
     }}
   >
-    CONFIRMAR COMPRA
+    IR A LA TIENDA
   </button>
 <div
   style={{
@@ -281,86 +290,8 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
 </div>
 </div>
 </div>
-
-<div style={{ marginTop: 28 }}>
-  <button
-    onClick={onBackPayment}
-    style={{
-      background: "transparent",
-      color: "#A66BFF",
-      border: "1px solid rgba(128,86,255,0.35)",
-      padding: "14px 26px",
-      borderRadius: "12px",
-      cursor: "pointer",
-      fontWeight: 800,
-      fontSize: "1rem",
-    }}
-  >
-    ← VOLVER A DETALLES DEL PAGO
-  </button>
-</div>
-
-  {showSuccessModal && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.65)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 999,
-    }}
-  >
-    <div
-      style={{
-        width: "min(520px, 90%)",
-        background: "rgba(18,9,31,0.96)",
-        border: "1px solid rgba(128,86,255,0.35)",
-        borderRadius: 18,
-        padding: 34,
-        textAlign: "center",
-        boxShadow: "0 0 60px rgba(106,60,230,0.35)",
-      }}
-    >
-      <div style={{ fontSize: "3.5rem", color: "#16f28b", marginBottom: 18 }}>
-        ✓
+        </div>
       </div>
-
-      <h2>¡Compra realizada con éxito!</h2>
-
-      <p style={{ color: "#A0A3B8" }}>
-        Tu compra fue registrada con éxito. En breve validaremos el pago para comenzar su preparación.
-      </p>
-
-      <div style={{ ...summaryBoxStyle, textAlign: "left", marginTop: 24 }}>
-        <p>Número de pedido: <strong style={{ color: "#A66BFF" }}>{orderNumber}</strong></p>
-        <p>Fecha: <strong>{date}</strong></p>
-        <p>Total pagado: <strong>${total.toLocaleString("es-AR")}</strong></p>
-      </div>
-
-      <button
-        onClick={onBackHome}
-        style={{
-          width: "100%",
-          marginTop: 26,
-          background: "linear-gradient(135deg, #6A3CE6, #8F6BFF)",
-          color: "#fff",
-          border: "none",
-          padding: "16px",
-          borderRadius: "12px",
-          cursor: "pointer",
-          fontWeight: 900,
-          fontSize: "1rem",
-        }}
-      >
-        IR A LA TIENDA
-      </button>
-    </div>
-  </div>
-)}
-      </div>
-    </div>
     </div>
   );
 }

@@ -1,25 +1,40 @@
 import { useState } from "react";
 import type { CartItem } from "../../core/cart/cartTypes";
+import type {
+  CheckoutCustomer,
+  PaymentMethodLabel,
+} from "../../core/checkout/checkoutTypes";
 import { theme } from "../../config/theme";
 
 
 interface PaymentScreenProps {
   items: CartItem[];
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (
+    customer: CheckoutCustomer,
+    paymentMethod: PaymentMethodLabel
+  ) => void;
+  submitting: boolean;
+  submitError: string;
 }
 
-export function PaymentScreen({ items, onBack, onComplete }: PaymentScreenProps) {
+export function PaymentScreen({
+  items,
+  onBack,
+  onComplete,
+  submitting,
+  submitError,
+}: PaymentScreenProps) {
   const total = items.reduce((acc, item) => acc + item.price * item.qty, 0);
   const totalItems = items.reduce((acc, item) => acc + item.qty, 0);
-  const [paymentMethod, setPaymentMethod] = useState("Tarjeta de crédito");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodLabel>("Tarjeta de crédito");
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [dni, setDni] = useState("");
-  const [postalCode, setPostalCode] = useState("");
   const [error, setError] = useState("");
+  const displayError = error || submitError;
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -50,6 +65,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
       <div style={{ maxWidth: "1120px", margin: "0 auto" }}>
         <button
   onClick={onBack}
+  disabled={submitting}
   style={{
     display: "inline-flex",
     alignItems: "center",
@@ -59,7 +75,8 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: "12px",
     padding: "12px 18px",
-    cursor: "pointer",
+    cursor: submitting ? "not-allowed" : "pointer",
+    opacity: submitting ? 0.5 : 1,
     fontWeight: 700,
     fontSize: "0.95rem",
     marginBottom: "30px",
@@ -123,7 +140,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     marginBottom: 24,
   }}
 >
-  {["Nombre", "Apellido", "Email", "Teléfono", "DNI", "Código postal"].map(
+  {["Nombre", "Apellido", "Email", "Teléfono", "DNI"].map(
     (label) => (
   <input
   key={label}
@@ -133,8 +150,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     label === "Apellido" ? lastName :
     label === "Email" ? email :
     label === "Teléfono" ? phone :
-    label === "DNI" ? dni :
-    postalCode
+    dni
   }
   onChange={(e) => {
     if (label === "Nombre") setName(e.target.value);
@@ -142,7 +158,6 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     if (label === "Email") setEmail(e.target.value);
     if (label === "Teléfono") setPhone(e.target.value);
     if (label === "DNI") setDni(e.target.value);
-    if (label === "Código postal") setPostalCode(e.target.value);
   }}
   style={{
     background: "#1E1F2E",
@@ -160,11 +175,13 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
 <h3 style={{ marginBottom: 14 }}>Método de pago</h3>
 
 <div style={{ display: "grid", gap: 12 }}>
-  {[
-    ["💳", "Tarjeta de crédito", "Visa · Mastercard"],
-    ["💜", "Mercado Pago", "Pago inmediato"],
-    ["🏦", "Transferencia bancaria", "CBU / Alias"],
-  ].map(([icon, title, desc]) => {
+  {(
+    [
+      ["💳", "Tarjeta de crédito", "Visa · Mastercard"],
+      ["💜", "Mercado Pago", "Pago inmediato"],
+      ["🏦", "Transferencia bancaria", "CBU / Alias"],
+    ] as [string, PaymentMethodLabel, string][]
+  ).map(([icon, title, desc]) => {
     const selected = paymentMethod === title;
 
     return (
@@ -301,7 +318,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
 
 
 
-{error && (
+{displayError && (
   <div
     style={{
       background: "rgba(220,38,38,0.15)",
@@ -315,11 +332,12 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
       fontWeight: 600,
     }}
   >
-    {error}
+    {displayError}
   </div>
 )}
 
             <button
+  disabled={submitting}
   onClick={() => {
   // Validación de datos personales
   if (
@@ -327,8 +345,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     !lastName ||
     !email ||
     !phone ||
-    !dni ||
-    !postalCode
+    !dni
   ) {
     setError("⚠️ Completá todos los datos personales antes de continuar.");
     return;
@@ -349,7 +366,10 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
   }
 
   setError("");
-  onComplete();
+  onComplete(
+    { firstName: name, lastName, email, phone },
+    paymentMethod
+  );
 }}
               style={{
                 marginTop: 20,
@@ -360,10 +380,11 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
                 background: "#6A3CE6",
                 color: "#fff",
                 fontWeight: 800,
-                cursor: "pointer",
+                cursor: submitting ? "not-allowed" : "pointer",
+                opacity: submitting ? 0.6 : 1,
               }}
             >
-              CONFIRMAR COMPRA
+              {submitting ? "PROCESANDO..." : "CONFIRMAR COMPRA"}
             </button>
           </section>
 
