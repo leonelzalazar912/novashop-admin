@@ -1,7 +1,7 @@
-import type { Product } from "../../products/data/productsData";
+import type { AdminProduct } from "../../../../types/product";
 
 type ProductInfoCardProps = {
-  product: Product;
+  product: AdminProduct;
 };
 
 export function ProductInfoCard({
@@ -20,11 +20,11 @@ export function ProductInfoCard({
 
       <p>
         <strong>🏢 Proveedor habitual:</strong>{" "}
-        {product.supplier}
+        {product.supplier?.name ?? "—"}
       </p>
 
       <p>
-        <strong>🏷️ Marca:</strong> {product.brand}
+        <strong>🏷️ Marca:</strong> {product.brand?.name ?? "—"}
       </p>
     </div>
   );

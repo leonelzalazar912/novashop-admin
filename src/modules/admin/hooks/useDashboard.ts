@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 import type { DashboardAlert } from "../types/dashboard";
 
 
@@ -10,12 +10,12 @@ interface DashboardData {
   totalCategories: number;
   totalUnits: number;
   averagePrice: number;
-  mostExpensiveProduct: Product | null;
-  highestStockProduct: Product | null;
-  alerts: DashboardAlert[];  
+  mostExpensiveProduct: AdminProduct | null;
+  highestStockProduct: AdminProduct | null;
+  alerts: DashboardAlert[];
 }
 
-export function useDashboard(products: Product[]): DashboardData {
+export function useDashboard(products: AdminProduct[]): DashboardData {
 
   // KPIs
   return useMemo(() => {
@@ -31,8 +31,14 @@ export function useDashboard(products: Product[]): DashboardData {
   );
 
   // Estadísticas
+  // Dedupe por id de categoría: product.category es un objeto {id, name}
+  // distinto por cada producto (viene de un join separado), así que un
+  // Set de objetos nunca colapsaría duplicados por más que compartan
+  // la misma categoría — hay que dedupear por su id.
   const totalCategories = new Set(
-    products.map((product) => product.category)
+    products
+      .map((product) => product.category?.id)
+      .filter((id): id is string => Boolean(id))
   ).size;
 
   const totalUnits = products.reduce(

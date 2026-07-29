@@ -1,7 +1,7 @@
-import type { Product } from "../../products/data/productsData";
+import type { AdminProduct } from "../../../../types/product";
 
 type PurchaseItemFormProps = {
-  products: Product[];
+  products: AdminProduct[];
   productId: string;
   quantity: number;
   unitCost: number;

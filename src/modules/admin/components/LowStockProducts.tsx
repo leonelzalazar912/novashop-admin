@@ -1,8 +1,8 @@
 import { DashboardSection } from "./DashboardSection";
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 
 interface LowStockProductsProps {
-  products: Product[];
+  products: AdminProduct[];
 }
 
 export function LowStockProducts({ products }: LowStockProductsProps) {

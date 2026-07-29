@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Product } from "../../products/data/productsData";
+import type { AdminProduct } from "../../../../types/product";
 import type { Supplier } from "../../suppliers/data/suppliersData";
 import type {
   Purchase,
@@ -11,7 +11,7 @@ import { PurchaseItemsTable } from "./PurchaseItemsTable";
 import { PurchaseItemForm } from "./PurchaseItemForm";
 
 type PurchaseFormProps = {
-  products: Product[];
+  products: AdminProduct[];
   suppliers: Supplier[];
   onCancel: () => void;
   onSave: (
@@ -26,7 +26,7 @@ export function PurchaseForm({
   onSave,
 }: PurchaseFormProps) {
   const [supplierId, setSupplierId] = useState(
-    suppliers[0]?.id ?? 0
+    suppliers[0]?.id ?? ""
   );
 
   const [date, setDate] = useState(
@@ -34,7 +34,7 @@ export function PurchaseForm({
   );
 
   const [productId, setProductId] = useState(
-    products[0]?.id ?? 0
+    products[0]?.id ?? ""
   );
 
   const [quantity, setQuantity] = useState(1);

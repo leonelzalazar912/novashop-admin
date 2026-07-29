@@ -1,8 +1,8 @@
 import { DashboardSection } from "./DashboardSection";
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 
 interface RecentOrdersProps {
-  products: Product[];
+  products: AdminProduct[];
 }
 
 export function RecentOrders({ products }: RecentOrdersProps) {
@@ -14,7 +14,7 @@ export function RecentOrders({ products }: RecentOrdersProps) {
         <div key={product.id} className="order-item">
           <div>
             <strong>{product.name}</strong>
-            <p>{product.category}</p>
+            <p>{product.category?.name ?? "Sin categoría"}</p>
           </div>
 
           <span>${product.price.toLocaleString("es-AR")}</span>

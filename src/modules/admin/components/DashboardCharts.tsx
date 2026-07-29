@@ -1,9 +1,9 @@
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 import { CategoryChart } from "./CategoryChart";
 import { InventoryPieChart } from "./InventoryPieChart";
 
 interface DashboardChartsProps {
-  products: Product[];
+  products: AdminProduct[];
 }
 
 export function DashboardCharts({ products }: DashboardChartsProps) {

@@ -1,8 +1,8 @@
-import type { Product } from "../data/productsData";
+import type { AdminProduct } from "../../../../types/product";
 
 interface ProductRowProps {
-  product: Product;
-  onEdit: (product: Product) => void;
+  product: AdminProduct;
+  onEdit: (product: AdminProduct) => void;
   onDelete: (id: string) => void;
   onToggleActive: (id: string) => void;
 }
@@ -13,27 +13,29 @@ export function ProductRow({
   onDelete,
   onToggleActive,
 }: ProductRowProps) {
+  const imageUrl = product.images[0]?.url;
+
   return (
     <tr>
       <td>
-        {product.image.startsWith("http") || product.image.startsWith("data:") ? (
+        {imageUrl ? (
           <img
             className="product-image"
-            src={product.image}
+            src={imageUrl}
             alt={product.name}
           />
         ) : (
-          product.image
+          "🖼️"
         )}
       </td>
 
       <td>{product.name}</td>
 
-      <td>{product.category}</td>
+      <td>{product.category?.name ?? "—"}</td>
 
-      <td>{product.brand}</td>
+      <td>{product.brand?.name ?? "—"}</td>
 
-      <td>{product.supplier}</td>
+      <td>{product.supplier?.name ?? "—"}</td>
 
       <td>${product.price.toLocaleString("es-AR")}</td>
 

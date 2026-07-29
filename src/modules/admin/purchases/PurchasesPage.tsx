@@ -3,7 +3,7 @@ import { PurchaseForm } from "./components/PurchaseForm";
 import { PurchasesTable } from "./components/PurchasesTable";
 import { usePurchases } from "./hooks/usePurchases";
 import { useSuppliers } from "../suppliers/hooks/useSuppliers";
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 import type { Purchase } from "./data/purchasesData";
 import { PurchaseDetailModal } from "./components/PurchaseDetailModal";
 import { PurchasesStats } from "./components/PurchasesStats";
@@ -11,7 +11,7 @@ import { PurchasesFilters } from "./components/PurchasesFilters";
 import { exportPurchasesToCsv } from "./utils/exportPurchasesToCsv";
 
 type PurchasesPageProps = {
-  products: Product[];
+  products: AdminProduct[];
   increaseProductStock: (
     productId: string,
     quantity: number,

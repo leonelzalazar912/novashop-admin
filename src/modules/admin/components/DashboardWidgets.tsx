@@ -1,9 +1,9 @@
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 import { RecentOrders } from "./RecentOrders";
 import { LowStockProducts } from "./LowStockProducts";
 
 interface DashboardWidgetsProps {
-  products: Product[];
+  products: AdminProduct[];
 }
 
 export function DashboardWidgets({ products }: DashboardWidgetsProps) {

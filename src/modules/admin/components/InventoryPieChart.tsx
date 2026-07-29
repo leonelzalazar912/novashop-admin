@@ -7,11 +7,11 @@ import {
   Legend,
 } from "recharts";
 
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 import { ChartCard } from "./ChartCard";
 
 interface InventoryPieChartProps {
-  products: Product[];
+  products: AdminProduct[];
 }
 
 const COLORS = [
@@ -29,14 +29,16 @@ export function InventoryPieChart({
   const data = Object.values(
     products.reduce<Record<string, { name: string; value: number }>>(
       (acc, product) => {
-        if (!acc[product.category]) {
-          acc[product.category] = {
-            name: product.category,
+        const categoryName = product.category?.name ?? "Sin categoría";
+
+        if (!acc[categoryName]) {
+          acc[categoryName] = {
+            name: categoryName,
             value: 0,
           };
         }
 
-        acc[product.category].value += product.stock;
+        acc[categoryName].value += product.stock;
 
         return acc;
       },

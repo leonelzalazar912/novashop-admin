@@ -2,30 +2,13 @@ import { useEffect, useState } from "react";
 import { useCategoriesData } from "../../hooks/useCategoriesData";
 import { useBrandsData } from "../../hooks/useBrandsData";
 import { useSuppliersData } from "../../hooks/useSuppliersData";
+import type { AdminProduct } from "../../../../types/product";
+import type { NewProductInput } from "../hooks/useProducts";
 
 interface ProductFormProps {
   onCancel: () => void;
-  onAddProduct: (product: {
-    image: string;
-    imageFile?: File | null;
-    name: string;
-    category: string;
-    brand: string;
-    supplier: string;
-    price: number;
-    stock: number;
-    published: boolean;
-  }) => void;
-  initialProduct?: {
-    image: string;
-    name: string;
-    category: string;
-    brand: string;
-    supplier: string;
-    price: number;
-    stock: number;
-    published: boolean;
-  };
+  onAddProduct: (product: NewProductInput) => void;
+  initialProduct?: AdminProduct;
 }
 
 export function ProductForm({
@@ -38,21 +21,22 @@ export function ProductForm({
   const suppliers = useSuppliersData();
 
   const [name, setName] = useState(initialProduct?.name ?? "");
-  const [category, setCategory] = useState(initialProduct?.category ?? "");
-  const [brand, setBrand] = useState(initialProduct?.brand ?? "");
-  const [supplier, setSupplier] = useState(initialProduct?.supplier ?? "");
+  const [categoryId, setCategoryId] = useState(initialProduct?.categoryId ?? "");
+  const [brandId, setBrandId] = useState(initialProduct?.brandId ?? "");
+  const [supplierId, setSupplierId] = useState(initialProduct?.supplier?.id ?? "");
   const [price, setPrice] = useState(initialProduct?.price?.toString() ?? "");
   const [stock, setStock] = useState(initialProduct?.stock?.toString() ?? "");
-  const [image, setImage] = useState(initialProduct?.image ?? "");
+  const initialImageUrl = initialProduct?.images[0]?.url ?? "";
+  const [image, setImage] = useState(initialImageUrl);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState(initialProduct?.image ?? "");
+  const [preview, setPreview] = useState(initialImageUrl);
   const [published, setPublished] = useState(initialProduct?.published ?? false);
 
   const isFormValid =
     name &&
-    category &&
-    brand &&
-    supplier &&
+    categoryId &&
+    brandId &&
+    supplierId &&
     price &&
     stock;
 
@@ -110,15 +94,15 @@ export function ProductForm({
           />
 
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
           >
             <option value="">Seleccionar categoría</option>
 
             {categories.map((category) => (
               <option
                 key={category.id}
-                value={category.name}
+                value={category.id}
               >
                 {category.name}
               </option>
@@ -126,15 +110,15 @@ export function ProductForm({
           </select>
 
           <select
-            value={brand}
-            onChange={(e) => setBrand(e.target.value)}
+            value={brandId}
+            onChange={(e) => setBrandId(e.target.value)}
           >
             <option value="">Seleccionar marca</option>
 
             {brands.map((brand) => (
               <option
                 key={brand.id}
-                value={brand.name}
+                value={brand.id}
               >
                 {brand.name}
               </option>
@@ -142,15 +126,15 @@ export function ProductForm({
           </select>
 
           <select
-            value={supplier}
-            onChange={(e) => setSupplier(e.target.value)}
+            value={supplierId}
+            onChange={(e) => setSupplierId(e.target.value)}
           >
             <option value="">Seleccionar proveedor</option>
 
             {suppliers.map((supplier) => (
               <option
                 key={supplier.id}
-                value={supplier.company}
+                value={supplier.id}
               >
                 {supplier.company}
               </option>
@@ -236,15 +220,15 @@ export function ProductForm({
                 if (!isFormValid) return;
 
                 onAddProduct({
-                  image: image || "🎮",
-                  imageFile,
                   name,
-                  category,
-                  brand,
-                  supplier,
+                  categoryId,
+                  brandId,
+                  supplierId,
                   price: Number(price),
                   stock: Number(stock),
                   published,
+                  imageUrl: image,
+                  imageFile,
                 });
               }}
             >

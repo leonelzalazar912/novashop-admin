@@ -8,25 +8,27 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import type { Product } from "../products/data/productsData";
+import type { AdminProduct } from "../../../types/product";
 import { ChartCard } from "./ChartCard";
 
 interface CategoryChartProps {
-  products: Product[];
+  products: AdminProduct[];
 }
 
 export function CategoryChart({ products }: CategoryChartProps) {
   const data = Object.values(
     products.reduce<Record<string, { category: string; total: number }>>(
       (acc, product) => {
-        if (!acc[product.category]) {
-          acc[product.category] = {
-            category: product.category,
+        const categoryName = product.category?.name ?? "Sin categoría";
+
+        if (!acc[categoryName]) {
+          acc[categoryName] = {
+            category: categoryName,
             total: 0,
           };
         }
 
-        acc[product.category].total += product.stock;
+        acc[categoryName].total += product.stock;
         return acc;
       },
       {}

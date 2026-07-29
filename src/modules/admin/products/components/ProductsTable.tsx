@@ -1,11 +1,11 @@
-import type { Product } from "../data/productsData";
+import type { AdminProduct } from "../../../../types/product";
 import { ProductRow } from "./ProductRow";
 import { EmptyState } from "../../components/common/EmptyState";
 import { useDataIntegrity } from "../../hooks/useDataIntegrity";
 
 interface ProductsTableProps {
-  products: Product[];
-  onEdit: (product: Product) => void;
+  products: AdminProduct[];
+  onEdit: (product: AdminProduct) => void;
   onDelete: (id: string) => void;
   onToggleActive: (id: string) => void;
 }
@@ -22,7 +22,7 @@ export function ProductsTable({
     hasPurchaseItemsByProduct,
   } = useDataIntegrity();
 
-  async function handleDelete(product: Product) {
+  async function handleDelete(product: AdminProduct) {
     try {
       const hasOrders = await hasOrdersByProduct(
         product.id

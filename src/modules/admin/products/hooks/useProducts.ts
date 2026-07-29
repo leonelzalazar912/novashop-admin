@@ -1,45 +1,91 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useMemo, useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
-import type { Product } from "../data/productsData";
+import type {
+  AdminProduct,
+  AdminProductSupplier,
+  ProductImage,
+} from "../../../../types/product";
 
-type ProductInput = Omit<Product, "id" | "active"> & {
+export interface NewProductInput {
+  name: string;
+  categoryId: string;
+  brandId: string;
+  supplierId: string;
+  price: number;
+  stock: number;
+  published: boolean;
+  imageUrl: string;
   imageFile?: File | null;
-};
+}
 
-type ProductUpdateInput = Product & {
-  imageFile?: File | null;
-};
+export interface UpdateProductInput extends NewProductInput {
+  id: string;
+  active: boolean;
+}
 
 const PRODUCT_IMAGES_BUCKET = "product-images";
 
+const PRODUCT_SELECT = `
+  id,
+  slug,
+  name,
+  description,
+  sku,
+  price,
+  currency,
+  cost,
+  tax_rate,
+  minimum_stock,
+  track_stock,
+  active,
+  published,
+  featured,
+  metadata,
+  category_id,
+  brand_id,
+  categories ( id, name ),
+  brands ( id, name ),
+  product_images ( image_url, alt_text, is_primary, display_order ),
+  product_suppliers ( supplier_id, unit_cost, preferred, suppliers ( id, company ) ),
+  inventory_levels ( quantity, location_id )
+`;
+
+type Relation<T> = T | T[] | null;
+
 type ProductDatabaseRow = {
   id: string;
+  slug: string;
   name: string;
+  description: string | null;
+  sku: string | null;
   price: number | string;
-  published: boolean;
+  currency: string;
+  cost: number | string;
+  tax_rate: number | string;
+  minimum_stock: number | string;
+  track_stock: boolean;
   active: boolean;
-  categories:
-    | { name: string }
-    | { name: string }[]
-    | null;
-  brands:
-    | { name: string }
-    | { name: string }[]
-    | null;
+  published: boolean;
+  featured: boolean;
+  metadata: Record<string, unknown> | null;
+  category_id: string | null;
+  brand_id: string | null;
+  categories: Relation<{ id: string; name: string }>;
+  brands: Relation<{ id: string; name: string }>;
   product_images:
     | {
         image_url: string;
+        alt_text: string | null;
         is_primary: boolean;
         display_order: number;
       }[]
     | null;
   product_suppliers:
     | {
+        supplier_id: string;
+        unit_cost: number | string | null;
         preferred: boolean;
-        suppliers:
-          | { company: string }
-          | { company: string }[]
-          | null;
+        suppliers: Relation<{ id: string; company: string }>;
       }[]
     | null;
   inventory_levels:
@@ -49,6 +95,11 @@ type ProductDatabaseRow = {
       }[]
     | null;
 };
+
+function getRelation<T>(relation: Relation<T>): T | null {
+  if (!relation) return null;
+  return Array.isArray(relation) ? relation[0] ?? null : relation;
+}
 
 function getStoragePathFromPublicUrl(url: string): string | null {
   const marker = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
@@ -112,49 +163,50 @@ function createSlug(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function getRelationName(
-  relation:
-    | { name: string }
-    | { name: string }[]
-    | null
-): string {
-  if (!relation) return "";
+function mapImages(
+  images: ProductDatabaseRow["product_images"]
+): ProductImage[] {
+  return [...(images ?? [])]
+    .sort((a, b) => {
+      if (a.is_primary !== b.is_primary) {
+        return Number(b.is_primary) - Number(a.is_primary);
+      }
 
-  if (Array.isArray(relation)) {
-    return relation[0]?.name ?? "";
-  }
-
-  return relation.name;
+      return a.display_order - b.display_order;
+    })
+    .map((image) => ({
+      url: image.image_url,
+      alt: image.alt_text,
+      isPrimary: image.is_primary,
+      order: image.display_order,
+    }));
 }
 
-function getSupplierName(
+function getPreferredSupplier(
   productSuppliers: ProductDatabaseRow["product_suppliers"]
-): string {
-  if (!productSuppliers?.length) return "";
+): AdminProductSupplier | null {
+  if (!productSuppliers?.length) return null;
 
   const preferred =
-    productSuppliers.find((item) => item.preferred) ??
-    productSuppliers[0];
+    productSuppliers.find((item) => item.preferred) ?? productSuppliers[0];
 
-  const supplier = preferred.suppliers;
+  const supplier = getRelation(preferred.suppliers);
 
-  if (!supplier) return "";
+  if (!supplier) return null;
 
-  if (Array.isArray(supplier)) {
-    return supplier[0]?.company ?? "";
-  }
-
-  return supplier.company;
+  return {
+    id: supplier.id,
+    name: supplier.company,
+    unitCost:
+      preferred.unit_cost === null || preferred.unit_cost === undefined
+        ? null
+        : Number(preferred.unit_cost),
+  };
 }
 
-function mapProduct(row: ProductDatabaseRow): Product {
-  const images = [...(row.product_images ?? [])].sort((a, b) => {
-    if (a.is_primary !== b.is_primary) {
-      return Number(b.is_primary) - Number(a.is_primary);
-    }
-
-    return a.display_order - b.display_order;
-  });
+function mapProduct(row: ProductDatabaseRow): AdminProduct {
+  const category = getRelation(row.categories);
+  const brand = getRelation(row.brands);
 
   const stock = (row.inventory_levels ?? []).reduce(
     (total, level) => total + Number(level.quantity ?? 0),
@@ -163,20 +215,32 @@ function mapProduct(row: ProductDatabaseRow): Product {
 
   return {
     id: row.id,
-    image: images[0]?.image_url ?? "🎮",
+    slug: row.slug,
     name: row.name,
-    category: getRelationName(row.categories),
-    brand: getRelationName(row.brands),
-    supplier: getSupplierName(row.product_suppliers),
+    description: row.description,
+    sku: row.sku,
     price: Number(row.price),
+    currency: row.currency,
+    category: category ? { id: category.id, name: category.name } : null,
+    brand: brand ? { id: brand.id, name: brand.name } : null,
+    images: mapImages(row.product_images),
     stock,
-    published: row.published,
+    featured: row.featured,
+    metadata: row.metadata ?? {},
+    cost: Number(row.cost),
+    taxRate: Number(row.tax_rate),
+    minimumStock: Number(row.minimum_stock),
+    trackStock: row.track_stock,
     active: row.active,
+    published: row.published,
+    categoryId: row.category_id,
+    brandId: row.brand_id,
+    supplier: getPreferredSupplier(row.product_suppliers),
   };
 }
 
 export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [locationId, setLocationId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -189,7 +253,7 @@ export function useProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] =
-    useState<Product | null>(null);
+    useState<AdminProduct | null>(null);
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -202,6 +266,25 @@ export function useProducts() {
     window.setTimeout(() => {
       setToast("");
     }, 2500);
+  }
+
+  async function fetchProductById(
+    targetStoreId: string,
+    productId: string
+  ): Promise<AdminProduct | null> {
+    const { data, error: fetchError } = await supabase
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("store_id", targetStoreId)
+      .eq("id", productId)
+      .maybeSingle();
+
+    if (fetchError || !data) {
+      console.error(fetchError);
+      return null;
+    }
+
+    return mapProduct(data as unknown as ProductDatabaseRow);
   }
 
   useEffect(() => {
@@ -273,34 +356,7 @@ export function useProducts() {
         error: productsError,
       } = await supabase
         .from("products")
-        .select(`
-          id,
-          name,
-          price,
-          published,
-          active,
-          categories (
-            name
-          ),
-          brands (
-            name
-          ),
-          product_images (
-            image_url,
-            is_primary,
-            display_order
-          ),
-          product_suppliers (
-            preferred,
-            suppliers (
-              company
-            )
-          ),
-          inventory_levels (
-            quantity,
-            location_id
-          )
-        `)
+        .select(PRODUCT_SELECT)
         .eq("store_id", membership.store_id)
         .order("name");
 
@@ -312,9 +368,7 @@ export function useProducts() {
       }
 
       setProducts(
-        (data as unknown as ProductDatabaseRow[]).map(
-          mapProduct
-        )
+        (data as unknown as ProductDatabaseRow[]).map(mapProduct)
       );
 
       setLoading(false);
@@ -327,75 +381,7 @@ export function useProducts() {
     setCurrentPage(1);
   }, [search, categoryFilter, sortBy]);
 
-  async function findRelatedIds(product: ProductInput) {
-    if (!storeId) {
-      throw new Error("No se encontró la tienda.");
-    }
-
-    const [
-      categoryResult,
-      brandResult,
-      supplierResult,
-    ] = await Promise.all([
-      supabase
-        .from("categories")
-        .select("id")
-        .eq("store_id", storeId)
-        .eq("name", product.category)
-        .limit(1)
-        .maybeSingle(),
-
-      supabase
-        .from("brands")
-        .select("id")
-        .eq("store_id", storeId)
-        .eq("name", product.brand)
-        .limit(1)
-        .maybeSingle(),
-
-      supabase
-        .from("suppliers")
-        .select("id")
-        .eq("store_id", storeId)
-        .eq("company", product.supplier)
-        .limit(1)
-        .maybeSingle(),
-    ]);
-
-    if (
-      categoryResult.error ||
-      !categoryResult.data
-    ) {
-      throw new Error(
-        "No se encontró la categoría seleccionada."
-      );
-    }
-
-    if (brandResult.error || !brandResult.data) {
-      throw new Error(
-        "No se encontró la marca seleccionada."
-      );
-    }
-
-    if (
-      supplierResult.error ||
-      !supplierResult.data
-    ) {
-      throw new Error(
-        "No se encontró el proveedor seleccionado."
-      );
-    }
-
-    return {
-      categoryId: categoryResult.data.id,
-      brandId: brandResult.data.id,
-      supplierId: supplierResult.data.id,
-    };
-  }
-
-  async function handleAddProduct(
-    product: ProductInput
-  ) {
+  async function handleAddProduct(product: NewProductInput) {
     if (!storeId || !locationId) {
       setError(
         "No se encontró la tienda o el depósito."
@@ -407,29 +393,28 @@ export function useProducts() {
       setError("");
 
       const {
-        categoryId,
-        brandId,
-        supplierId,
-      } = await findRelatedIds(product);
-
-      const {
         data: createdProduct,
         error: productError,
       } = await supabase
         .from("products")
         .insert({
           store_id: storeId,
-          category_id: categoryId,
-          brand_id: brandId,
+          category_id: product.categoryId,
+          brand_id: product.brandId,
           name: product.name.trim(),
           slug: `${createSlug(product.name)}-${Date.now()}`,
+          description: null,
+          sku: null,
+          currency: "ARS",
           price: product.price,
           cost: 0,
+          tax_rate: 0,
           minimum_stock: 0,
           track_stock: true,
           active: true,
           published: product.published,
           featured: false,
+          metadata: {},
         })
         .select("id")
         .single();
@@ -441,60 +426,54 @@ export function useProducts() {
 
       const productId = createdProduct.id;
 
-      let imageUrl = product.image || "🎮";
+      try {
+        let imageUrl = product.imageUrl.trim();
 
-      if (product.imageFile) {
-        try {
+        if (product.imageFile) {
           imageUrl = await uploadProductImage(
             storeId,
             productId,
             product.imageFile
           );
-        } catch (uploadError) {
-          await supabase
-            .from("products")
-            .delete()
-            .eq("id", productId);
-
-          throw uploadError;
         }
-      }
 
-      const [
-        imageResult,
-        supplierLinkResult,
-        inventoryResult,
-      ] = await Promise.all([
-        supabase.from("product_images").insert({
-          store_id: storeId,
-          product_id: productId,
-          image_url: imageUrl,
-          display_order: 0,
-          is_primary: true,
-        }),
+        if (imageUrl) {
+          const { error: imageError } = await supabase
+            .from("product_images")
+            .insert({
+              store_id: storeId,
+              product_id: productId,
+              image_url: imageUrl,
+              display_order: 0,
+              is_primary: true,
+            });
 
-        supabase.from("product_suppliers").insert({
-          store_id: storeId,
-          product_id: productId,
-          supplier_id: supplierId,
-          preferred: true,
-        }),
+          if (imageError) throw imageError;
+        }
 
-        supabase.from("inventory_levels").insert({
-          store_id: storeId,
-          product_id: productId,
-          location_id: locationId,
-          quantity: product.stock,
-          reserved_quantity: 0,
-        }),
-      ]);
+        const { error: supplierLinkError } = await supabase
+          .from("product_suppliers")
+          .insert({
+            store_id: storeId,
+            product_id: productId,
+            supplier_id: product.supplierId,
+            preferred: true,
+          });
 
-      const relatedError =
-        imageResult.error ??
-        supplierLinkResult.error ??
-        inventoryResult.error;
+        if (supplierLinkError) throw supplierLinkError;
 
-      if (relatedError) {
+        const { error: inventoryError } = await supabase
+          .from("inventory_levels")
+          .insert({
+            store_id: storeId,
+            product_id: productId,
+            location_id: locationId,
+            quantity: product.stock,
+            reserved_quantity: 0,
+          });
+
+        if (inventoryError) throw inventoryError;
+      } catch (relatedError) {
         await supabase
           .from("products")
           .delete()
@@ -503,23 +482,14 @@ export function useProducts() {
         throw relatedError;
       }
 
-      const newProduct: Product = {
-        id: productId,
-        image: imageUrl,
-        name: product.name,
-        category: product.category,
-        brand: product.brand,
-        supplier: product.supplier,
-        price: product.price,
-        stock: product.stock,
-        published: product.published,
-        active: true,
-      };
+      const newProduct = await fetchProductById(
+        storeId,
+        productId
+      );
 
-      setProducts((previous) => [
-        ...previous,
-        newProduct,
-      ]);
+      if (newProduct) {
+        setProducts((previous) => [...previous, newProduct]);
+      }
 
       setShowForm(false);
       showToast("Producto creado correctamente");
@@ -534,9 +504,7 @@ export function useProducts() {
     }
   }
 
-  async function handleUpdateProduct(
-    product: ProductUpdateInput
-  ) {
+  async function handleUpdateProduct(product: UpdateProductInput) {
     if (!storeId || !locationId) {
       setError(
         "No se encontró la tienda o el depósito."
@@ -549,15 +517,9 @@ export function useProducts() {
 
       const previousImage = products.find(
         (item) => item.id === product.id
-      )?.image;
+      )?.images[0]?.url;
 
-      const {
-        categoryId,
-        brandId,
-        supplierId,
-      } = await findRelatedIds(product);
-
-      let newImageUrl = product.image || "🎮";
+      let newImageUrl = product.imageUrl.trim();
 
       if (product.imageFile) {
         newImageUrl = await uploadProductImage(
@@ -570,8 +532,8 @@ export function useProducts() {
       const { error: productError } = await supabase
         .from("products")
         .update({
-          category_id: categoryId,
-          brand_id: brandId,
+          category_id: product.categoryId,
+          brand_id: product.brandId,
           name: product.name.trim(),
           slug: `${createSlug(product.name)}-${product.id.slice(
             0,
@@ -597,18 +559,20 @@ export function useProducts() {
         throw deleteImagesError;
       }
 
-      const { error: imageError } = await supabase
-        .from("product_images")
-        .insert({
-          store_id: storeId,
-          product_id: product.id,
-          image_url: newImageUrl,
-          display_order: 0,
-          is_primary: true,
-        });
+      if (newImageUrl) {
+        const { error: imageError } = await supabase
+          .from("product_images")
+          .insert({
+            store_id: storeId,
+            product_id: product.id,
+            image_url: newImageUrl,
+            display_order: 0,
+            is_primary: true,
+          });
 
-      if (imageError) {
-        throw imageError;
+        if (imageError) {
+          throw imageError;
+        }
       }
 
       if (previousImage && previousImage !== newImageUrl) {
@@ -631,7 +595,7 @@ export function useProducts() {
           .insert({
             store_id: storeId,
             product_id: product.id,
-            supplier_id: supplierId,
+            supplier_id: product.supplierId,
             preferred: true,
           });
 
@@ -659,24 +623,18 @@ export function useProducts() {
         throw inventoryError;
       }
 
-      const updatedProduct: Product = {
-        id: product.id,
-        image: newImageUrl,
-        name: product.name,
-        category: product.category,
-        brand: product.brand,
-        supplier: product.supplier,
-        price: product.price,
-        stock: product.stock,
-        published: product.published,
-        active: product.active,
-      };
-
-      setProducts((previous) =>
-        previous.map((item) =>
-          item.id === product.id ? updatedProduct : item
-        )
+      const updatedProduct = await fetchProductById(
+        storeId,
+        product.id
       );
+
+      if (updatedProduct) {
+        setProducts((previous) =>
+          previous.map((item) =>
+            item.id === product.id ? updatedProduct : item
+          )
+        );
+      }
 
       setEditingProduct(null);
       setShowForm(false);
@@ -744,8 +702,10 @@ export function useProducts() {
       return;
     }
 
-    if (productToDelete) {
-      await removeProductImage(productToDelete.image);
+    const previousImage = productToDelete?.images[0]?.url;
+
+    if (previousImage) {
+      await removeProductImage(previousImage);
     }
 
     setProducts((previous) =>
@@ -956,7 +916,7 @@ export function useProducts() {
 
           const matchesCategory =
             categoryFilter === "Todas" ||
-            product.category === categoryFilter;
+            product.category?.name === categoryFilter;
 
           return matchesSearch && matchesCategory;
         })
@@ -970,14 +930,21 @@ export function useProducts() {
     [products, search, categoryFilter, sortBy]
   );
 
-  const categories = [
-    "Todas",
-    ...new Set(
-      products
-        .map((product) => product.category)
-        .filter(Boolean)
-    ),
-  ];
+  // Dedupe por id de categoría, no por referencia de objeto: dos productos
+  // de la misma categoría traen cada uno su propio objeto {id, name} desde
+  // el mapeo de Supabase, así que un `new Set(products.map(p => p.category))`
+  // los trataría como distintos y nunca colapsaría duplicados.
+  const categories = useMemo(() => {
+    const seen = new Map<string, string>();
+
+    for (const product of products) {
+      if (product.category) {
+        seen.set(product.category.id, product.category.name);
+      }
+    }
+
+    return ["Todas", ...seen.values()];
+  }, [products]);
 
   const totalPages = Math.max(
     1,
