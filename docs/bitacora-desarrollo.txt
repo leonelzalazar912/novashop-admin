@@ -1025,3 +1025,133 @@ Restricciones funcionales y visuales por rol validadas.
 Compilación final correcta.
 
 Commit y push finales todavía pendientes.
+
+---
+
+## Sesión — 28-29/07/2026
+
+### Objetivo de la sesión
+
+Documentar el estado real del proyecto (`docs/Architecture.md`, `docs/ProductVision.md`), y a partir de ahí ejecutar dos tareas pendientes del roadmap: unificar el modelo `Product` del storefront con el del admin, y conectar el catálogo público de la tienda a las tablas reales de Supabase (hasta ahora 100% mock). En el camino aparecieron y se resolvieron varios problemas no previstos: imágenes en base64, integridad de borrado de productos, y una serie de bugs preexistentes sin relación con esta migración.
+
+### Situación inicial
+
+Se exploró el código de cero (sin memoria de sesiones anteriores más allá de este archivo y `NovaShop_Contexto.txt`) y se generó `docs/Architecture.md` completo: stack, estructura de carpetas, patrón feature-based de `modules/admin`, estado real de la migración a Supabase y convenciones detectadas.
+
+Se detectó que el storefront público (`src/app/components/data.ts`) seguía siendo un catálogo mock de ~1170 líneas (juegos, con campos como `discount`, `rating`, `reviews`, `developer`, `releaseYear`) mientras que el admin ya gestionaba productos reales en Supabase — el catálogo público no reflejaba nada de lo que se cargaba desde el admin.
+
+### Diagnóstico del esquema real sin Docker
+
+No hay Docker Desktop instalado en el entorno de desarrollo, por lo que `supabase db pull` y `supabase db dump` (que dependen de un contenedor para el shadow database / `pg_dump`) no funcionan. Tampoco hay `psql` ni un cliente Postgres local. Se probó traer el esquema vía el endpoint OpenAPI de PostgREST con la anon key, pero el gateway nuevo de Supabase lo bloquea explícitamente para claves no-secretas.
+
+Se resolvió consultando `information_schema.columns`, `pg_policies` y `pg_class` directamente desde el SQL Editor del dashboard (el usuario corrió las queries, se pegó el resultado en el chat). De ahí se confirmó:
+
+- Esquema real de `products`, `product_images`, `product_suppliers`, `stores` (columnas exactas, no las que se suponían).
+- Las políticas RLS de lectura pública para `products`, `product_images`, `brands`, `categories`, `stores`, `store_settings` **ya existían** (`active = true AND published = true` para productos, patrón similar para el resto) — no hubo que crearlas.
+- Tablas que no se sabía que existían: `stores`, `store_settings`, `order_addresses`, `order_status_history`, `payments`, `shipments`, `audit_logs` — la base está más avanzada de lo que documentaba `NovaShop_Contexto.txt`.
+- Para lecturas puntuales sin necesidad de pedirle al usuario que corra SQL, se usó la anon/publishable key directo contra PostgREST vía `curl` (funciona porque las tablas relevantes tienen lectura pública activada) — por ejemplo para confirmar el `slug`/`id` real de la tienda (`novashop-demo`, `81f5b4cb-1954-41de-8954-51ec1b922dea`) y para diagnosticar problemas de datos sin intervención del usuario.
+
+### Decisiones tomadas con el usuario antes de tocar código
+
+1. Catálogo genérico, no específico de gaming: los atributos propios de cada rubro (developer/género/año, talles/colores, etc.) van en una columna `metadata jsonb`, no como columnas fijas de `products`.
+2. La lectura pública anónima del catálogo se resuelve por `store_id`, con `store_slug` fijo en `storeConfig.ts` (no un UUID hardcodeado) — preparado para resolver por dominio en un futuro multi-tienda.
+3. Los campos "de marketing" que no existen en el schema real (`originalPrice`, `discount`, `rating`, `reviews`, `badge`) quedan **fuera de alcance** de esta migración, no se agregan columnas nuevas para ellos.
+4. Storage de imágenes: bucket público `product-images`, con borrado del archivo viejo del bucket cuando se reemplaza la imagen de un producto (`storage.remove()`), desde el arranque (no como mejora futura).
+
+### Migración SQL ejecutada por el usuario (vía SQL Editor)
+
+- `alter table public.products add column metadata jsonb not null default '{}'::jsonb;`
+- Creación del bucket `product-images` (público, límite 5 MB, `image/png|jpeg|webp`) y policies de `storage.objects` restringiendo `insert`/`update`/`delete` a `is_store_member(store_id)` extraído del path con `storage.foldername(name)`.
+
+### Código: unificación de `Product` + catálogo público conectado
+
+- `src/types/product.ts`: reemplazado por un único `Product` (id `string`, `category`/`brand` como `{id, name}`, `images: ProductImage[]`, `metadata`) + `AdminProduct extends Product` (agrega `cost`, `supplier`, etc., pensado solo para `modules/admin`).
+- `core/cart/` (`cartTypes.ts`, `CartContext.tsx`, `CartProvider.tsx`): migrado de `id: number` a `id: string` en todos los métodos (`removeFromCart`, `updateQuantity`, `increaseQuantity`, `decreaseQuantity`).
+- Nuevo `core/catalog/catalogService.ts` (resuelve `store_id` por `slug`, trae productos/categorías seleccionando explícitamente solo columnas públicas — nunca `cost`/`minimum_stock`/`supplier`) y `core/catalog/useCatalog.ts` (hook con loading/error).
+- `src/config/storeConfig.ts`: agregado `storeSlug: "novashop-demo"`.
+- Migrados a datos reales: `App.tsx`, `Header.tsx`, `ProductCard.tsx`, `ProductGrid.tsx`, `FeaturedGames.tsx`, `ConsoleCategories.tsx` (categorías reales en vez de una lista de consolas hardcodeada), `CatalogScreen.tsx` (se sacaron los filtros de Género/Época y el orden por descuento, que no tienen datos reales; la pestaña "Especificaciones" ahora renderiza `metadata` de forma genérica), `CartDrawer.tsx`, `CheckoutScreen.tsx`, `CompletedScreen.tsx`.
+- Se encontró y se eliminó código muerto en `App.tsx`: `ps5Games`, `xboxGames`, un import suelto de `ProductCard` y `featuredGames` estaban declarados pero nunca se renderizaban — no hubo que reemplazar ninguna franja del home porque no existía ninguna visualmente.
+- Se agregó un botón "🛍️ Ver tienda" en `AdminSidebar.tsx` (navegación mínima admin → storefront, no existía ninguna forma de llegar del admin a la tienda pública).
+
+### Bug encontrado y corregido: `published` no editable
+
+`useProducts.ts` tenía `published: false` hardcodeado al crear un producto, nunca se seleccionaba al leer ni se enviaba al editar — todo producto nuevo nacía invisible en la tienda pública sin manera de cambiarlo desde la UI. Se agregó `published` al modelo, al `select`, al `insert` y al `update`, y un toggle "Publicado/Borrador" en `ProductForm.tsx` (default **Borrador**, decisión explícita del usuario: publicar tiene que ser un acto consciente).
+
+### Migración de imágenes: base64 → Supabase Storage
+
+`ProductForm.tsx` convertía el archivo subido a base64 con `FileReader` y lo guardaba tal cual en `product_images.image_url` — se detectó al ver que una sola consulta con imagen pesaba 6.4 MB. Se migró a Supabase Storage:
+
+- `ProductForm.tsx`: ya no convierte a base64; guarda el `File` en estado y previsualiza con `URL.createObjectURL` (se libera con `revokeObjectURL` al desmontar).
+- `useProducts.ts`: nuevos helpers `uploadProductImage`/`removeProductImage`. `handleAddProduct`/`handleUpdateProduct` suben el archivo a Storage antes de escribir `product_images`; `handleUpdateProduct` borra la imagen anterior del bucket si cambió.
+
+### Bug encontrado y corregido: borrado de productos no hacía nada
+
+El usuario reportó que borrar un producto de prueba ("play5") no hacía nada visible. Diagnóstico confirmado por consola del navegador: error 409, Postgres `23503` (foreign key violation) porque `stock_movements` todavía referenciaba al producto. Causas combinadas:
+
+- `handleDeleteProduct` borraba la fila de `products` directo, sin borrar antes `product_images`/`product_suppliers`/`inventory_levels`.
+- `ProductsPage.tsx` nunca leía el `error` que devuelve `useProducts()` — cualquier fallo se perdía en silencio.
+
+Se implementó un patrón híbrido, acordado con el usuario antes de tocar código:
+
+- Cascada real (borrado automático) para `product_images`, `product_suppliers`, `inventory_levels` — son "estado actual" sin valor propio sin el producto. También se borra el archivo de Storage si corresponde.
+- Bloqueo + mensaje claro (mismo patrón que ya existía para `order_items` vía `hasOrdersByProduct`) para `stock_movements` y `purchase_items` — son historial/auditoría, no deben desaparecer. Se agregaron `hasStockMovementsByProduct`/`hasPurchaseItemsByProduct` a `useDataIntegrity.ts` y se llaman desde `ProductsTable.tsx` antes de confirmar el borrado.
+- Se agregó un toggle "Activar"/"Desactivar" (`toggleProductActive`, mismo patrón que ya existía en Clientes) como alternativa al borrado físico cuando está bloqueado por integridad referencial.
+- `ProductsPage.tsx` ahora renderiza el `error` del hook con el componente `Message` — cualquier fallo futuro se va a ver en pantalla, no a perderse en la consola.
+- De paso se sacó un `window.confirm` duplicado que tenía `handleDeleteProduct` (ya confirmaba `ProductsTable.tsx` antes de llamarlo).
+
+"play5" se borró manualmente por SQL (tenía movimientos de stock de pruebas anteriores) antes de que el fix estuviera listo.
+
+### Bugs preexistentes corregidos (sin relación con esta migración)
+
+Al instalar `typescript` como devDependency (el proyecto no lo tenía, tampoco tenía `tsconfig.json` — `npm run build` nunca chequeó tipos, solo transpila con esbuild) y correr un chequeo de tipos real por primera vez en el historial del proyecto, aparecieron 12 errores preexistentes, confirmados por `git log` como anteriores a esta sesión:
+
+- 7 imports rotos a `../data/productsData` en `modules/admin/components/{CategoryChart,DashboardCharts,DashboardWidgets,InventoryPieChart,LowStockProducts,RecentOrders}.tsx` y `modules/admin/hooks/useDashboard.ts` — asumían un `modules/admin/data/productsData.ts` central que nunca existió; el archivo real está en `modules/admin/products/data/productsData.ts`. Corregido: solo la línea del import en cada archivo.
+- Mezcla `id: number` / `id: string` en `BrandsPage.tsx`, `CategoriesPage.tsx`, `CategoryForm.tsx`, `SuppliersPage.tsx` — resabio de cuando esos módulos usaban `localStorage` con ids `Date.now()`; el resto de cada módulo (tipos, hooks, tablas) ya estaba migrado a `string`, solo las funciones-wrapper de la `*Page.tsx` (y la prop `onUpdateCategory` de `CategoryForm.tsx`) quedaron con la firma vieja. Corregido: solo las anotaciones de tipo, cero cambio de lógica.
+- `handleAddBrand`/`handleAddSupplier` en `BrandsPage.tsx`/`SuppliersPage.tsx` sin `await`: comparaban una `Promise<boolean>` (siempre truthy) en vez de esperar el resultado real, así que el mensaje "Ya existe una marca/proveedor con ese nombre" nunca se mostraba aunque la creación fallara por duplicado. Corregido agregando `async`/`await`.
+
+Ninguno de estos tres grupos tiene relación con la migración de `Product`: sobrevivieron porque nunca hubo un chequeador de tipos corriendo sobre el proyecto, y tanto un `import type` roto como una anotación de tipo incorrecta se borran por completo al transpilar (no rompen el bundle de Vite/esbuild, solo son visibles para `tsc`).
+
+### Documentación actualizada
+
+- `docs/Architecture.md`: reescrito en gran parte — estructura de carpetas actualizada, `Product` unificado documentado, estado de migración actualizado (catálogo público conectado, Storage, `published`/`active`), modelo de datos con columnas reales confirmadas y sección de Storage, convenciones nuevas (patrón híbrido de borrado, `active` como alternativa, resolución de tienda por slug), deuda técnica reorganizada (ítems resueltos marcados, ítems nuevos: `modules/admin/products` sin unificar, falta `tsconfig.json`, `data.ts` sin uso, `config/categories.ts` con export huérfano confirmado, no-atomicidad del borrado en cascada).
+- `docs/ProductVision.md`: se habían agregado en esta misma sesión (antes de la parte de código) la sección "Visión de plataforma comercial (multiempresa/SaaS)" y "Backlog de funcionalidades futuras" relevadas de `NovaShop_Contexto.txt`. Se agregó una nota de progreso sobre la conexión del catálogo real.
+- `docs/NovaShop_Contexto.txt`: actualizado en esta misma sesión (ver más abajo) — quedó desactualizado en su sección "próximo paso exacto" desde que se migró Usuarios (sesiones 21-23/07), y ahora también reflejaba un estado de Productos anterior a esta sesión.
+
+### Archivos creados
+
+- `src/core/catalog/catalogService.ts`
+- `src/core/catalog/useCatalog.ts`
+
+### Archivos modificados (código)
+
+`src/types/product.ts`, `src/core/cart/cartTypes.ts`, `src/core/cart/CartContext.tsx`, `src/core/cart/CartProvider.tsx`, `src/config/storeConfig.ts`, `src/app/App.tsx`, `src/app/components/{Header,ProductCard,ProductGrid,FeaturedGames,ConsoleCategories,CatalogScreen,CartDrawer,CheckoutScreen,CompletedScreen}.tsx`, `src/modules/admin/components/AdminSidebar.tsx`, `src/modules/admin/AdminDashboard.tsx`, `src/modules/admin/products/data/productsData.ts`, `src/modules/admin/products/hooks/useProducts.ts`, `src/modules/admin/products/components/{ProductForm,ProductRow,ProductsTable}.tsx`, `src/modules/admin/products/ProductsPage.tsx`, `src/modules/admin/hooks/useDataIntegrity.ts`, `src/modules/admin/styles/admin.css`, `src/modules/admin/components/{CategoryChart,DashboardCharts,DashboardWidgets,InventoryPieChart,LowStockProducts,RecentOrders}.tsx`, `src/modules/admin/hooks/useDashboard.ts`, `src/modules/admin/brands/BrandsPage.tsx`, `src/modules/admin/categories/CategoriesPage.tsx`, `src/modules/admin/categories/components/CategoryForm.tsx`, `src/modules/admin/suppliers/SuppliersPage.tsx`.
+
+### Archivos modificados (documentación)
+
+`docs/Architecture.md`, `docs/ProductVision.md`, `docs/NovaShop_Contexto.txt`, `docs/bitacora-desarrollo.txt` (este archivo).
+
+### Infraestructura
+
+- `package.json`/`package-lock.json`: se agregó `typescript` como devDependency (no estaba, y el proyecto no tiene `tsconfig.json` — pendiente crear uno real).
+- Supabase: columna `products.metadata` (jsonb), bucket de Storage `product-images` con sus policies, corridas por el usuario vía SQL Editor.
+- No se pudo usar `supabase db pull`/`db dump` (falta Docker) en ningún momento de la sesión; todo el diagnóstico de esquema se hizo por SQL Editor manual o por lecturas anónimas vía REST con la anon key.
+
+### Verificación
+
+`npm run build` y `npx tsc --noEmit` (con flags manuales, no hay `tsconfig.json`) corridos después de cada bloque de cambios, sin errores nuevos introducidos. Los únicos errores de `tsc` restantes al cierre de la sesión son artefactos de no tener `tsconfig.json` (`ImportMeta.env`, imports de `.css`, extensión `.tsx` en import) — no bugs reales.
+
+Pendiente de verificación manual en navegador por el usuario: flujo completo del catálogo público (dado que no hay herramienta de navegador disponible en el entorno del asistente).
+
+### Estado de la sesión
+
+Product unificado y catálogo público conectado a Supabase, de punta a punta. Imágenes migradas a Storage. Borrado de productos con integridad de datos y toggle de activo/inactivo. 12 bugs preexistentes (imports rotos, tipos de id, await faltante) corregidos. Documentación (`Architecture.md`, `ProductVision.md`, `NovaShop_Contexto.txt`, esta bitácora) puesta al día.
+
+Pendiente explícito: unificar `modules/admin/products` al tipo `AdminProduct` (quedó con su tipo local propio, a propósito, para no arriesgar el módulo ya probado). Crear `tsconfig.json` real. Decidir destino de `src/app/components/data.ts` y del export huérfano de `src/config/categories.ts`.
+
+### Próximo objetivo
+
+Cargar productos reales desde el admin (con imágenes vía Storage) y validar el catálogo público a ojo en el navegador. Después, evaluar si se retoma la unificación de `modules/admin/products` al `AdminProduct` común, o se prioriza otro punto de la deuda técnica (`tsconfig.json` real, en particular, para que estos chequeos dejen de depender de flags manuales por CLI).
+
+### Próximo archivo recomendado
+
+`src/modules/admin/products/hooks/useProducts.ts` (si se decide continuar con la unificación a `AdminProduct`) o crear `tsconfig.json` en la raíz del proyecto.

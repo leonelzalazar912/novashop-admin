@@ -48,6 +48,8 @@ NovaShop debe evolucionar hacia una plataforma que soporte:
 
 Esta visión todavía no está implementada — hoy existe un único comercio configurado a mano en `src/config/*.ts`. Es el horizonte a largo plazo detrás de decisiones como el modelo `store_id` (ver Architecture.md § Decisiones de arquitectura).
 
+**Progreso relevante (29/07/2026)**: el catálogo público de la tienda ya lee de Supabase en vez de datos mock, y ya resuelve la tienda por `slug` en vez de por un ID pisado a mano — es la pieza que faltaba para que, el día que exista más de una tienda, el storefront pueda apuntar a cualquiera de ellas sin tocar código. Detalle técnico completo en [Architecture.md](Architecture.md).
+
 ## Backlog de funcionalidades futuras
 
 Relevado de `docs/NovaShop_Contexto.txt`. No es un compromiso de corto plazo — es la lista de referencia para no perder de vista el alcance completo del producto al priorizar. Antes de iniciar cualquier ítem, confirmar que sigue vigente (este backlog puede haber quedado desactualizado respecto a decisiones más recientes).

@@ -1,9 +1,29 @@
 # NovaShop — Contexto General del Proyecto
 
-**Versión:** 1.0  
-**Última actualización:** 14/07/2026  
-**Estado:** En desarrollo  
+**Versión:** 1.1
+**Última actualización:** 29/07/2026
+**Estado:** En desarrollo
 **Objetivo de este archivo:** recuperar rápidamente el contexto del proyecto al comenzar una conversación o cuando se pierda el historial.
+
+---
+
+## ⚠️ Nota de actualización (29/07/2026)
+
+Este archivo se escribió originalmente el 14/07/2026 y varias secciones de abajo (especialmente la 5, la 7, la 11 y la 12) describen un estado **anterior** a varias sesiones de migración importantes que ya pasaron. La fuente de verdad técnica actualizada es **`docs/Architecture.md`** (estructura, modelo de datos real, decisiones vigentes) — este archivo sigue siendo útil para la visión de producto y las reglas de trabajo, pero para el estado técnico exacto, confiar en `Architecture.md` y en `docs/bitacora-desarrollo.txt` (log sesión por sesión) por encima de lo que diga la sección 5 de acá abajo.
+
+Resumen de lo que cambió desde el 14/07:
+
+- **Usuarios**: migrado por completo a Supabase (Edge Function `manage-users`, permisos por rol, invitaciones). Sesiones del 21/07 y 23/07.
+- **Clientes, Pedidos, Marcas, Categorías, Proveedores, Compras**: ya estaban migrados a Supabase antes incluso de esta sesión (confirmado revisando el código, no quedaba nada de `localStorage` en esos módulos).
+- **Productos**: además de estar en Supabase, ahora tiene `published`/`active` editables desde la UI, borrado con integridad de datos (cascada + bloqueo según corresponda), e imágenes reales en Supabase Storage (ya no base64). Sesión del 28-29/07.
+- **Catálogo público (storefront)**: dejó de ser mock. Se conectó a las tablas reales de Supabase, resolviendo la tienda por `slug` en vez de un ID fijo. Sesión del 28-29/07.
+- **Modelo `Product`**: unificado entre storefront y admin del lado del tipo público (`src/types/product.ts`), con `AdminProduct` para los campos internos. El módulo `modules/admin/products` en sí todavía no usa `AdminProduct` (sigue con su tipo local), queda pendiente.
+- **Ya existen decenas de tablas en Supabase con RLS activado**, incluyendo varias que ni se sabía que existían (`stores`, `store_settings`, `payments`, `shipments`, `audit_logs`, etc. — ver Architecture.md § Modelo de datos). La sección 7 de este archivo ("no se creó ninguna tabla todavía") quedó obsoleta.
+- Se instaló `typescript` como devDependency (no estaba) y se corrió un chequeo de tipos real por primera vez en el proyecto, lo que sacó a la luz 12 bugs preexistentes (imports rotos, mezcla de tipos de `id`, un `await` faltante) — todos corregidos. Sigue faltando un `tsconfig.json` real.
+
+Las secciones 11 y 12 (modelos por revisar / próximo paso exacto) están reescritas más abajo para reflejar esto. No siguas el "próximo paso" viejo que decía auditar `brandsData`/`clientsData`/`ordersData`/`usersData`/`cartTypes` — los cinco ya están resueltos.
+
+**Este archivo es ahora el único "documento maestro" del proyecto.** Existía un segundo documento con el mismo propósito, `estructura-proyecto.txt` (en la raíz del repo), que se usó como referencia en la sesión del 21/07/2026 — quedó deprecado el 29/07/2026 para no tener dos fuentes de contexto que puedan decir cosas distintas. No consultarlo para el estado actual.
 
 ---
 
@@ -112,13 +132,9 @@ NovaShop deberá prepararse para:
 
 ### Persistencia temporal existente
 
-Los módulos actuales todavía usan principalmente:
+[OBSOLETO desde el 29/07/2026] Esto describía el estado antes de migrar. Hoy todos los módulos del admin y el catálogo público leen/escriben en Supabase; `localStorage` solo queda para cosas no críticas (ej. preferencia de tarjetas visibles del dashboard en `AdminDashboard.tsx`). Ver `docs/Architecture.md` § Estado de la migración a Supabase.
 
-- Estado de React.
-- `localStorage`.
-- Archivos de datos iniciales.
-
-`localStorage` no será el almacenamiento definitivo.
+`localStorage` no será el almacenamiento definitivo (esto sigue vigente como principio, aunque ya no describe la realidad actual del código).
 
 ---
 
@@ -215,6 +231,8 @@ También existen componentes comunes, hooks, datos y estilos administrativos.
 
 5. Estado funcional actual
 Los porcentajes son estimaciones del prototipo visual y local, no del producto comercial terminado.
+
+[OBSOLETO desde el 29/07/2026] Toda esta sección describe el estado ANTERIOR a la migración a Supabase (asume `localStorage`, IDs numéricos, "problemas que deben corregirse al migrar"). Esa migración ya se hizo para todos los módulos listados acá abajo. Para el estado real y las columnas exactas de cada tabla, ver `docs/Architecture.md` § Estado de la migración a Supabase y § Modelo de datos. Se deja el texto original sin borrar como referencia histórica de cómo era el modelo antes de migrar.
 
 Dashboard administrativo
 Estado aproximado local: 90–95%
@@ -590,9 +608,7 @@ con:
 /// <reference types="vite/client" />
 La aplicación inicia normalmente después de reiniciar Vite.
 
-No se creó ninguna tabla todavía.
-
-No se ejecutó SQL en Supabase.
+[OBSOLETO desde el 29/07/2026 — ver nota de actualización al inicio del archivo] Esto decía "no se creó ninguna tabla todavía" y "no se ejecutó SQL en Supabase". Ya no es así: existen más de 20 tablas reales con RLS activado (multiempresa, catálogo, inventario, compras, clientes/pedidos, auditoría — lista completa y columnas en `docs/Architecture.md` § Modelo de datos en Supabase), un bucket de Storage (`product-images`) y una Edge Function desplegada (`manage-users`). Todo se ejecutó vía SQL Editor del dashboard, a mano, sin migraciones versionadas en el repo (no hay Docker en el entorno de desarrollo para usar `supabase db pull`/`db push`).
 
 8. Decisiones tomadas
 Decisión 1 — Supabase será la infraestructura definitiva
@@ -757,65 +773,37 @@ audit_logs
 Este listado es preliminar. No debe transformarse todavía en SQL sin terminar la auditoría.
 
 11. Modelos que faltan revisar
-Antes de diseñar la base definitiva deben revisarse completos:
 
-src/modules/admin/brands/data/brandsData.ts
-src/modules/admin/clients/data/clientsData.ts
-src/modules/admin/orders/data/ordersData.ts
-src/modules/admin/users/data/usersData.ts
-src/core/cart/cartTypes.ts
-También conviene revisar después:
+[SECCIÓN OBSOLETA — reescrita el 29/07/2026, ver nota de actualización al inicio del archivo]
 
-src/config/business.ts
-src/config/categories.ts
-src/app/components/data.ts
-src/types/product.ts
-El último modelo revisado fue:
+La lista original (`brandsData.ts`, `clientsData.ts`, `ordersData.ts`, `usersData.ts`, `cartTypes.ts`) ya está resuelta por completo:
 
-src/modules/admin/categories/data/categoriesData.ts
+- `brandsData.ts`, `clientsData.ts`, `ordersData.ts`, `usersData.ts`: los cuatro módulos ya están migrados a Supabase (tablas reales, relaciones por ID, UUID). Usuarios además tiene Edge Function con permisos por rol.
+- `src/core/cart/cartTypes.ts`: revisado y migrado de `id: number` a `id: string` en la sesión del 28-29/07/2026, junto con el resto de `core/cart/`.
+- `src/types/product.ts`: revisado y unificado (un solo `Product` público + `AdminProduct` para el admin) en la misma sesión.
+- `src/app/components/data.ts`: ya no se usa en ningún lado (el catálogo público se conectó a Supabase) — candidato a borrar, no a revisar.
+- `src/config/categories.ts`: revisado — su export `categories` (Electrónica/Ropa/Perfumería/Juguetes) confirmado sin ningún uso en el código. Candidato a limpiar.
+- `src/config/business.ts`: todavía no revisado a fondo, pero es config estática de la tienda (contacto, dirección, moneda) sin relación con ninguna tabla — bajo riesgo.
+
+El modelo de datos real (columnas, relaciones, RLS) ya no es un diseño preliminar: existe y está documentado en `docs/Architecture.md` § Modelo de datos en Supabase, extraído directamente de `information_schema` el 28/07/2026.
+
+Lo que sigue sin resolver, y si vale la pena, es otra cosa: `modules/admin/products` no usa todavía el `AdminProduct` unificado (ver Architecture.md § Deuda, punto 1) — es una refactorización de un módulo ya probado, no un modelo por diseñar.
+
 12. Próximo paso exacto
-No comenzar Ventas.
 
-No comenzar Caja.
+[SECCIÓN OBSOLETA — reescrita el 29/07/2026]
 
-No comenzar Reportes.
+Ya no aplica "no ejecutar SQL todavía" ni "no migrar componentes todavía": se ejecutó SQL (columna `metadata`, bucket de Storage) y se migraron componentes (catálogo público completo) en la sesión del 28-29/07/2026, con diseño acordado antes de tocar código en cada caso.
 
-No ejecutar SQL todavía.
+Sigue vigente: no comenzar Ventas, Caja ni Reportes hasta que se decida explícitamente lo contrario.
 
-No migrar componentes todavía.
+Próximo paso real, según la bitácora del 28-29/07/2026:
 
-El siguiente archivo que debe revisarse es:
+1. Cargar productos reales desde el admin (con imágenes vía Storage) y validar a ojo en el navegador que el catálogo público los muestra bien (búsqueda, categorías, detalle, carrito). Nadie del lado asistente pudo verificarlo visualmente porque no hay herramienta de navegador disponible en ese entorno.
+2. Después, elegir entre: (a) terminar de unificar `modules/admin/products` al `AdminProduct` común, o (b) crear un `tsconfig.json` real (el proyecto no tiene ninguno; los chequeos de tipos de la última sesión se hicieron con flags manuales por línea de comandos).
+3. Revisar destino de `src/app/components/data.ts` (borrar o convertir en seed) y del export huérfano de `src/config/categories.ts`.
 
-src/modules/admin/brands/data/brandsData.ts
-Después, en este orden:
-
-src/modules/admin/clients/data/clientsData.ts
-src/modules/admin/orders/data/ordersData.ts
-src/modules/admin/users/data/usersData.ts
-src/core/cart/cartTypes.ts
-Con esos modelos se debe producir:
-
-Lista definitiva de entidades.
-
-Columnas de cada tabla.
-
-Relaciones.
-
-Restricciones.
-
-Estados permitidos.
-
-Estrategia multiempresa.
-
-Roles y permisos iniciales.
-
-Flujo de stock.
-
-Flujo de pedidos.
-
-Orden de migración.
-
-Solo después se prepara el SQL inicial consolidado.
+Ninguno de estos tres puntos requiere diseñar un modelo de datos nuevo — son continuaciones de trabajo ya empezado.
 
 13. Orden de implementación previsto
 Fase inmediata — Diseño de datos
@@ -1118,20 +1106,16 @@ estado;
 próximo paso.
 
 17. Resumen rápido para retomar
+
+[REESCRITO el 29/07/2026 — la versión anterior de esta sección decía "todavía no existen tablas ni se ejecutó SQL", que ya no es cierto. Ver nota de actualización al inicio del archivo para el detalle completo.]
+
 NovaShop es un Ecommerce + ERP genérico y multiempresa que se pretende comercializar.
 
-El frontend y el panel administrativo tienen mucho trabajo visual y funcional local avanzado. Productos, categorías, marcas, proveedores y compras ya poseen prototipos importantes. Compras incluye CSV, impresión, cancelación y reversión local de stock.
+La migración de `localStorage` a Supabase que preveía este documento **ya se hizo**: todos los módulos del admin (productos, categorías, marcas, proveedores, compras, clientes, pedidos, usuarios) leen y escriben en Postgres real, con RLS activado en cada tabla y modelo multiempresa por `store_id`. Usuarios tiene además una Edge Function (`manage-users`) con permisos por rol. El catálogo público de la tienda (que hasta el 27/07 seguía siendo mock) también se conectó a Supabase en la sesión del 28-29/07/2026.
 
-La persistencia actual mediante localStorage será reemplazada por Supabase.
+Supabase tiene hoy más de 20 tablas reales (multiempresa, catálogo, inventario, compras, clientes/pedidos, auditoría), un bucket de Storage (`product-images`) y la Edge Function `manage-users` desplegada. El modelo de datos completo, con columnas reales, está en `docs/Architecture.md` § Modelo de datos en Supabase — no hace falta re-derivarlo desde los archivos `data/*.ts` del frontend como planteaba este documento originalmente.
 
-Supabase ya está instalado y configurado. Existe src/lib/supabase.ts, las variables están en .env.local y la aplicación inicia correctamente.
+El desarrollo de módulos nuevos (Ventas, Caja, Reportes) sigue congelado hasta que se decida explícitamente retomarlo — eso no cambió.
 
-Todavía no existen tablas ni se ejecutó SQL.
-
-El desarrollo de módulos nuevos está congelado.
-
-El siguiente paso es revisar:
-
-src/modules/admin/brands/data/brandsData.ts
-Después se revisarán clientes, pedidos, usuarios y carrito. Con todos esos modelos se diseñará la base definitiva antes de ejecutar SQL.
+El siguiente paso real (ver sección 12 y `docs/bitacora-desarrollo.txt`, sesión 28-29/07/2026) es cargar productos reales desde el admin y validar el catálogo público en el navegador, y después decidir entre unificar `modules/admin/products` al tipo `AdminProduct` común o crear un `tsconfig.json` real para el proyecto (no existe ninguno todavía).
 
