@@ -488,6 +488,7 @@ alter table public.inventory_levels add constraint inventory_levels_product_loca
 alter table public.inventory_locations add constraint inventory_locations_store_code_unique UNIQUE (store_id, code);
 alter table public.order_addresses add constraint order_addresses_type_unique UNIQUE (order_id, address_type);
 alter table public.orders add constraint orders_store_number_unique UNIQUE (store_id, order_number);
+alter table public.payments add constraint payments_provider_reference_unique UNIQUE (provider, external_reference);
 alter table public.product_suppliers add constraint product_suppliers_unique UNIQUE (product_id, supplier_id);
 alter table public.products add constraint products_store_sku_unique UNIQUE (store_id, sku);
 alter table public.products add constraint products_store_slug_unique UNIQUE (store_id, slug);
