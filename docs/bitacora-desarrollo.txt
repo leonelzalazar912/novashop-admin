@@ -1155,3 +1155,104 @@ Cargar productos reales desde el admin (con imágenes vía Storage) y validar el
 ### Próximo archivo recomendado
 
 `src/modules/admin/products/hooks/useProducts.ts` (si se decide continuar con la unificación a `AdminProduct`) o crear `tsconfig.json` en la raíz del proyecto.
+
+---
+
+## Sesión — 29/07/2026 (continuación larga: tsconfig, checkout, AdminProduct, schema versionado, Mercado Pago)
+
+### Objetivo de la sesión
+
+Continuación directa de la sesión anterior. Se encararon, en orden: crear un `tsconfig.json` real, conectar el checkout público a Supabase de punta a punta, unificar `modules/admin/products` al tipo `AdminProduct`, versionar el schema completo de Supabase en el repo, y arrancar la integración de Mercado Pago como pasarela de pago real. Los primeros cuatro quedaron terminados y commiteados. **Mercado Pago quedó en progreso, sin validar de punta a punta** — es el estado que hay que retomar la próxima sesión.
+
+### 1. `tsconfig.json` real
+
+El proyecto no tenía ninguno; `npm run build` nunca chequeaba tipos, solo transpilaba con esbuild. Se creó con `strict: true`, `moduleResolution: "Bundler"`, `noEmit`, `isolatedModules`, excluyendo `supabase/functions` (Deno, no TypeScript de browser). Se fijaron `@types/react`/`@types/react-dom` en `^18.3` como devDependencies explícitas (antes flotaban a v19 vía MUI/Radix, desalineadas del runtime React 18.3.1 real).
+
+Con `strict: true`, `tsc` solo encontró dos causas de error en todo el proyecto: `src/app/components/data.ts` (catálogo mock de ~1170 líneas, confirmado sin ningún uso — se borró) y un import con extensión `.tsx` explícita en `src/main.tsx` (único caso, corregido). Sin esos dos puntos, el proyecto tipó limpio de entrada — mejor resultado del esperado.
+
+`npm run build` pasó a correr `tsc -p tsconfig.json && vite build`; se agregó el script `typecheck` para correrlo suelto. Commit: `build: agregar tsconfig.json real con strict mode y validar tipos en el build`.
+
+### 2. Checkout público conectado a Supabase
+
+Antes, todo el flujo `CartDrawer → CheckoutScreen → DeliveryScreen → PaymentScreen → CompletedScreen` era decorativo: no escribía nada en Supabase, no descontaba stock, y `CompletedScreen` mostraba datos hardcodeados ("Alejandro Fernández", número de pedido fijo).
+
+**Diseño acordado antes de tocar código** (varias rondas de discusión):
+- La orden se crea **primero**, el descuento de stock queda atómico dentro de esa misma operación — no separado en pasos que puedan quedar a medio camino.
+- Se decidió una función de Postgres (`SECURITY DEFINER`) en vez de encadenar llamadas desde el cliente, específicamente para que todo el checkout sea una sola transacción: si cualquier paso falla, Postgres revierte todo solo, sin necesidad de lógica de rollback manual ni riesgo de sobreventa (usa `SELECT ... FOR UPDATE` sobre `inventory_levels`, con las filas bloqueadas en orden fijo por `product_id` para evitar deadlocks entre checkouts concurrentes).
+- El precio se recalcula del lado del servidor desde `products.price` — la función nunca confía en el precio que mande el cliente.
+- Checkout de invitado por email (sin login de cliente, que no existe en el storefront todavía): la función busca o crea un `customer` por email dentro de la tienda.
+- "Transferencia bancaria" se dejó, a propósito, **fuera** de cualquier automatización: sigue siendo manual, la orden queda `payment_status: 'pending'` y el admin la pasa a `'paid'` a mano desde Pedidos — no hizo falta desarrollar nada nuevo para eso, ya existía la capacidad.
+
+Se creó la función `checkout_create_order(p_store_id, p_items, p_customer, p_delivery, p_payment_method)` vía SQL Editor (columnas y constraints reales confirmadas antes de escribirla, con varias consultas a `information_schema`/`pg_constraint` — se encontraron y corrigieron sobre la marcha varios supuestos incorrectos: `orders.status` no acepta `'pending'` como valor, solo `draft/confirmed/completed/cancelled`; se usó `'confirmed'` para una orden recién creada, igual que ya hacía el admin). Se agregó `order_number_seq` para numerar pedidos server-side (más seguro bajo concurrencia que el generador cliente-side del admin).
+
+Se validó exhaustivamente por SQL Editor antes de tocar el frontend: una compra válida (creó orden + ítems + descontó stock + registró `stock_movements`) y un intento con stock insuficiente (falló limpio, sin dejar ninguna fila a medias — confirmando la garantía de atomicidad).
+
+**Frontend**: se creó `core/checkout/` (`checkoutTypes.ts`, `checkoutService.ts`, `useCheckout.ts`, mismo patrón que `core/catalog/`). `App.tsx` pasó a levantar el estado real de entrega y pago (antes `DeliveryScreen`/`PaymentScreen` lo guardaban en `useState` local sin ningún callback que lo subiera) y dispara el submit real al confirmar en `PaymentScreen`, con el botón deshabilitado mientras la orden está en vuelo. `CompletedScreen` se reescribió para mostrar el `order_number`, la dirección (o "retiro en el local") y el método de pago reales, y se le sacó el segundo botón "CONFIRMAR COMPRA" que no hacía nada (la confirmación real ya pasa en `PaymentScreen`).
+
+De paso se corrigió que el carrito permitía incrementar la cantidad de un producto (desde el stepper de `CheckoutScreen` o re-agregando desde el catálogo) por encima del stock real, sin ningún tope — fix en `CartProvider.addToCart`/`increaseQuantity`.
+
+Probado manualmente de punta a punta por el usuario, incluyendo el flujo de retiro en el local. Commit: `feat: conectar el checkout a Supabase de punta a punta`.
+
+### 3. `modules/admin/products` unificado a `AdminProduct`
+
+Repaso previo detallado: se identificaron 14 archivos dependientes del `Product` local (`productsData.ts`) — más de los 6 que se esperaban en un primer vistazo, incluyendo todo `modules/admin/purchases/` y varios widgets del dashboard. Diferencias reales entre el `Product` local y `AdminProduct`: `category`/`brand`/`supplier` pasaban de texto plano a objetos `{id, name}` (violaba la decisión de arquitectura de guardar relaciones por id, no texto), `image: string` pasaba a `images: ProductImage[]`.
+
+Cambios de lógica real (no solo de tipos): `useProducts.ts` — el `select` de Supabase se expandió para traer todas las columnas de `AdminProduct`; se eliminó `findRelatedIds` (resolvía categoría/marca/proveedor por nombre en cada guardado, con una consulta a Supabase — ahora el formulario ya conoce los ids desde los `<select>`, se guardan directo); un producto sin imagen ya no inserta el emoji `"🎮"` como si fuera una URL real en `product_images`, simplemente no tiene fila de imagen. `ProductForm.tsx`, `ProductRow.tsx`, `ProductInfoCard.tsx` (en `purchases/`), `useDashboard.ts`, `CategoryChart.tsx`, `InventoryPieChart.tsx`, `RecentOrders.tsx` tocados con cambios reales; el resto (`ProductsTable.tsx`, `ProductsPage.tsx`, `PurchasesPage.tsx`, `PurchaseForm.tsx`, `PurchaseItemForm.tsx`) solo cambio de import.
+
+Se encontraron y corrigieron **dos bugs de deduplicación por identidad de objeto** que `tsc` no puede detectar (un `Set`/`Record` de objetos `{id,name}` nunca colapsa duplicados, aunque compartan la misma categoría): el conteo de "categorías totales" del dashboard (`useDashboard.ts`) y la lista de categorías del filtro de la toolbar de productos (`useProducts.ts`) — los dos corregidos para dedupear por id. También un bug preexistente sin relación en `PurchaseForm.tsx` (`useState(products[0]?.id ?? 0)`, mezclaba el número `0` con ids que son `string`).
+
+Se pidió al usuario probar a mano específicamente los dos fixes de deduplicación (con productos repitiendo categoría), ya que el build en verde no los confirma — confirmado funcionando. `productsData.ts` se borró al quedar sin ningún uso. Commit: `refactor: unificar modules/admin/products al tipo AdminProduct`.
+
+### 4. Schema completo versionado en `supabase/schema_dump.sql`
+
+Se confirmó en vivo (no solo por documentación vieja) que ni `supabase db pull` ni `db dump` funcionan sin Docker en este entorno (`LegacyDockerRunError`). Se armó un dump manual vía 14 consultas a `information_schema`/`pg_catalog`, dejando que las funciones nativas de Postgres (`pg_get_constraintdef`, `pg_get_functiondef`, `pg_get_triggerdef`, `indexdef`) generen el DDL exacto en vez de reconstruirlo a mano — mismo criterio ya usado para columnas de `products` en la sesión anterior.
+
+Incidentes menores en el camino: la consulta de tipos compuestos al principio devolvía también los tipos-fila automáticos de cada tabla (se corrigió filtrando `pg_class.relkind = 'c'`); el aviso de seguridad del SQL Editor de Supabase ("esta consulta crea una tabla sin RLS") resultó ser un falso positivo — el escaneo de texto del editor confundía el string literal `'create table...'` dentro de un `select` con una sentencia DDL real; en un momento el usuario pegó por error el *resultado* de una consulta en vez de la consulta misma, casi ejecutando un `CREATE TABLE` real — se paró a tiempo.
+
+El archivo quedó ordenado para correr de punta a punta sin errores de dependencias (extensiones → tipos → secuencias → tablas sin FK → RLS habilitado → constraints → índices → funciones → triggers → políticas → Storage → grants/revokes), envuelto en `begin;`/`commit;` para que un error a mitad de camino revierta todo en vez de dejar el schema a medias. **Validado**: se pegó completo en un proyecto Supabase nuevo y vacío, corrió sin errores. Excluido a propósito: la extensión `supabase_vault` (gestionada por la plataforma, se aprovisiona sola). Commit: `docs: versionar el schema completo de Supabase en supabase/schema_dump.sql`.
+
+### 5. Mercado Pago — EN PROGRESO, NO terminado
+
+**Alcance acordado con el usuario antes de tocar código**: Checkout Bricks (embebido en `PaymentScreen.tsx`, no Checkout Pro con redirect), orden primero y pago después (reintento de pago posible sobre la misma orden si falla, sin volver a llamar a `checkout_create_order`), "Transferencia bancaria" se queda manual fuera de la pasarela, y los datos bancarios hardcodeados ("NexusPlay") quedan pendientes de actualizar recién cuando una empresa/persona real vaya a usar el software (es infraestructura pensada para venderse a distintos comercios, no tiene sentido poner datos reales de uno solo todavía).
+
+**Backend creado y desplegado**:
+- `supabase/functions/mercadopago-create-payment/`: recibe `{orderId, paymentData}` del frontend (vía `supabase.functions.invoke`, `auth: "publishable"` de `@supabase/server`), llama a `POST /v1/payments` de la API de MP con el `Access Token` secreto (`Deno.env.get`), actualiza `payment_status` de la orden y hace `upsert` en `payments`.
+- `supabase/functions/mercadopago-webhook/`: endpoint público (`verify_jwt = false` en `config.toml`, MP no manda ningún JWT de Supabase), valida la firma `x-signature` (HMAC-SHA256 con un secreto separado del Access Token, manifest `id:...;request-id:...;ts:...;`) antes de confiar en cualquier notificación, y ante cada una vuelve a consultar el pago real contra la API de MP en vez de confiar en el payload crudo.
+- Se agregó la constraint `payments_provider_reference_unique UNIQUE (provider, external_reference)` (evita filas duplicadas si MP reintenta notificar el mismo pago) — ya reflejada en `schema_dump.sql`.
+- Credenciales: `VITE_MERCADOPAGO_PUBLIC_KEY` en `.env.local`, `MERCADOPAGO_ACCESS_TOKEN` y `MERCADOPAGO_WEBHOOK_SECRET` como secrets de Supabase — las tres de **test**, de la aplicación real del usuario.
+
+**Debugging sin resolver del todo — verificación de identidad de proyectos**: a mitad del debugging, el usuario notó que tenía dos proyectos Supabase en el dashboard (uno real con datos, uno vacío creado para validar `schema_dump.sql` en la sesión anterior) y pidió confirmar sin ambigüedad cuál era cuál antes de seguir tocando nada. Se verificó con `npx supabase projects list`: el proyecto real es `ewidbmbsuncdmmnxzunp` ("novashop-development", creado 11/07, linkeado al CLI desde la primera sesión) — el otro (`ztwmbehuawobazmvopig`, nombrado confusamente "proyecto definitivo novashop" pero creado recién el 29/07 y nunca linkeado) es el descartable. Confirmado por el usuario con datos reales (`stores`/`products`) antes de continuar. Ningún despliegue de esta sesión fue al proyecto equivocado.
+
+**Error sin resolver al cierre de la sesión**: probando `mercadopago-create-payment` por curl con la tarjeta de test Mastercard, se obtiene consistentemente `{"success":false,"message":"Invalid payment_method_id"}` (código de error de MP `3028`, categoría `config_error`). Descartado como causa: nombres de campo del payload (confirmados snake_case, correctos), número de tarjeta de test (confirmado en dos fuentes oficiales que `5031755734530604` es la Mastercard de **crédito** real, no débito), redeploy de la función tras cambiar secrets (confirmado que Supabase no lo requiere, los secrets se leen en caliente). Se probó también cambiar a credenciales de una "cuenta de prueba" de MP creada especialmente — resultó ser un camino equivocado: MP no expone credenciales de test separadas dentro de una cuenta de prueba, solo credenciales de producción (que igual son seguras de usar ahí porque la cuenta entera es simulada) — se revirtió a las credenciales de test de la cuenta real, que eran las correctas desde el principio.
+
+Hipótesis más sólida sin confirmar: la consulta a `/v1/payment_methods/card_issuers` para obtener el `issuer_id` (que Mastercard requiere según su propio `additional_info_needed`) se hizo con un BIN de 6 dígitos; la documentación de la SDK v2 actual de MP indica que ahora se esperan 8 dígitos. No se llegó a probar esta corrección antes de cortar la sesión.
+
+**Decisión para retomar**: no seguir aislando la causa por curl a mano. Construir directamente el **Payment Brick** de Mercado Pago en `PaymentScreen.tsx` — el propio Brick resuelve `payment_method_id`/`issuer_id` automáticamente a partir del BIN real que tipea el usuario, evitando por completo la necesidad de determinarlos manualmente como se venía haciendo.
+
+**Archivos de esta parte, sin commitear al momento de escribir esto**: `supabase/functions/mercadopago-create-payment/`, `supabase/functions/mercadopago-webhook/`, cambios en `supabase/config.toml` y `supabase/schema_dump.sql` (la constraint nueva). Se resolvió en el cierre de la sesión, ver más abajo.
+
+### Verificación
+
+`npm run build` (tsc + vite) corrido en verde después de cada bloque de cambios de código (tsconfig, checkout, AdminProduct). La parte de Mercado Pago es backend puro (Edge Functions Deno, fuera del alcance de `tsconfig.json`), verificada por curl contra la API real de Mercado Pago, no por build de frontend.
+
+### Archivos nuevos
+
+`tsconfig.json`, `src/core/checkout/{checkoutTypes,checkoutService,useCheckout}.ts`, `supabase/schema_dump.sql`, `supabase/functions/mercadopago-create-payment/`, `supabase/functions/mercadopago-webhook/`.
+
+### Archivos borrados
+
+`src/app/components/data.ts`, `src/modules/admin/products/data/productsData.ts`.
+
+### Estado de la sesión
+
+`tsconfig.json`, checkout conectado, y unificación de `AdminProduct` — terminados, probados y commiteados. `schema_dump.sql` — terminado, validado, commiteado. **Mercado Pago — backend desplegado y conectividad con la API de MP confirmada, pero el pago con tarjeta de test NO se completó exitosamente de punta a punta.** No dar esto por terminado en la próxima sesión.
+
+Se encontraron dos archivos de scratch sin trackear en la raíz del repo (`payment.json`, `token.json`, cuerpos de las requests curl usadas para debuggear) — sin datos sensibles reales (tarjeta de test documentada, token de un solo uso ya consumido), pero no se commitearon; quedan en disco por si el usuario los sigue usando.
+
+### Próximo objetivo
+
+Construir el Payment Brick de Mercado Pago en `PaymentScreen.tsx`, reemplazando los inputs propios de número de tarjeta/CVV (no se pueden mantener por PCI — MP exige que esos campos específicos se capturen con sus propios componentes seguros). Ver `docs/Architecture.md` § Estado de la migración → Mercado Pago para el detalle técnico completo del backend ya construido, contra el cual el Brick tiene que integrar.
+
+### Próximo archivo recomendado
+
+`src/app/components/PaymentScreen.tsx`.

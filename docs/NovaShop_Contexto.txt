@@ -15,13 +15,17 @@ Resumen de lo que cambió desde el 14/07:
 
 - **Usuarios**: migrado por completo a Supabase (Edge Function `manage-users`, permisos por rol, invitaciones). Sesiones del 21/07 y 23/07.
 - **Clientes, Pedidos, Marcas, Categorías, Proveedores, Compras**: ya estaban migrados a Supabase antes incluso de esta sesión (confirmado revisando el código, no quedaba nada de `localStorage` en esos módulos).
-- **Productos**: además de estar en Supabase, ahora tiene `published`/`active` editables desde la UI, borrado con integridad de datos (cascada + bloqueo según corresponda), e imágenes reales en Supabase Storage (ya no base64). Sesión del 28-29/07.
+- **Productos**: además de estar en Supabase, ahora tiene `published`/`active` editables desde la UI, borrado con integridad de datos (cascada + bloqueo según corresponda), e imágenes reales en Supabase Storage (ya no base64). Sesión del 28-29/07. Y desde la continuación del 29/07, `modules/admin/products` usa el tipo `AdminProduct` unificado (antes tenía su propio tipo local con relaciones como texto plano).
 - **Catálogo público (storefront)**: dejó de ser mock. Se conectó a las tablas reales de Supabase, resolviendo la tienda por `slug` en vez de un ID fijo. Sesión del 28-29/07.
-- **Modelo `Product`**: unificado entre storefront y admin del lado del tipo público (`src/types/product.ts`), con `AdminProduct` para los campos internos. El módulo `modules/admin/products` en sí todavía no usa `AdminProduct` (sigue con su tipo local), queda pendiente.
+- **Checkout público**: conectado de punta a punta (sesión del 29/07, continuación). Confirmar en `PaymentScreen` dispara la función de Postgres `checkout_create_order` — crea la orden, descuenta stock atómicamente, todo o nada. `CompletedScreen` ya muestra datos reales del pedido, no hardcodeados.
+- **`tsconfig.json` real**: creado (no existía ninguno). `npm run build` ahora tipa en `strict` antes de bundlear.
+- **Schema versionado**: el schema completo de Supabase (tablas, RLS, funciones, políticas, Storage) está en `supabase/schema_dump.sql`, generado a mano (no hay Docker para `supabase db dump`) y validado corriéndolo en un proyecto vacío.
+- **Mercado Pago — en progreso, NO terminado**: se crearon y desplegaron dos Edge Functions (`mercadopago-create-payment`, `mercadopago-webhook`), la conexión con la API de MP funciona, pero **el pago con tarjeta todavía no se validó de punta a punta** (error `Invalid payment_method_id` sin resolver del todo al cierre de esta sesión). Próximo paso: construir el Payment Brick en el frontend. Ver Architecture.md § Estado de la migración para el detalle completo — no dar esto por terminado.
+- **Modelo `Product`**: unificado entre storefront y admin, incluyendo ya `modules/admin/products` (ver arriba).
 - **Ya existen decenas de tablas en Supabase con RLS activado**, incluyendo varias que ni se sabía que existían (`stores`, `store_settings`, `payments`, `shipments`, `audit_logs`, etc. — ver Architecture.md § Modelo de datos). La sección 7 de este archivo ("no se creó ninguna tabla todavía") quedó obsoleta.
-- Se instaló `typescript` como devDependency (no estaba) y se corrió un chequeo de tipos real por primera vez en el proyecto, lo que sacó a la luz 12 bugs preexistentes (imports rotos, mezcla de tipos de `id`, un `await` faltante) — todos corregidos. Sigue faltando un `tsconfig.json` real.
+- Se instaló `typescript` como devDependency (no estaba) y se corrió un chequeo de tipos real por primera vez en el proyecto, lo que sacó a la luz 12 bugs preexistentes (imports rotos, mezcla de tipos de `id`, un `await` faltante) — todos corregidos.
 
-Las secciones 11 y 12 (modelos por revisar / próximo paso exacto) están reescritas más abajo para reflejar esto. No siguas el "próximo paso" viejo que decía auditar `brandsData`/`clientsData`/`ordersData`/`usersData`/`cartTypes` — los cinco ya están resueltos.
+Las secciones 11 y 12 (modelos por revisar / próximo paso exacto) están reescritas más abajo para reflejar esto. No siguas el "próximo paso" viejo que decía auditar `brandsData`/`clientsData`/`ordersData`/`usersData`/`cartTypes` — los cinco ya están resueltos, igual que la unificación de `Product` y `tsconfig.json`.
 
 **Este archivo es ahora el único "documento maestro" del proyecto.** Existía un segundo documento con el mismo propósito, `estructura-proyecto.txt` (en la raíz del repo), que se usó como referencia en la sesión del 21/07/2026 — quedó deprecado el 29/07/2026 para no tener dos fuentes de contexto que puedan decir cosas distintas. No consultarlo para el estado actual.
 
@@ -791,19 +795,13 @@ Lo que sigue sin resolver, y si vale la pena, es otra cosa: `modules/admin/produ
 
 12. Próximo paso exacto
 
-[SECCIÓN OBSOLETA — reescrita el 29/07/2026]
+[SECCIÓN OBSOLETA — reescrita el 29/07/2026, segunda vez en el mismo día]
 
-Ya no aplica "no ejecutar SQL todavía" ni "no migrar componentes todavía": se ejecutó SQL (columna `metadata`, bucket de Storage) y se migraron componentes (catálogo público completo) en la sesión del 28-29/07/2026, con diseño acordado antes de tocar código en cada caso.
+Los tres puntos que planteaba la versión anterior de esta sección ya están resueltos: el catálogo público se validó a ojo en el navegador (confirmado con imagen, categoría y marca funcionando), `modules/admin/products` ya usa `AdminProduct`, y se creó el `tsconfig.json` real. `src/app/components/data.ts` se borró (confirmado sin ningún uso). El export huérfano de `src/config/categories.ts` sigue sin resolver, pero es menor.
 
 Sigue vigente: no comenzar Ventas, Caja ni Reportes hasta que se decida explícitamente lo contrario.
 
-Próximo paso real, según la bitácora del 28-29/07/2026:
-
-1. Cargar productos reales desde el admin (con imágenes vía Storage) y validar a ojo en el navegador que el catálogo público los muestra bien (búsqueda, categorías, detalle, carrito). Nadie del lado asistente pudo verificarlo visualmente porque no hay herramienta de navegador disponible en ese entorno.
-2. Después, elegir entre: (a) terminar de unificar `modules/admin/products` al `AdminProduct` común, o (b) crear un `tsconfig.json` real (el proyecto no tiene ninguno; los chequeos de tipos de la última sesión se hicieron con flags manuales por línea de comandos).
-3. Revisar destino de `src/app/components/data.ts` (borrar o convertir en seed) y del export huérfano de `src/config/categories.ts`.
-
-Ninguno de estos tres puntos requiere diseñar un modelo de datos nuevo — son continuaciones de trabajo ya empezado.
+**Próximo paso real, único pendiente grande**: terminar la integración de Mercado Pago. El backend ya está desplegado (Edge Functions `mercadopago-create-payment`/`mercadopago-webhook`, RPC `checkout_create_order` ya conectada, credenciales de test configuradas), pero el pago con tarjeta **no se validó de punta a punta todavía** — se venía debuggeando por curl a mano un error `Invalid payment_method_id` (código MP `3028`) sin resolución confirmada al cierre de esta sesión. La decisión tomada es no seguir por curl: construir directamente el **Payment Brick** en `PaymentScreen.tsx`, porque el propio Brick resuelve `payment_method_id`/`issuer_id` automáticamente y evita todo el problema que se estaba debuggeando a mano. Ver `docs/Architecture.md` § Estado de la migración → Mercado Pago para el detalle técnico completo antes de retomar.
 
 13. Orden de implementación previsto
 Fase inmediata — Diseño de datos
@@ -1107,15 +1105,15 @@ próximo paso.
 
 17. Resumen rápido para retomar
 
-[REESCRITO el 29/07/2026 — la versión anterior de esta sección decía "todavía no existen tablas ni se ejecutó SQL", que ya no es cierto. Ver nota de actualización al inicio del archivo para el detalle completo.]
+[REESCRITO el 29/07/2026, segunda vez en el mismo día — ver nota de actualización al inicio del archivo para el detalle completo.]
 
 NovaShop es un Ecommerce + ERP genérico y multiempresa que se pretende comercializar.
 
-La migración de `localStorage` a Supabase que preveía este documento **ya se hizo**: todos los módulos del admin (productos, categorías, marcas, proveedores, compras, clientes, pedidos, usuarios) leen y escriben en Postgres real, con RLS activado en cada tabla y modelo multiempresa por `store_id`. Usuarios tiene además una Edge Function (`manage-users`) con permisos por rol. El catálogo público de la tienda (que hasta el 27/07 seguía siendo mock) también se conectó a Supabase en la sesión del 28-29/07/2026.
+La migración de `localStorage` a Supabase que preveía este documento **ya se hizo por completo**: todos los módulos del admin (productos, categorías, marcas, proveedores, compras, clientes, pedidos, usuarios) leen y escriben en Postgres real, con RLS activado en cada tabla y modelo multiempresa por `store_id`, y `modules/admin/products` ya usa el tipo `AdminProduct` unificado. Usuarios tiene además una Edge Function (`manage-users`) con permisos por rol. El catálogo público de la tienda se conectó a Supabase (sesión 28-29/07) y **el checkout también** — confirmar la compra crea una orden real vía la función de Postgres `checkout_create_order` (atómica: valida y descuenta stock, crea la orden, todo o nada).
 
-Supabase tiene hoy más de 20 tablas reales (multiempresa, catálogo, inventario, compras, clientes/pedidos, auditoría), un bucket de Storage (`product-images`) y la Edge Function `manage-users` desplegada. El modelo de datos completo, con columnas reales, está en `docs/Architecture.md` § Modelo de datos en Supabase — no hace falta re-derivarlo desde los archivos `data/*.ts` del frontend como planteaba este documento originalmente.
+Supabase tiene hoy más de 20 tablas reales (multiempresa, catálogo, inventario, compras, clientes/pedidos, auditoría), un bucket de Storage (`product-images`), la Edge Function `manage-users`, y dos Edge Functions más para Mercado Pago (`mercadopago-create-payment`, `mercadopago-webhook`). El schema completo está versionado en `supabase/schema_dump.sql` (validado corriéndolo en un proyecto vacío), y el proyecto ya tiene `tsconfig.json` real con `strict: true`.
 
 El desarrollo de módulos nuevos (Ventas, Caja, Reportes) sigue congelado hasta que se decida explícitamente retomarlo — eso no cambió.
 
-El siguiente paso real (ver sección 12 y `docs/bitacora-desarrollo.txt`, sesión 28-29/07/2026) es cargar productos reales desde el admin y validar el catálogo público en el navegador, y después decidir entre unificar `modules/admin/products` al tipo `AdminProduct` común o crear un `tsconfig.json` real para el proyecto (no existe ninguno todavía).
+**El único trabajo grande sin terminar**: la integración de Mercado Pago. El backend está desplegado y la conexión con la API de MP funciona, pero el pago con tarjeta de test **todavía no se completó exitosamente de punta a punta** — quedó en debug (error `Invalid payment_method_id`, código MP `3028`) sin resolución confirmada. El próximo paso decidido es dejar de probar por curl a mano y construir directamente el **Payment Brick** en `PaymentScreen.tsx`, que resuelve automáticamente los datos que venían dando problemas. Ver `docs/Architecture.md` § Estado de la migración → Mercado Pago antes de retomar — no asumir que esto está terminado.
 

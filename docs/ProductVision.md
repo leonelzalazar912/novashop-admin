@@ -48,7 +48,9 @@ NovaShop debe evolucionar hacia una plataforma que soporte:
 
 Esta visión todavía no está implementada — hoy existe un único comercio configurado a mano en `src/config/*.ts`. Es el horizonte a largo plazo detrás de decisiones como el modelo `store_id` (ver Architecture.md § Decisiones de arquitectura).
 
-**Progreso relevante (29/07/2026)**: el catálogo público de la tienda ya lee de Supabase en vez de datos mock, y ya resuelve la tienda por `slug` en vez de por un ID pisado a mano — es la pieza que faltaba para que, el día que exista más de una tienda, el storefront pueda apuntar a cualquiera de ellas sin tocar código. Detalle técnico completo en [Architecture.md](Architecture.md).
+**Progreso relevante (29/07/2026)**: el catálogo público de la tienda ya lee de Supabase en vez de datos mock, y ya resuelve la tienda por `slug` en vez de por un ID pisado a mano — es la pieza que faltaba para que, el día que exista más de una tienda, el storefront pueda apuntar a cualquiera de ellas sin tocar código. El checkout también quedó conectado de punta a punta (orden real, stock descontado atómicamente). Detalle técnico completo en [Architecture.md](Architecture.md).
+
+**Nota sobre credenciales de pago y multi-tienda**: al integrar Mercado Pago (en curso, ver Architecture.md § Estado de la migración) quedó explícito un punto que esta visión ya anticipaba: las credenciales de la pasarela de pago (`Access Token`, `Public Key`) son hoy un secreto único de una sola tienda. Para el día en que NovaShop se ofrezca a distintos comercios, cada uno va a necesitar su propia cuenta de Mercado Pago y sus propias credenciales — no alcanza con la cuenta de un solo comercio. Queda anotado como parte de lo que falta para la "Visión de plataforma comercial" de abajo, no bloquea la integración actual de una sola tienda.
 
 ## Backlog de funcionalidades futuras
 
