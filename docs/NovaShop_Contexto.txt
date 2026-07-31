@@ -1,7 +1,7 @@
 # NovaShop — Contexto General del Proyecto
 
-**Versión:** 1.1
-**Última actualización:** 29/07/2026
+**Versión:** 1.2
+**Última actualización:** 31/07/2026
 **Estado:** En desarrollo
 **Objetivo de este archivo:** recuperar rápidamente el contexto del proyecto al comenzar una conversación o cuando se pierda el historial.
 
@@ -28,6 +28,12 @@ Resumen de lo que cambió desde el 14/07:
 Las secciones 11 y 12 (modelos por revisar / próximo paso exacto) están reescritas más abajo para reflejar esto. No siguas el "próximo paso" viejo que decía auditar `brandsData`/`clientsData`/`ordersData`/`usersData`/`cartTypes` — los cinco ya están resueltos, igual que la unificación de `Product` y `tsconfig.json`.
 
 **Este archivo es ahora el único "documento maestro" del proyecto.** Existía un segundo documento con el mismo propósito, `estructura-proyecto.txt` (en la raíz del repo), que se usó como referencia en la sesión del 21/07/2026 — quedó deprecado el 29/07/2026 para no tener dos fuentes de contexto que puedan decir cosas distintas. No consultarlo para el estado actual.
+
+## ⚠️ Nota de actualización (31/07/2026)
+
+**Mercado Pago ya no es el pendiente grande.** Todo lo que decía la nota del 29/07 y las secciones 12/17 de abajo sobre "el pago con tarjeta no se validó de punta a punta" quedó resuelto en esta sesión: se construyó el Payment Brick (`CardPayment` de `@mercadopago/sdk-react`) en `PaymentScreen.tsx`, y se validó con pagos de test reales — uno aprobado y uno rechazado con reintento sobre la misma orden, ambos confirmados con datos reales en `orders`/`payments`. En el camino se encontraron y corrigieron dos bugs reales (un constraint de `payments` documentado pero nunca aplicado contra la base real, y un error silencioso en `mercadopago-create-payment` que dejaba marcar una orden como pagada sin haber podido registrar el pago). Detalle técnico completo en `docs/Architecture.md` § Estado de la migración → Mercado Pago, y la cronología en `docs/bitacora-desarrollo.txt` (sesión 31/07/2026, continuación).
+
+No sigas el "próximo paso" de las secciones 12 y 17 de abajo en lo que respecta a Mercado Pago — está desactualizado por esta nota. El pendiente real ahora es otro: auditar `schema_dump.sql` contra el estado real de `novashop-development` (ver `Architecture.md` § Deuda, punto 1), ya que el constraint faltante de arriba demostró que el dump puede estar documentando cosas que nunca se aplicaron de verdad.
 
 ---
 
@@ -795,13 +801,15 @@ Lo que sigue sin resolver, y si vale la pena, es otra cosa: `modules/admin/produ
 
 12. Próximo paso exacto
 
-[SECCIÓN OBSOLETA — reescrita el 29/07/2026, segunda vez en el mismo día]
+[SECCIÓN OBSOLETA — reescrita el 31/07/2026, tercera vez, ver nota de actualización al inicio del archivo]
 
 Los tres puntos que planteaba la versión anterior de esta sección ya están resueltos: el catálogo público se validó a ojo en el navegador (confirmado con imagen, categoría y marca funcionando), `modules/admin/products` ya usa `AdminProduct`, y se creó el `tsconfig.json` real. `src/app/components/data.ts` se borró (confirmado sin ningún uso). El export huérfano de `src/config/categories.ts` sigue sin resolver, pero es menor.
 
 Sigue vigente: no comenzar Ventas, Caja ni Reportes hasta que se decida explícitamente lo contrario.
 
-**Próximo paso real, único pendiente grande**: terminar la integración de Mercado Pago. El backend ya está desplegado (Edge Functions `mercadopago-create-payment`/`mercadopago-webhook`, RPC `checkout_create_order` ya conectada, credenciales de test configuradas), pero el pago con tarjeta **no se validó de punta a punta todavía** — se venía debuggeando por curl a mano un error `Invalid payment_method_id` (código MP `3028`) sin resolución confirmada al cierre de esta sesión. La decisión tomada es no seguir por curl: construir directamente el **Payment Brick** en `PaymentScreen.tsx`, porque el propio Brick resuelve `payment_method_id`/`issuer_id` automáticamente y evita todo el problema que se estaba debuggeando a mano. Ver `docs/Architecture.md` § Estado de la migración → Mercado Pago para el detalle técnico completo antes de retomar.
+**Mercado Pago — ya NO es el próximo paso, se terminó y se validó en la sesión del 31/07/2026.** Se construyó el Payment Brick (`CardPayment` de `@mercadopago/sdk-react`) en `PaymentScreen.tsx`, y se confirmó con pagos de test reales (aprobado, y rechazado con reintento sobre la misma orden) que `orders`/`payments` quedan consistentes. Ver `docs/Architecture.md` § Estado de la migración → Mercado Pago para el detalle completo.
+
+**Próximo paso real ahora**: auditar `schema_dump.sql` contra el estado real de `novashop-development` (ver `Architecture.md` § Deuda, punto 1) — se descubrió en esta misma sesión que un constraint documentado como ya aplicado (`payments_provider_reference_unique`) en realidad nunca se había ejecutado contra la base real, y no hay garantía de que sea el único caso. Si no se prioriza eso, el resto de la deuda técnica listada en `Architecture.md` § Deuda queda como candidato (revertir stock al cancelar/borrar órdenes, credenciales de pago multi-tienda, limpieza de `src/config/categories.ts`, etc.).
 
 13. Orden de implementación previsto
 Fase inmediata — Diseño de datos
@@ -1105,7 +1113,7 @@ próximo paso.
 
 17. Resumen rápido para retomar
 
-[REESCRITO el 29/07/2026, segunda vez en el mismo día — ver nota de actualización al inicio del archivo para el detalle completo.]
+[REESCRITO el 31/07/2026, tercera vez — ver nota de actualización al inicio del archivo para el detalle completo.]
 
 NovaShop es un Ecommerce + ERP genérico y multiempresa que se pretende comercializar.
 
@@ -1115,5 +1123,7 @@ Supabase tiene hoy más de 20 tablas reales (multiempresa, catálogo, inventario
 
 El desarrollo de módulos nuevos (Ventas, Caja, Reportes) sigue congelado hasta que se decida explícitamente retomarlo — eso no cambió.
 
-**El único trabajo grande sin terminar**: la integración de Mercado Pago. El backend está desplegado y la conexión con la API de MP funciona, pero el pago con tarjeta de test **todavía no se completó exitosamente de punta a punta** — quedó en debug (error `Invalid payment_method_id`, código MP `3028`) sin resolución confirmada. El próximo paso decidido es dejar de probar por curl a mano y construir directamente el **Payment Brick** en `PaymentScreen.tsx`, que resuelve automáticamente los datos que venían dando problemas. Ver `docs/Architecture.md` § Estado de la migración → Mercado Pago antes de retomar — no asumir que esto está terminado.
+**Mercado Pago ya se terminó y se validó de punta a punta (sesión del 31/07/2026).** Se construyó el Payment Brick (`CardPayment` de `@mercadopago/sdk-react`) en `PaymentScreen.tsx` — resuelve automáticamente `payment_method_id`/`issuer_id` a partir del BIN de la tarjeta, eliminando el problema que se venía debuggeando por curl. Se confirmó con pagos de test reales (uno aprobado, uno rechazado con reintento sobre la misma orden) que `orders.payment_status` y `payments` quedan consistentes. Ver `docs/Architecture.md` § Estado de la migración → Mercado Pago para el detalle completo.
+
+**El próximo trabajo grande ahora**: auditar `schema_dump.sql` contra el estado real de `novashop-development`. En la validación de Mercado Pago se descubrió que un constraint documentado como ya aplicado nunca se había ejecutado contra la base real — no hay garantía de que sea el único caso. Ver `docs/Architecture.md` § Deuda, punto 1.
 

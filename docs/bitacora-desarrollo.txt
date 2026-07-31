@@ -1256,3 +1256,70 @@ Construir el Payment Brick de Mercado Pago en `PaymentScreen.tsx`, reemplazando 
 ### Próximo archivo recomendado
 
 `src/app/components/PaymentScreen.tsx`.
+
+
+---
+
+## Sesión 31/07/2026 — Payment Brick de Mercado Pago
+
+Retomando el pendiente de la sesión anterior: en vez de seguir aislando por curl la causa de `Invalid payment_method_id`, se construyó el Payment Brick de Mercado Pago en `PaymentScreen.tsx`.
+
+**Implementación**: se instaló `@mercadopago/sdk-react` y se usó el componente `CardPayment` (Card Payment Brick), no el `Payment` Brick unificado — la pantalla ya tenía sus propias opciones de "Mercado Pago" (QR decorativo, sin tocar) y "Transferencia bancaria" por fuera, así que no hacía falta el selector de métodos del Brick unificado, y `CardPayment.onSubmit` devuelve directo `{token, issuer_id, payment_method_id, installments, payer}` — coincide campo a campo con lo que ya esperaba `parsePaymentData` en `mercadopago-create-payment`, sin transformar nada.
+
+Se rediseñó el flujo de `PaymentScreen` en dos etapas: el botón "CONFIRMAR COMPRA" primero crea la orden (misma RPC `checkout_create_order` de siempre, vía `onCreateOrder`) sin navegar todavía; con el `orderId` devuelto se monta el Brick en el mismo lugar donde antes había inputs manuales de tarjeta (se borraron, no se pueden mantener por PCI). Si el pago es rechazado, se rechaza la promesa del `onSubmit` del Brick para que MP vuelva a habilitar su botón y el usuario pueda reintentar sobre la misma orden, sin duplicar el descuento de stock. Se agregó `payWithCard` a `useCheckout.ts` y `processCardPayment` a `checkoutService.ts` (mismo patrón `supabase.functions.invoke` + lectura de `error.context` que ya usaba `usersService.ts` para `manage-users`). `App.tsx` pasó de un único `onComplete` a tres props separadas (`onCreateOrder`, `onProcessCardPayment`, `onOrderCompleted`) para no volver a llamar la RPC de creación de orden después de un pago exitoso.
+
+**Verificación**: `npm run build` (tsc estricto + vite) en verde. Se probó en el navegador con Playwright headless (instalado fuera del proyecto, no quedó como dependencia) contra el backend real. Al intentar probar el checkout completo se encontró que la base de desarrollo tiene un solo producto y sin stock (`stock = 0`) — no se pudo agregar nada al carrito. Se probó entonces el Payment Brick aislado (con un `orderId` inventado, sin pasar por `checkout_create_order`): el Brick tokenizó una tarjeta de test real de Mercado Pago (Mastercard `5031 7557 3453 0604`) y **resolvió automáticamente `payment_method_id: "master"` e `issuer_id: "3"` a partir del BIN** — exactamente los dos datos que las pruebas manuales por curl no lograban resolver. La llamada a `mercadopago-create-payment` con esos datos pasó la validación del payload (no devolvió "Los datos de pago no son válidos") y falló recién en la búsqueda de la orden (`404 No se encontró el pedido`), esperable por ser un `orderId` inventado. Confirma que la causa raíz del bloqueo por curl está resuelta por el propio Brick. Se confirmó también que tras un rechazo el Brick se resetea y permite reintentar sin crear una orden nueva.
+
+**No se llegó a probar** el flujo de punta a punta contra una orden real (`checkout_create_order` con un producto con stock de verdad) — queda pendiente para la próxima sesión, junto con cargar stock a algún producto en la base de desarrollo.
+
+### Archivos modificados
+
+`package.json`/`package-lock.json` (nueva dependencia `@mercadopago/sdk-react`), `src/app/components/PaymentScreen.tsx`, `src/app/App.tsx`, `src/core/checkout/checkoutTypes.ts`, `src/core/checkout/checkoutService.ts`, `src/core/checkout/useCheckout.ts`.
+
+### Estado de la sesión
+
+Payment Brick construido, compilando en verde, validado de forma aislada contra la API real de Mercado Pago (tokenización + resolución de `payment_method_id`/`issuer_id` confirmadas). **No validado todavía contra una orden real** — no dar el pago con Mercado Pago por terminado hasta correr el flujo completo con un producto con stock.
+
+### Próximo objetivo
+
+Cargar stock a un producto en la base de desarrollo (`novashop-development`) y correr el checkout completo (carrito → entrega → pago con "Tarjeta de crédito" → Brick → `mercadopago-create-payment`) para confirmar que un pago aprobado deja `payment_status = 'paid'` en `orders` y una fila en `payments`. Probar también una tarjeta de test de rechazo de Mercado Pago para confirmar el reintento sobre la misma orden en un flujo real (no aislado).
+
+### Próximo archivo recomendado
+
+`src/app/components/PaymentScreen.tsx` (para la prueba de punta a punta) o el panel de admin de Productos (para cargar stock).
+
+---
+
+## Sesión 31/07/2026 (continuación) — Validación de punta a punta del Payment Brick
+
+Se retomó el pendiente dejado por la sesión anterior (Payment Brick construido pero sin validar contra una orden real, bloqueado por falta de stock en la base de desarrollo). El usuario ejecutó las pruebas manualmente en el navegador siguiendo instrucciones paso a paso; se detectaron y corrigieron dos bugs reales en el camino.
+
+**Paso 1 — Stock:** se cargó stock (10 unidades) al único producto de la base de desarrollo ("xbox serires") desde el admin, que estaba en 0.
+
+**Paso 2 — Primer intento de pago aprobado, credenciales mezcladas:** al completar el Brick con la tarjeta de test Mastercard (`5031 7557 3453 0604`, titular `APRO APRO`) contra un pedido real (`PED-000005`), Mercado Pago rechazó con `"Unauthorized use of live credentials"`. Causa: el `Access Token` cargado como secret de Supabase (`MERCADOPAGO_ACCESS_TOKEN`) resultó ser el de **producción**, no el de **prueba**, a pesar de que la sesión anterior había registrado que las tres credenciales eran de test. El usuario lo corrigió cargando el `Access Token` correcto desde la sección "Credenciales de prueba" del panel de Mercado Pago.
+
+**Bug 1 — Constraint faltante:** tras corregir las credenciales, el segundo intento de pago se aprobó en Mercado Pago y `orders.payment_status` quedó en `'paid'`, pero la tabla `payments` no tenía ninguna fila (ni para ese pedido ni en total). Revisando los logs de `mercadopago-create-payment` en el dashboard de Supabase apareció el error de Postgres `{ code: "42P10", message: "there is no unique or exclusion constraint matching the ON CONFLICT specification" }`. El constraint `payments_provider_reference_unique UNIQUE (provider, external_reference)` — que la sesión del 29/07 había documentado como ya agregado y reflejado en `schema_dump.sql` — nunca se había ejecutado realmente contra `novashop-development`. Se aplicó el `ALTER TABLE` faltante directo contra la base real. Queda como duda abierta (no resuelta hoy, anotada como deuda) si otras piezas del dump de esa sesión tampoco llegaron a aplicarse contra la base real, ya que el único método de validación usado entonces fue pegar el dump completo en un proyecto Supabase vacío, no comparar contra la base real.
+
+**Bug 2 — Error silencioso en `mercadopago-create-payment`:** una vez aplicado el constraint, se detectó que el código solo logueaba (`console.error`) el error del `upsert` a `payments` sin cortar la ejecución — la función seguía marcando la orden como pagada y respondía éxito al frontend aunque el pago nunca hubiera quedado registrado en `payments`. Se corrigió agregando un `return` de error 500 explícito en los dos puntos donde antes solo se logueaba (falla al guardar en `payments`, falla al actualizar `orders`), con un mensaje que advierte no reintentar el pago sin contactar soporte primero (para no arriesgar un doble cobro real en Mercado Pago sobre una orden que ya se cobró). Redeployada con `npx supabase functions deploy mercadopago-create-payment`.
+
+**Validación final, ya con ambos bugs corregidos:**
+- Pago aprobado de punta a punta (`PED-000006`): `orders.payment_status = 'paid'` + fila en `payments` con `status: 'paid'`, `payment_method: 'master'`, `mp_status: 'approved'`, `paid_at` seteado.
+- Reintento sobre la misma orden (`PED-000007`): primer intento con tarjeta de rechazo (titular `OTHE OTHE`) → rechazado, el Brick se resetea sin salir de la orden actual; segundo intento con `APRO APRO` sobre la misma orden → aprobado. Resultado en la base: **1 sola fila en `orders`** (no se duplicó el pedido) y **2 filas en `payments`** para el mismo `order_id` (`failed` + `paid`, cada una con su propio `external_reference` de Mercado Pago) — comportamiento esperado, no un bug.
+
+**Limpieza de cierre:** se borró la orden de prueba `PED-000005` (quedaba con `payment_status: 'paid'` sin fila en `payments`, artefacto del bug 1, sin el `external_reference` real para reconstruirla de forma honesta) con `delete from orders where order_number = 'PED-000005'` — cascada limpia `order_items`/`order_addresses`/`order_status_history`/`payments`/`shipments`. El `stock_movements` de esa orden queda huérfano (referencia un `order_id` que ya no existe), mismo comportamiento ya aceptado para cualquier borrado/cancelación de orden (no revierte stock).
+
+### Archivos modificados
+
+`supabase/functions/mercadopago-create-payment/index.ts` (fix del error silencioso, redeployado). Cambios de SQL directos contra `novashop-development` (constraint agregada, orden de prueba borrada) — no versionados en el repo, ver nota de siempre sobre falta de migraciones versionadas.
+
+### Estado de la sesión
+
+**Mercado Pago — Payment Brick terminado y validado de punta a punta.** Pago aprobado, pago rechazado con reintento sobre la misma orden, ambos confirmados con datos reales en `orders` y `payments`. No queda pendiente de esta integración salvo la auditoría más amplia de `schema_dump.sql` vs. base real (ver `Architecture.md` § Deuda, punto 1) y los gaps ya conocidos de antes (revertir stock al cancelar/borrar una orden, credenciales de pago multi-tienda).
+
+### Próximo objetivo
+
+Ya no hay nada urgente de Mercado Pago. Los próximos candidatos, por orden de aparición en la deuda técnica: auditar `schema_dump.sql` contra `novashop-development` (constraints/índices/funciones), o retomar cualquiera de los puntos ya listados en `Architecture.md` § Deuda (dashboard con datos mock, revertir stock al cancelar órdenes, etc.).
+
+### Próximo archivo recomendado
+
+Ninguno puntual — el próximo paso es de decisión de prioridades, no de código.
