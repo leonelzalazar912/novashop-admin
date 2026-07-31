@@ -381,29 +381,35 @@ export default function App() {
         }
         submitting={checkout.submitting}
         submitError={checkout.error}
-        onComplete={async (customer, paymentMethod) => {
+        onCreateOrder={(customer, paymentMethod) => {
           if (!deliveryData) {
-            return;
+            return Promise.resolve(null);
           }
 
-          const result = await checkout.submit({
+          return checkout.submit({
             items: cartItems,
             customer,
             delivery: deliveryData,
             paymentMethod,
           });
-
-          if (result) {
-            setCompletedOrder({
-              orderNumber: result.orderNumber,
-              items: cartItems,
-              customer,
-              delivery: deliveryData,
-              paymentMethod,
-            });
-            clearCart();
-            setScreen("completed");
+        }}
+        onProcessCardPayment={(orderId, formData) =>
+          checkout.payWithCard(orderId, formData)
+        }
+        onOrderCompleted={(customer, paymentMethod, orderNumber) => {
+          if (!deliveryData) {
+            return;
           }
+
+          setCompletedOrder({
+            orderNumber,
+            items: cartItems,
+            customer,
+            delivery: deliveryData,
+            paymentMethod,
+          });
+          clearCart();
+          setScreen("completed");
         }}
       />
     );

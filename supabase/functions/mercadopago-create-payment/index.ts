@@ -270,6 +270,11 @@ export default {
 
       if (paymentUpsertError) {
         console.error(paymentUpsertError);
+
+        return errorResponse(
+          "Mercado Pago procesó el pago pero no se pudo registrar en el sistema. No reintentes el pago sin contactar a soporte primero.",
+          500
+        );
       }
 
       const { error: orderUpdateError } =
@@ -280,6 +285,11 @@ export default {
 
       if (orderUpdateError) {
         console.error(orderUpdateError);
+
+        return errorResponse(
+          "El pago se registró pero no se pudo actualizar el estado del pedido. Contactá a soporte antes de reintentar.",
+          500
+        );
       }
 
       return Response.json({

@@ -26,3 +26,22 @@ export interface CheckoutOrderResult {
   orderId: string;
   orderNumber: string;
 }
+
+export interface MercadoPagoCardFormData {
+  token: string;
+  issuer_id: string;
+  payment_method_id: string;
+  installments: number;
+  payer: {
+    email?: string;
+    identification?: {
+      type: string;
+      number: string;
+    };
+  };
+}
+
+export interface CardPaymentResult {
+  ok: boolean;
+  message: string;
+}

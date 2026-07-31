@@ -2,9 +2,11 @@ import { supabase } from "../../lib/supabase";
 import { resolveStoreId } from "../catalog/catalogService";
 import type { CartItem } from "../cart/cartTypes";
 import type {
+  CardPaymentResult,
   CheckoutCustomer,
   CheckoutDelivery,
   CheckoutOrderResult,
+  MercadoPagoCardFormData,
   PaymentMethodLabel,
 } from "./checkoutTypes";
 
@@ -65,4 +67,77 @@ export async function submitOrder({
     orderId: row.order_id,
     orderNumber: row.order_number,
   };
+}
+
+async function getFunctionErrorMessage(
+  error: unknown,
+  fallbackMessage: string
+): Promise<string> {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("context" in error)
+  ) {
+    return fallbackMessage;
+  }
+
+  const context = (error as { context?: Response }).context;
+
+  if (!context) {
+    return fallbackMessage;
+  }
+
+  try {
+    const responseBody = (await context.clone().json()) as {
+      message?: unknown;
+    };
+
+    if (
+      typeof responseBody.message === "string" &&
+      responseBody.message.trim() !== ""
+    ) {
+      return responseBody.message;
+    }
+  } catch {
+    // La respuesta no contenía JSON válido.
+  }
+
+  return fallbackMessage;
+}
+
+export async function processCardPayment(
+  orderId: string,
+  paymentData: MercadoPagoCardFormData
+): Promise<CardPaymentResult> {
+  const { data, error } = await supabase.functions.invoke(
+    "mercadopago-create-payment",
+    {
+      body: { orderId, paymentData },
+    }
+  );
+
+  if (error) {
+    console.error(error);
+
+    throw new Error(
+      await getFunctionErrorMessage(
+        error,
+        "No se pudo procesar el pago con Mercado Pago."
+      )
+    );
+  }
+
+  const status = typeof data?.status === "string" ? data.status : "";
+
+  const message =
+    typeof data?.message === "string"
+      ? data.message
+      : "No se pudo procesar el pago.";
+
+  const ok =
+    status === "approved" ||
+    status === "pending" ||
+    status === "in_process";
+
+  return { ok, message };
 }

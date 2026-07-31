@@ -1,27 +1,51 @@
 import { useState } from "react";
+import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 import type { CartItem } from "../../core/cart/cartTypes";
 import type {
+  CardPaymentResult,
   CheckoutCustomer,
+  CheckoutOrderResult,
+  MercadoPagoCardFormData,
   PaymentMethodLabel,
 } from "../../core/checkout/checkoutTypes";
 import { theme } from "../../config/theme";
 
+initMercadoPago(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY, {
+  locale: "es-AR",
+});
 
 interface PaymentScreenProps {
   items: CartItem[];
   onBack: () => void;
-  onComplete: (
+  onCreateOrder: (
     customer: CheckoutCustomer,
     paymentMethod: PaymentMethodLabel
+  ) => Promise<CheckoutOrderResult | null>;
+  onProcessCardPayment: (
+    orderId: string,
+    formData: MercadoPagoCardFormData
+  ) => Promise<CardPaymentResult>;
+  onOrderCompleted: (
+    customer: CheckoutCustomer,
+    paymentMethod: PaymentMethodLabel,
+    orderNumber: string
   ) => void;
   submitting: boolean;
   submitError: string;
 }
 
+interface CardOrder {
+  orderId: string;
+  orderNumber: string;
+  customer: CheckoutCustomer;
+}
+
 export function PaymentScreen({
   items,
   onBack,
-  onComplete,
+  onCreateOrder,
+  onProcessCardPayment,
+  onOrderCompleted,
   submitting,
   submitError,
 }: PaymentScreenProps) {
@@ -34,11 +58,9 @@ export function PaymentScreen({
   const [phone, setPhone] = useState("");
   const [dni, setDni] = useState("");
   const [error, setError] = useState("");
+  const [cardOrder, setCardOrder] = useState<CardOrder | null>(null);
   const displayError = error || submitError;
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
+  const fieldsLocked = submitting || cardOrder !== null;
   const inputStyle = {
     background: "#1E1F2E",
     border: "1px solid rgba(255,255,255,0.1)",
@@ -47,6 +69,39 @@ export function PaymentScreen({
     borderRadius: 10,
     outline: "none",
 };
+
+  async function handleConfirm() {
+    if (
+      !name ||
+      !lastName ||
+      !email ||
+      !phone ||
+      !dni
+    ) {
+      setError("⚠️ Completá todos los datos personales antes de continuar.");
+      return;
+    }
+
+    setError("");
+
+    const customer: CheckoutCustomer = { firstName: name, lastName, email, phone };
+    const result = await onCreateOrder(customer, paymentMethod);
+
+    if (!result) {
+      return;
+    }
+
+    if (paymentMethod === "Tarjeta de crédito") {
+      setCardOrder({
+        orderId: result.orderId,
+        orderNumber: result.orderNumber,
+        customer,
+      });
+    } else {
+      onOrderCompleted(customer, paymentMethod, result.orderNumber);
+    }
+  }
+
   return (
     <div
       style={{
@@ -145,6 +200,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
   <input
   key={label}
   placeholder={label}
+  disabled={fieldsLocked}
   value={
     label === "Nombre" ? name :
     label === "Apellido" ? lastName :
@@ -166,6 +222,8 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     padding: "13px 14px",
     borderRadius: 10,
     outline: "none",
+    opacity: fieldsLocked ? 0.6 : 1,
+    cursor: fieldsLocked ? "not-allowed" : "text",
   }}
 />
     )
@@ -187,6 +245,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     return (
       <button
         key={title}
+        disabled={fieldsLocked}
         onClick={() => {
   setPaymentMethod(title);
   setError("");
@@ -203,7 +262,8 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
           color: "#E8E9F0",
           padding: 14,
           borderRadius: 12,
-          cursor: "pointer",
+          cursor: fieldsLocked ? "not-allowed" : "pointer",
+          opacity: fieldsLocked && !selected ? 0.5 : 1,
           transition: "all .2s ease",
         }}
       >
@@ -224,18 +284,72 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
   <div style={{ marginTop: 22 }}>
     <h3 style={{ marginBottom: 14 }}>Datos de la tarjeta</h3>
 
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 14,
-      }}
-    >
-      <input placeholder="Número de tarjeta" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} style={inputStyle} />
-      <input placeholder="Nombre del titular" value={cardName} onChange={(e) => setCardName(e.target.value)} style={inputStyle} />
-      <input placeholder="Vencimiento MM/AA" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} style={inputStyle} />
-      <input placeholder="CVV" value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} style={inputStyle} />
-    </div>
+    {cardOrder ? (
+      <div>
+        <div
+          style={{
+            background: "rgba(106,60,230,0.12)",
+            border: "1px solid rgba(106,60,230,0.35)",
+            borderRadius: 12,
+            padding: "12px 14px",
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <span style={{ color: "#A0A3B8", fontSize: 13 }}>
+            Pedido <strong style={{ color: "#E8E9F0" }}>{cardOrder.orderNumber}</strong> creado. Completá el pago con tarjeta a continuación.
+          </span>
+
+          <button
+            onClick={() => setCardOrder(null)}
+            disabled={submitting}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#9B7CFF",
+              cursor: submitting ? "not-allowed" : "pointer",
+              fontSize: 13,
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Cambiar método
+          </button>
+        </div>
+
+        <CardPayment
+          initialization={{ amount: total, payer: { email } }}
+          onSubmit={async (formData) => {
+            const result = await onProcessCardPayment(cardOrder.orderId, {
+              token: formData.token,
+              issuer_id: formData.issuer_id,
+              payment_method_id: formData.payment_method_id,
+              installments: formData.installments,
+              payer: formData.payer,
+            });
+
+            if (!result.ok) {
+              setError(result.message);
+              throw new Error(result.message);
+            }
+
+            setError("");
+            onOrderCompleted(cardOrder.customer, paymentMethod, cardOrder.orderNumber);
+          }}
+          onError={(brickError) => {
+            console.error(brickError);
+            setError("No se pudo cargar el formulario de pago de Mercado Pago.");
+          }}
+        />
+      </div>
+    ) : (
+      <p style={{ color: "#A0A3B8", fontSize: 14 }}>
+        Completá tus datos personales y confirmá la compra para continuar con el pago seguro de Mercado Pago.
+      </p>
+    )}
   </div>
 )}
 
@@ -290,7 +404,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
         marginTop: 12,
       }}
     >
-      
+
     </p>
   </div>
 )}
@@ -312,7 +426,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
     <p>CBU: <strong>0000003100098765432101</strong></p>
     <p>Alias: <strong>NEXUSPLAY.GAMES</strong></p>
 
-    
+
   </div>
 )}
 
@@ -336,41 +450,10 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
   </div>
 )}
 
-            <button
+            {cardOrder === null && (
+              <button
   disabled={submitting}
-  onClick={() => {
-  // Validación de datos personales
-  if (
-    !name ||
-    !lastName ||
-    !email ||
-    !phone ||
-    !dni
-  ) {
-    setError("⚠️ Completá todos los datos personales antes de continuar.");
-    return;
-  }
-
-  // Si eligió tarjeta, validar también los datos de la tarjeta
-  if (
-    paymentMethod === "Tarjeta de crédito" &&
-    (
-      !cardNumber ||
-      !cardName ||
-      !cardExpiry ||
-      !cardCvv
-    )
-  ) {
-    setError("⚠️ Completá todos los datos de la tarjeta.");
-    return;
-  }
-
-  setError("");
-  onComplete(
-    { firstName: name, lastName, email, phone },
-    paymentMethod
-  );
-}}
+  onClick={handleConfirm}
               style={{
                 marginTop: 20,
                 width: "100%",
@@ -386,6 +469,7 @@ linear-gradient(180deg, #12091F 0%, #090A0F 55%, #07080C 100%)
             >
               {submitting ? "PROCESANDO..." : "CONFIRMAR COMPRA"}
             </button>
+            )}
           </section>
 
           <aside
