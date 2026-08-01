@@ -1323,3 +1323,31 @@ Ya no hay nada urgente de Mercado Pago. Los próximos candidatos, por orden de a
 ### Próximo archivo recomendado
 
 Ninguno puntual — el próximo paso es de decisión de prioridades, no de código.
+
+---
+
+## Sesión 31/07/2026 (continuación) — Auditoría de schema_dump.sql vs. base real
+
+Se retomó el pendiente dejado al cierre de la sesión anterior (Architecture.md § Deuda, punto 1): confirmar si el constraint `payments_provider_reference_unique` (documentado como aplicado desde el 29/07 pero encontrado ausente en la validación de Mercado Pago) era un caso aislado o síntoma de un desfase más amplio entre `schema_dump.sql` y la base real de `novashop-development`.
+
+Sin Docker disponible (confirmado de nuevo intentando `npx supabase db dump --linked`, mismo error de siempre), se auditó a mano: se extrajeron de `schema_dump.sql` los 120 constraints (25 PK + 14 UNIQUE + 27 CHECK + 54 FK), 61 índices (39 auto-creados por PK/UNIQUE + 22 explícitos), 6 funciones y 19 triggers declarados, y se compararon uno por uno contra el resultado de correr `pg_constraint`/`pg_indexes`/`pg_proc`/`pg_trigger` directamente en el SQL Editor de `novashop-development`.
+
+**Resultado: coincidencia total.** Las cuatro categorías cerraron con el mismo conteo y los mismos nombres/definiciones en ambos lados — ningún constraint, índice, función o trigger documentado faltaba en la base real, y no apareció ningún elemento extra sin documentar. Se confirmó puntualmente que `payments_provider_reference_unique` sigue presente (fix de la sesión anterior firme).
+
+**Conclusión**: el gap encontrado con esa constraint fue un incidente aislado (probablemente se corrió/validó solo contra el proyecto Supabase vacío usado para probar el dump, y nunca se replicó a mano contra la base real), no la punta de un problema sistemático de sincronización. No hace falta seguir auditando el resto del schema por esta preocupación puntual.
+
+### Archivos modificados
+
+`docs/Architecture.md` (§ Deuda: punto 1 movido a resueltos con el resultado de la auditoría, renumerado el resto; nota de actualización al inicio). Ningún cambio de código ni de SQL en esta parte de la sesión — fue puramente de verificación.
+
+### Estado de la sesión
+
+Auditoría cerrada, sin hallazgos nuevos. La deuda técnica que queda en `Architecture.md` § Deuda es la misma de siempre (limpieza de `categories.ts`, atomicidad del borrado de productos, duplicación de hooks admin, revertir stock al cancelar/borrar órdenes, credenciales de pago multi-tienda, etc.) — ninguna es urgente.
+
+### Próximo objetivo
+
+Sin un pendiente técnico grande abierto. Próximo paso es de decisión de prioridades: retomar cualquiera de los puntos de `Architecture.md` § Deuda, o encarar una funcionalidad nueva del backlog (`ProductVision.md`).
+
+### Próximo archivo recomendado
+
+Ninguno puntual.
