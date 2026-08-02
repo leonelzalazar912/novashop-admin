@@ -1351,3 +1351,45 @@ Sin un pendiente técnico grande abierto. Próximo paso es de decisión de prior
 ### Próximo archivo recomendado
 
 Ninguno puntual.
+
+---
+
+## Sesión 01-02/08/2026 — Revertir stock al cancelar/borrar una orden
+
+Se retomó el pendiente de `Architecture.md` § Deuda punto 8: cancelar o borrar un pedido no revertía el stock que `checkout_create_order` había descontado. El usuario pidió explícitamente el plan antes de tocar código.
+
+**Diagnóstico**: confirmado en `src/modules/admin/orders/hooks/useOrders.ts` que `updateOrder` (transición a "Cancelado") y `deleteOrder` hacían un `update`/`delete` directo sobre `orders`, sin ninguna referencia a `inventory_levels` ni `stock_movements`. `OrderForm.tsx` no restringe transiciones de estado (se puede cancelar y volver a activar libremente), y no hay cancelación parcial (una vez en edición, el formulario oculta agregar/quitar productos — cancelar siempre es de la orden completa).
+
+**Diseño**: función de Postgres, mismo patrón que `checkout_create_order`, en vez de lógica en el hook — necesita `SELECT FOR UPDATE` sobre `inventory_levels` para no correr el mismo riesgo de condición de carrera que ya se resolvió del lado de la venta, en el sentido inverso (liberar stock al mismo tiempo que una venta concurrente del mismo producto). Se creó `cancel_order(p_order_id, p_store_id)` y `delete_order(p_order_id, p_store_id)`, cada una liberando stock por `stock_movements` `'order_release'` antes de actualizar/borrar la orden, con chequeo de idempotencia.
+
+**Verificación manual (usuario) — primera ronda**: cancelar y borrar revertían el stock correctamente en la base. Pero el usuario reportó que la sección Productos del admin no mostraba el cambio hasta cerrar sesión y volver a entrar.
+
+**Bug de caché encontrado (no relacionado al fix de stock)**: `AdminDashboard.tsx` llama a `useProducts()` una sola vez, a nivel de toda la sesión de admin (no se remonta al navegar entre secciones), y la carga de productos estaba en un `useEffect` con `[]` sin ninguna función de recarga expuesta. Fix acotado, confirmado con el usuario: se extrajo `loadProducts` a una función reutilizable, expuesta como `reload()` desde `useProducts()`, y `AdminDashboard.tsx` la llama cada vez que se entra a la sección Productos. Se dejó anotada como deuda la solución general (adoptar React Query u otra librería de data-fetching), no se implementó.
+
+**Segunda ronda de pruebas — caso nuevo encontrado por el usuario**: al "des-cancelar" un pedido (volverlo de "Cancelado" a "Pendiente"/"En preparación"), el stock no se volvía a descontar. Esto ya estaba anotado como fuera de alcance en el plan original ("se deja como posible mejora futura"), pero el usuario pidió resolverlo. Se le presentaron 3 opciones (implementar re-reserva con chequeo de stock, dejarlo documentado como límite conocido, o bloquear la transición en la UI) — eligió implementar la re-reserva.
+
+**Rediseño**: se reemplazó `cancel_order` por una única función `update_order_status(p_order_id, p_store_id, p_status, p_fulfillment_status)` que decide sola, comparando el `status` actual contra el pedido, si hay que liberar stock (transición hacia `'cancelled'`), volver a descontarlo con validación de disponibilidad (transición desde `'cancelled'` hacia un estado activo — si no alcanza, `raise exception` y no cambia nada), o no tocar inventario (cualquier otra transición). De paso se corrigió un bug que el caso de reactivación iba a exponer en el diseño anterior: `cancel_order` decidía si ya había liberado stock buscando si existía algún `stock_movements` `'order_release'` para la orden — con ciclos de cancelar/reactivar/cancelar, eso encontraría un `order_release` viejo y saltearía la segunda liberación real. La versión nueva usa el **estado actual de la orden** como fuente de verdad en vez del historial de movimientos, y toma el movimiento de stock más reciente por producto (`DISTINCT ON (product_id) ... ORDER BY created_at DESC`) para saber cantidad y depósito, en vez de asumir un único `'sale'` por producto — así funciona sin importar cuántos ciclos tenga la orden. `delete_order` se actualizó con la misma lógica.
+
+**Bug adicional encontrado al implementar la reactivación**: `OrdersPage.tsx` nunca leía el `error` de `useOrders()` — cualquier fallo (incluido el nuevo rechazo por stock insuficiente) se perdía en silencio, el formulario se cerraba y mostraba "Pedido actualizado correctamente" igual. Corregido con el mismo patrón que ya usa `ProductsPage.tsx` (`<Message message={error} />`), y `OrderForm.tsx`/`OrdersPage.tsx` ahora esperan el resultado real (`Promise<boolean>`) antes de limpiar el formulario o mostrar el mensaje de éxito.
+
+**Seguridad**: como las funciones son `SECURITY DEFINER` (bypassean RLS), se agregó un chequeo `is_store_member(p_store_id)` al principio de las dos — sin él, cualquier usuario autenticado podría, en teoría, tocar pedidos de otra tienda pasando su `store_id` a mano.
+
+### Archivos modificados
+
+`src/modules/admin/orders/hooks/useOrders.ts`, `src/modules/admin/orders/components/OrderForm.tsx`, `src/modules/admin/orders/OrdersPage.tsx`, `src/modules/admin/products/hooks/useProducts.ts`, `src/modules/admin/AdminDashboard.tsx`. Funciones Postgres (`update_order_status`, `delete_order`) creadas directo contra `novashop-development` y agregadas a `supabase/schema_dump.sql`.
+
+### Verificación
+
+`npm run build` en verde después de cada bloque de cambios. Probado manualmente por el usuario en el navegador: cancelar libera stock, reactivar (Pendiente/En preparación) vuelve a descontarlo, la sección Productos ya refleja el cambio sin cerrar sesión, y el formulario de Pedidos ya no se cierra ni miente "actualizado correctamente" si el backend rechaza el cambio.
+
+### Estado de la sesión
+
+Bug de stock al cancelar/borrar una orden — resuelto, incluyendo el caso de reactivación con validación de disponibilidad. De paso se corrigieron dos bugs no relacionados que aparecieron en el camino (caché de Productos sin invalidar, error de Pedidos sin mostrarse). `Architecture.md` § Deuda punto 8 cerrado.
+
+### Próximo objetivo
+
+Sin pendiente técnico grande abierto de este tema. Candidatos de la deuda técnica restante: adoptar una librería de data-fetching (React Query) para resolver de raíz el problema de caché entre secciones del admin, o cualquiera de los puntos ya listados en `Architecture.md` § Deuda.
+
+### Próximo archivo recomendado
+
+Ninguno puntual.

@@ -927,6 +927,158 @@ end;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.update_order_status(p_order_id uuid, p_store_id uuid, p_status text, p_fulfillment_status text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_current_status text;
+  v_line record;
+  v_available numeric;
+begin
+  if not is_store_member(p_store_id) then
+    raise exception 'No tenés permisos para modificar pedidos de esta tienda.';
+  end if;
+
+  select status into v_current_status
+  from orders
+  where id = p_order_id and store_id = p_store_id
+  for update;
+
+  if not found then
+    raise exception 'No se encontró el pedido.';
+  end if;
+
+  if p_status = 'cancelled' and v_current_status is distinct from 'cancelled' then
+    for v_line in
+      select distinct on (product_id)
+        product_id, location_id, abs(quantity_delta) as quantity
+      from stock_movements
+      where reference_type = 'order'
+        and reference_id = p_order_id
+        and product_id is not null
+      order by product_id, created_at desc
+    loop
+      update inventory_levels
+      set quantity = quantity + v_line.quantity,
+          updated_at = now()
+      where product_id = v_line.product_id
+        and location_id = v_line.location_id;
+
+      insert into stock_movements (
+        store_id, product_id, location_id, movement_type, quantity_delta,
+        reference_type, reference_id, notes, created_by
+      ) values (
+        p_store_id, v_line.product_id, v_line.location_id, 'order_release',
+        v_line.quantity, 'order', p_order_id,
+        'Reversión de stock por cancelación de pedido', null
+      );
+    end loop;
+
+  elsif p_status <> 'cancelled' and v_current_status = 'cancelled' then
+    for v_line in
+      select distinct on (product_id)
+        product_id, location_id, abs(quantity_delta) as quantity
+      from stock_movements
+      where reference_type = 'order'
+        and reference_id = p_order_id
+        and product_id is not null
+      order by product_id, created_at desc
+    loop
+      select quantity into v_available
+      from inventory_levels
+      where product_id = v_line.product_id
+        and location_id = v_line.location_id
+      for update;
+
+      if v_available is null or v_available < v_line.quantity then
+        raise exception 'No hay stock suficiente para reactivar este pedido.';
+      end if;
+
+      update inventory_levels
+      set quantity = quantity - v_line.quantity,
+          updated_at = now()
+      where product_id = v_line.product_id
+        and location_id = v_line.location_id;
+
+      insert into stock_movements (
+        store_id, product_id, location_id, movement_type, quantity_delta,
+        reference_type, reference_id, notes, created_by
+      ) values (
+        p_store_id, v_line.product_id, v_line.location_id, 'sale',
+        -v_line.quantity, 'order', p_order_id,
+        'Reactivación de pedido previamente cancelado', null
+      );
+    end loop;
+  end if;
+
+  update orders
+  set status = p_status,
+      fulfillment_status = p_fulfillment_status,
+      cancelled_at = case when p_status = 'cancelled' then now() else null end,
+      updated_at = now()
+  where id = p_order_id;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.delete_order(p_order_id uuid, p_store_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_current_status text;
+  v_line record;
+begin
+  if not is_store_member(p_store_id) then
+    raise exception 'No tenés permisos para modificar pedidos de esta tienda.';
+  end if;
+
+  select status into v_current_status
+  from orders
+  where id = p_order_id and store_id = p_store_id
+  for update;
+
+  if not found then
+    raise exception 'No se encontró el pedido.';
+  end if;
+
+  if v_current_status is distinct from 'cancelled' then
+    for v_line in
+      select distinct on (product_id)
+        product_id, location_id, abs(quantity_delta) as quantity
+      from stock_movements
+      where reference_type = 'order'
+        and reference_id = p_order_id
+        and product_id is not null
+      order by product_id, created_at desc
+    loop
+      update inventory_levels
+      set quantity = quantity + v_line.quantity,
+          updated_at = now()
+      where product_id = v_line.product_id
+        and location_id = v_line.location_id;
+
+      insert into stock_movements (
+        store_id, product_id, location_id, movement_type, quantity_delta,
+        reference_type, reference_id, notes, created_by
+      ) values (
+        p_store_id, v_line.product_id, v_line.location_id, 'order_release',
+        v_line.quantity, 'order', p_order_id,
+        'Reversión de stock por borrado de pedido', null
+      );
+    end loop;
+  end if;
+
+  delete from orders where id = p_order_id and store_id = p_store_id;
+end;
+$function$
+;
+
 -- ============================================================
 -- 9. Triggers
 -- ============================================================
@@ -1032,6 +1184,12 @@ grant EXECUTE on function public.is_store_admin to anon;
 grant EXECUTE on function public.is_store_admin to authenticated;
 grant EXECUTE on function public.is_store_member to anon;
 grant EXECUTE on function public.is_store_member to authenticated;
+
+-- update_order_status / delete_order: operaciones de admin (cancelar,
+-- reactivar o borrar un pedido), nunca invocadas desde el storefront público
+-- — solo authenticated, no anon.
+grant EXECUTE on function public.update_order_status to authenticated;
+grant EXECUTE on function public.delete_order to authenticated;
 
 -- bootstrap_new_store / handle_new_user / set_updated_at: son funciones
 -- trigger (RETURNS trigger). Postgres ya bloquea su invocación directa fuera
