@@ -287,93 +287,93 @@ export function useProducts() {
     return mapProduct(data as unknown as ProductDatabaseRow);
   }
 
-  useEffect(() => {
-    async function loadProducts() {
-      setLoading(true);
-      setError("");
+  async function loadProducts() {
+    setLoading(true);
+    setError("");
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-      if (userError || !user) {
-        console.error(userError);
-        setError("No hay una sesión iniciada.");
-        setLoading(false);
-        return;
-      }
-
-      setUserId(user.id);
-
-      const {
-        data: membership,
-        error: membershipError,
-      } = await supabase
-        .from("store_members")
-        .select("store_id")
-        .eq("user_id", user.id)
-        .eq("active", true)
-        .limit(1)
-        .maybeSingle();
-
-      if (membershipError || !membership) {
-        console.error(membershipError);
-        setError(
-          "No se encontró una tienda asociada al usuario."
-        );
-        setLoading(false);
-        return;
-      }
-
-      setStoreId(membership.store_id);
-
-      const {
-        data: location,
-        error: locationError,
-      } = await supabase
-        .from("inventory_locations")
-        .select("id")
-        .eq("store_id", membership.store_id)
-        .eq("active", true)
-        .order("is_default", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (locationError || !location) {
-        console.error(locationError);
-        setError(
-          "No se encontró un depósito para administrar el stock."
-        );
-        setLoading(false);
-        return;
-      }
-
-      setLocationId(location.id);
-
-      const {
-        data,
-        error: productsError,
-      } = await supabase
-        .from("products")
-        .select(PRODUCT_SELECT)
-        .eq("store_id", membership.store_id)
-        .order("name");
-
-      if (productsError) {
-        console.error(productsError);
-        setError("No se pudieron cargar los productos.");
-        setLoading(false);
-        return;
-      }
-
-      setProducts(
-        (data as unknown as ProductDatabaseRow[]).map(mapProduct)
-      );
-
+    if (userError || !user) {
+      console.error(userError);
+      setError("No hay una sesión iniciada.");
       setLoading(false);
+      return;
     }
 
+    setUserId(user.id);
+
+    const {
+      data: membership,
+      error: membershipError,
+    } = await supabase
+      .from("store_members")
+      .select("store_id")
+      .eq("user_id", user.id)
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (membershipError || !membership) {
+      console.error(membershipError);
+      setError(
+        "No se encontró una tienda asociada al usuario."
+      );
+      setLoading(false);
+      return;
+    }
+
+    setStoreId(membership.store_id);
+
+    const {
+      data: location,
+      error: locationError,
+    } = await supabase
+      .from("inventory_locations")
+      .select("id")
+      .eq("store_id", membership.store_id)
+      .eq("active", true)
+      .order("is_default", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (locationError || !location) {
+      console.error(locationError);
+      setError(
+        "No se encontró un depósito para administrar el stock."
+      );
+      setLoading(false);
+      return;
+    }
+
+    setLocationId(location.id);
+
+    const {
+      data,
+      error: productsError,
+    } = await supabase
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("store_id", membership.store_id)
+      .order("name");
+
+    if (productsError) {
+      console.error(productsError);
+      setError("No se pudieron cargar los productos.");
+      setLoading(false);
+      return;
+    }
+
+    setProducts(
+      (data as unknown as ProductDatabaseRow[]).map(mapProduct)
+    );
+
+    setLoading(false);
+  }
+
+  useEffect(() => {
     void loadProducts();
   }, []);
 
@@ -984,5 +984,6 @@ export function useProducts() {
     setSortBy,
     loading,
     error,
+    reload: loadProducts,
   };
 }

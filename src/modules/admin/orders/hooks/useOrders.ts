@@ -510,21 +510,34 @@ export function useOrders() {
     const databaseStatus =
       getDatabaseOrderStatus(updatedOrder.status);
 
+    const { error: statusError } = await supabase.rpc(
+      "update_order_status",
+      {
+        p_order_id: updatedOrder.id,
+        p_store_id: storeId,
+        p_status: databaseStatus.status,
+        p_fulfillment_status:
+          databaseStatus.fulfillmentStatus,
+      }
+    );
+
+    if (statusError) {
+      console.error(statusError);
+      setError(
+        statusError.message ||
+          "No se pudo actualizar el estado del pedido."
+      );
+      return false;
+    }
+
     const { error: updateError } = await supabase
       .from("orders")
       .update({
-        status: databaseStatus.status,
-        fulfillment_status:
-          databaseStatus.fulfillmentStatus,
         payment_status:
           getDatabasePaymentStatus(
             updatedOrder.paymentStatus
           ),
         notes: updatedOrder.notes || null,
-        cancelled_at:
-          updatedOrder.status === "Cancelado"
-            ? new Date().toISOString()
-            : null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", updatedOrder.id)
@@ -556,11 +569,13 @@ export function useOrders() {
       return false;
     }
 
-    const { error: deleteError } = await supabase
-      .from("orders")
-      .delete()
-      .eq("id", id)
-      .eq("store_id", storeId);
+    const { error: deleteError } = await supabase.rpc(
+      "delete_order",
+      {
+        p_order_id: id,
+        p_store_id: storeId,
+      }
+    );
 
     if (deleteError) {
       console.error(deleteError);

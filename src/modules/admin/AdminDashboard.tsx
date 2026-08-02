@@ -47,6 +47,12 @@ export function AdminDashboard({ onGoStore }: AdminDashboardProps) {
 
   const productsManager = useProducts();
 
+  useEffect(() => {
+    if (section === "products") {
+      void productsManager.reload();
+    }
+  }, [section]);
+
   const dashboard = useDashboard(
     productsManager.products
   );

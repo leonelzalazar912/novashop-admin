@@ -22,6 +22,7 @@ export function OrdersPage() {
     addOrder,
     updateOrder,
     deleteOrder,
+    error,
   } = useOrders();
 
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -34,20 +35,37 @@ export function OrdersPage() {
     return () => clearTimeout(timer);
   }, [message]);
 
-  function handleAddOrder(order: Omit<Order, "id">) {
-    addOrder(order);
-    setMessage("Pedido creado correctamente.");
+  async function handleAddOrder(
+    order: Omit<Order, "id">
+  ): Promise<boolean> {
+    const success = await addOrder(order);
+
+    if (success) {
+      setMessage("Pedido creado correctamente.");
+    }
+
+    return success;
   }
 
-  function handleUpdateOrder(order: Order) {
-    updateOrder(order);
-    setEditingOrder(null);
-    setMessage("Pedido actualizado correctamente.");
+  async function handleUpdateOrder(
+    order: Order
+  ): Promise<boolean> {
+    const success = await updateOrder(order);
+
+    if (success) {
+      setEditingOrder(null);
+      setMessage("Pedido actualizado correctamente.");
+    }
+
+    return success;
   }
 
-  function handleDeleteOrder(id: string) {
-    deleteOrder(id);
-    setMessage("Pedido eliminado correctamente.");
+  async function handleDeleteOrder(id: string) {
+    const success = await deleteOrder(id);
+
+    if (success) {
+      setMessage("Pedido eliminado correctamente.");
+    }
   }
 
   return (
@@ -60,6 +78,7 @@ export function OrdersPage() {
       </div>
 
       <Message message={message} />
+      <Message message={error} />
 
       <Toolbar
         search={search}

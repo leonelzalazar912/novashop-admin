@@ -10,8 +10,8 @@ import { useProductsData } from "../../hooks/useProductsData";
 
 type OrderFormProps = {
   editingOrder: Order | null;
-  onAddOrder: (order: Omit<Order, "id">) => void;
-  onUpdateOrder: (order: Order) => void;
+  onAddOrder: (order: Omit<Order, "id">) => Promise<boolean>;
+  onUpdateOrder: (order: Order) => Promise<boolean>;
   onCancelEdit: () => void;
 };
 
@@ -129,7 +129,7 @@ export function OrderForm({
     setError("");
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!clientId || items.length === 0) {
@@ -137,26 +137,26 @@ export function OrderForm({
       return;
     }
 
-    if (editingOrder) {
-      onUpdateOrder({
-        ...editingOrder,
-        status,
-        paymentStatus,
-        notes: notes.trim(),
-      });
-    } else {
-      onAddOrder({
-        clientId,
-        items,
-        status,
-        paymentStatus,
-        date: new Date().toISOString().split("T")[0],
-        total,
-        notes: notes.trim(),
-      });
-    }
+    const success = editingOrder
+      ? await onUpdateOrder({
+          ...editingOrder,
+          status,
+          paymentStatus,
+          notes: notes.trim(),
+        })
+      : await onAddOrder({
+          clientId,
+          items,
+          status,
+          paymentStatus,
+          date: new Date().toISOString().split("T")[0],
+          total,
+          notes: notes.trim(),
+        });
 
-    clearForm();
+    if (success) {
+      clearForm();
+    }
   }
 
   function handleCancel() {
